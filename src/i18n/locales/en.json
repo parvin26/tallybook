@@ -53,7 +53,6 @@
     "selectState": "Select state",
     "city": "City/District",
     "cityPlaceholder": "e.g., Petaling Jaya",
-    "selectState": "Select state",
     "startingCash": "Starting Cash",
     "startingBank": "Starting Bank Balance",
     "typeOtherRequired": "Please specify business type",
@@ -209,6 +208,7 @@
     "language": "Language",
     "bahasaMalaysia": "Bahasa Malaysia",
     "english": "English",
+    "krio": "Krio",
     "data": "Data",
     "exportCSV": "Export CSV",
     "exportCSVDesc": "Download CSV",
@@ -231,6 +231,7 @@
     "noTransactionsExport": "No transactions to export",
     "languageChanged": "Bahasa ditukar ke Bahasa Malaysia",
     "languageChangedEn": "Language changed to English",
+    "languageChangedKrio": "Language changed to Krio",
     "languageError": "Cannot change language"
   },
   "health": {
@@ -474,6 +475,35 @@
     "businessNameRequired": "Business name is required",
     "countryRequired": "Country is required"
   },
+  "pwa": {
+    "installableChip": {
+      "title": "Installable PWA",
+      "subtitle": "You can install this on your phone or desktop"
+    },
+    "install": {
+      "title": "Install Tally",
+      "subtitle": {
+        "canInstall": "Add to your device for quick access",
+        "ios": "Use Share then Add to Home Screen",
+        "installed": "Installed"
+      },
+      "button": "Install",
+      "how": "How",
+      "success": "Tally installed successfully!",
+      "cancelled": "Installation cancelled"
+    },
+    "iosModal": {
+      "title": "Install Tally on iOS",
+      "step1": {
+        "title": "Tap Share",
+        "description": "Tap the Share button in your browser's toolbar (bottom on iPhone, top on iPad)"
+      },
+      "step2": {
+        "title": "Add to Home Screen",
+        "description": "Scroll down and tap 'Add to Home Screen', then confirm"
+      }
+    }
+  },
   "report": {
     "common": {
       "exportPDF": "Export PDF",
@@ -538,4 +568,7 @@
       "emptyStateTitle": "Keep recording daily to see trends",
       "emptyStateMessage": "We need at least 3 days of entries to show insights",
       "recordSale": "Record Sale",
-      "recor
+      "recordExpense": "Record Expense"
+    }
+  }
+}
