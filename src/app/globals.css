@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  /* TALLY Premium Design Tokens */
+  --tally-bg: #F7FAF9;
+  --tally-surface: #FFFFFF;
+  --tally-surface-2: #F1F6F5;
+  --tally-border: rgba(15, 23, 42, 0.10);
+  --tally-text: #0F172A;
+  --tally-text-muted: #64748B;
+  
+  /* CTA Colors */
+  --tally-sale: #29978C;
+  --tally-sale-hover: #238579;
+  --tally-expense: #EA6C3C;
+  --tally-expense-hover: #E56E44;
+  --tally-mint: #BBD8D3;
+  
+  /* Design System */
+  --tally-radius: 16px;
+  --tally-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  
+  /* Legacy (for backward compatibility) */
+  --background: var(--tally-bg);
+  --surface: var(--tally-surface);
+  --surface-secondary: var(--tally-surface-2);
+  --divider: var(--tally-border);
+  --text-primary: var(--tally-text);
+  --text-secondary: var(--tally-text-muted);
+  --text-muted: var(--tally-text-muted);
+  --icon-default: var(--tally-text-muted);
+  
+  /* Transaction Colors (STRICT USE) */
+  --money-in: var(--tally-sale);
+  --money-in-bg: var(--tally-mint);
+  --money-out: var(--tally-expense);
+  --money-out-bg: rgba(234, 108, 60, 0.1);
+  
+  /* Actions */
+  --cta-primary: var(--tally-sale);
+  --cta-text: #FFFFFF;
+  --cta-hover: var(--tally-sale-hover);
+  
+  /* Feedback */
+  --success: var(--tally-sale);
+  --success-bg: var(--tally-mint);
+  --error: var(--tally-expense);
+  --error-bg: rgba(234, 108, 60, 0.1);
+  --disabled-bg: #E5E7EB;
+  --disabled-text: #9CA3AF;
+  
+  /* Business Health (Neutral) */
+  --health-bg: var(--tally-surface-2);
+  --health-border: var(--tally-border);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--tally-bg);
+  color: var(--tally-text);
+  font-family: Arial, Helvetica, sans-serif;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Hide scrollbar for horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
