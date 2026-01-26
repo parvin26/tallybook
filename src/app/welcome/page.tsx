@@ -4,36 +4,31 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { X } from 'lucide-react'
 
 const SLIDES = [
   {
     key: 'slide1',
-    icon: '⚡',
     titleKey: 'welcome.slide1.title',
     descriptionKey: 'welcome.slide1.description',
   },
   {
     key: 'slide2',
-    icon: '📊',
     titleKey: 'welcome.slide2.title',
     descriptionKey: 'welcome.slide2.description',
   },
   {
     key: 'slide3',
-    icon: '⭐',
     titleKey: 'welcome.slide3.title',
     descriptionKey: 'welcome.slide3.description',
   },
   {
     key: 'slide4',
-    icon: '🤝',
     titleKey: 'welcome.slide4.title',
     descriptionKey: 'welcome.slide4.description',
   },
   {
     key: 'slide5',
-    icon: '🚀',
     titleKey: 'welcome.slide5.title',
     descriptionKey: 'welcome.slide5.description',
   },
@@ -43,7 +38,7 @@ export default function WelcomePage() {
   const { t } = useTranslation()
   const router = useRouter()
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [hasSeenWelcome, setHasSeenWelcome] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     // Check if user has seen welcome before
@@ -51,12 +46,20 @@ export default function WelcomePage() {
     if (seen === 'true') {
       router.push('/')
     } else {
-      // Use requestAnimationFrame to avoid synchronous setState in effect
-      requestAnimationFrame(() => {
-        setHasSeenWelcome(false)
-      })
+      setIsOpen(true)
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden'
+    }
+
+    return () => {
+      // Restore body scroll when component unmounts
+      document.body.style.overflow = 'unset'
     }
   }, [router])
+
+  const handleClose = () => {
+    handleGetStarted()
+  }
 
   const handleNext = () => {
     if (currentSlide < SLIDES.length - 1) {
@@ -78,10 +81,20 @@ export default function WelcomePage() {
 
   const handleGetStarted = () => {
     localStorage.setItem('tally-welcome-seen', 'true')
+    document.body.style.overflow = 'unset'
     router.push('/')
   }
 
-  if (hasSeenWelcome) {
+  // Prevent backdrop clicks from closing (user must use Skip or Close)
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      // Allow backdrop click to close only if explicitly enabled
+      // For now, we'll prevent it to match the modal overlay style
+      e.stopPropagation()
+    }
+  }
+
+  if (!isOpen) {
     return null
   }
 
@@ -89,67 +102,76 @@ export default function WelcomePage() {
   const isLastSlide = currentSlide === SLIDES.length - 1
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Skip Button */}
-      <div className="p-6 flex justify-end">
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/50"
+      onClick={handleBackdropClick}
+      style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+    >
+      <div 
+        className="relative w-full max-w-md bg-[var(--tally-surface)] rounded-xl border border-[var(--tally-border)] shadow-xl p-6 space-y-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
         <button
-          onClick={handleSkip}
-          className="text-sm text-gray-600 hover:text-gray-900"
+          onClick={handleClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-[var(--tally-surface-2)] transition-colors text-[var(--tally-text-muted)]"
+          aria-label="Close"
         >
-          {t('welcome.skip')}
+          <X className="w-4 h-4" />
         </button>
-      </div>
 
-      {/* Slide Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
-        <div className="text-6xl mb-8">{slide.icon}</div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 text-center">
-          {t(slide.titleKey)}
-        </h1>
-        <p className="text-lg text-gray-600 text-center max-w-md mb-12">
-          {t(slide.descriptionKey)}
-        </p>
+        {/* Slide Content */}
+        <div className="space-y-4 pt-2">
+          <h1 className="text-2xl font-bold text-[var(--tally-text)] text-center">
+            {t(slide.titleKey)}
+          </h1>
+          <p className="text-base text-[var(--tally-text-muted)] text-center">
+            {t(slide.descriptionKey)}
+          </p>
+        </div>
 
         {/* Progress Dots */}
-        <div className="flex gap-2 mb-12">
+        <div className="flex gap-2 justify-center">
           {SLIDES.map((_, index) => (
             <div
               key={index}
               className={`w-2 h-2 rounded-full transition-colors ${
-                index === currentSlide ? 'bg-cta-primary' : 'bg-divider'
+                index === currentSlide 
+                  ? 'bg-[#29978C]' 
+                  : 'bg-[var(--tally-border)]'
               }`}
             />
           ))}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex gap-4 w-full max-w-md">
-          {currentSlide > 0 && (
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              className="flex-1"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t('common.back')}
-            </Button>
-          )}
+        <div className="space-y-3">
+          {/* Primary Button */}
           <Button
             onClick={handleNext}
-            className={`flex-1 bg-cta-primary hover:bg-cta-hover text-cta-text ${currentSlide === 0 ? 'w-full' : ''}`}
+            className="w-full bg-[#29978C] hover:bg-[#238a7f] text-white h-12 text-base font-medium"
           >
-            {isLastSlide ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                {t('welcome.getStarted')}
-              </>
-            ) : (
-              <>
-                {t('welcome.next')}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </>
-            )}
+            {isLastSlide ? t('welcome.getStarted') : t('welcome.next')}
           </Button>
+
+          {/* Secondary Actions */}
+          <div className="flex items-center justify-between">
+            {currentSlide > 0 && (
+              <button
+                onClick={handlePrevious}
+                className="text-sm text-[var(--tally-text-muted)] hover:text-[var(--tally-text)] transition-colors"
+              >
+                {t('common.back')}
+              </button>
+            )}
+            <div className="flex-1" />
+            <button
+              onClick={handleSkip}
+              className="text-sm text-[var(--tally-text-muted)] hover:text-[var(--tally-text)] transition-colors"
+            >
+              {t('welcome.skip')}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ export function BottomNav() {
     { href: '/', label: t('nav.home'), icon: Home },
     { href: '/history', label: t('nav.records'), icon: Clock },
     { href: '/stock', label: t('nav.stock'), icon: Package },
-    { href: '/summary', label: t('nav.reports'), icon: FileText },
+    { href: '/reports', label: t('nav.reports'), icon: FileText },
     { href: '/settings', label: t('nav.account'), icon: User },
   ]
 

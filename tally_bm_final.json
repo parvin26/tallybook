@@ -13,8 +13,6 @@
     "cancel": "Batal",
     "category": "Kategori",
     "categoryPlaceholder": "Contoh: Runcit, Makanan & Minuman",
-    "selectCategory": "Pilih kategori",
-    "specifyCategory": "Nyatakan kategori",
     "change": "Tukar",
     "contact": "Hubungi",
     "contactDesc": "Hubungi kami",
@@ -190,48 +188,7 @@
     "stabilityDesc": "Berdasarkan konsistensi rekod anda",
     "subtitle": "Berdasarkan apa yang anda rekod",
     "suggestion": "Cadangan",
-    "title": "Pemeriksaan Bisnes",
-    "emptyState": {
-      "title": "Mula rekod untuk melihat pandangan",
-      "message": "Rekod jualan atau belanja pertama anda untuk mendapatkan pandangan peribadi tentang bisnes anda."
-    },
-    "insights": {
-      "consistencyGood": "Rekod adalah konsisten",
-      "consistencyGoodMessage": "Anda merekod transaksi pada {{count}} daripada {{total}} hari lepas",
-      "consistencyModerate": "Rekod boleh lebih kerap",
-      "consistencyModerateMessage": "Anda merekod transaksi pada {{count}} daripada {{total}} hari lepas",
-      "consistencyLow": "Rekod memerlukan perhatian",
-      "consistencyLowMessage": "Anda merekod transaksi pada {{count}} daripada {{total}} hari lepas. {{gaps}} hari tiada rekod.",
-      "consistencyGuidance": "Cuba rekod setiap hari untuk pandangan yang lebih baik",
-      "cashDirectionPositive": "Lebih banyak wang masuk",
-      "cashDirectionPositiveMessage": "Lebih banyak wang masuk daripada keluar dalam tempoh ini",
-      "cashDirectionNegative": "Lebih banyak wang keluar",
-      "cashDirectionNegativeMessage": "Belanja melebihi jualan pada kebanyakan hari",
-      "cashDirectionMixed": "Aliran tunai bercampur",
-      "cashDirectionMixedMessage": "Wang masuk dan keluar adalah seimbang",
-      "cashDirectionGuidance": "Pertimbangkan untuk menyemak belanja atau fokus pada jualan",
-      "momentumUp": "Aktiviti bisnes meningkat",
-      "momentumUpMessage": "{{change}}% lebih banyak transaksi daripada tempoh sebelumnya",
-      "momentumDown": "Aktiviti bisnes menurun",
-      "momentumDownMessage": "{{change}}% lebih sedikit transaksi daripada tempoh sebelumnya",
-      "momentumStable": "Aktiviti bisnes adalah stabil",
-      "momentumStableMessage": "Bilangan transaksi adalah serupa dengan tempoh sebelumnya",
-      "stabilityGood": "Belanja adalah stabil",
-      "stabilityGoodMessage": "Tiada belanja atau jualan yang luar biasa besar direkodkan",
-      "stabilityExpenseSpike": "Belanja besar dikesan",
-      "stabilityExpenseSpikeMessage": "{{count}} belanja yang luar biasa besar direkodkan",
-      "stabilityGuidance": "Semak belanja besar untuk memastikan ia perlu",
-      "heroProduct": "Kaedah jualan teratas",
-      "heroProductMessage": "Kebanyakan jualan datang dari {{category}} ({{count}} transaksi)",
-      "heroProductGuidance": "Kaedah pembayaran ini berfungsi dengan baik untuk bisnes anda",
-      "weakProduct": "Kategori aktiviti rendah",
-      "weakProductMessage": "{{category}} mempunyai aktiviti yang sangat rendah",
-      "weakProductGuidance": "Pertimbangkan untuk menyemak harga atau promosi untuk kategori ini",
-      "paymentMethodDominant": "Corak kaedah pembayaran",
-      "paymentMethodDominantMessage": "{{percent}}% daripada belanja dibayar dengan {{method}}",
-      "paymentMethodCreditGuidance": "Penggunaan kredit yang kerap harus dipantau dengan teliti",
-      "paymentMethodCashGuidance": "Penggunaan tunai yang tinggi mungkin menjejaskan ketelusan aliran tunai"
-    }
+    "title": "Pemeriksaan Bisnes"
   },
   "help": {
     "contact": "Hubungi Kami",
@@ -411,19 +368,6 @@
     "quantitySoldLabel": "Kuantiti dijual",
     "selectItem": "Pilih item",
     "unitLabel": "Unit"
-  },
-  "expense": {
-    "paymentMethod": {
-      "title": "Cara Bayar",
-      "card": "Kad",
-      "eWallet": "Dompet Elektronik",
-      "providerName": "Nama Pembekal",
-      "providerNamePlaceholder": "cth. Maybank, Visa",
-      "reference": "Rujukan",
-      "referencePlaceholder": "4 digit terakhir atau nombor rujukan",
-      "walletName": "Nama Dompet",
-      "walletNamePlaceholder": "cth. DuitNow, TNG, GrabPay"
-    }
   },
   "settings": {
     "aboutTally": "Mengenai Tally",
@@ -624,34 +568,5 @@
     },
     "subtitle": "Buku akaun digital untuk bisnes kecil",
     "title": "Selamat Datang ke TALLY"
-  },
-  "onboarding": {
-    "tagline": "Buku nota bisnes anda",
-    "country": {
-      "question": "Di manakah bisnes anda?",
-      "availableNow": "Tersedia sekarang",
-      "comingSoon": "Akan datang"
-    },
-    "language": {
-      "question": "Pilih bahasa anda"
-    },
-    "about": {
-      "title": "Apakah TALLY?",
-      "description": "TALLY membantu anda merekod wang bisnes harian dengan mudah dan kekal terkawal"
-    },
-    "start": {
-      "message": "Anda sudah bersedia! Mula rekod transaksi bisnes anda.",
-      "button": "Mula"
-    },
-    "country": {
-      "question": "Di manakah bisnes anda?",
-      "selectPlaceholder": "Pilih negara anda",
-      "availableNow": "Tersedia sekarang",
-      "comingSoon": "Akan datang",
-      "notAvailableYet": "Belum tersedia. Kami akan memaklumkan anda apabila negara anda disokong."
-    },
-    "language": {
-      "question": "Pilih bahasa anda"
-    }
   }
 }

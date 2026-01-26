@@ -21,6 +21,8 @@ import { InventoryItem } from '@/types/stock'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { uploadAttachment, saveAttachmentMetadata } from '@/lib/attachments'
+import { isGuestMode, saveGuestTransaction } from '@/lib/guest-storage'
+import { trackEvent } from '@/lib/telemetry'
 
 export default function RecordSalePage() {
   const { t } = useTranslation()
@@ -122,17 +124,13 @@ export default function RecordSalePage() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!currentBusiness?.id) {
-        throw new Error(t('transaction.noBusiness'))
-      }
-
       const amountNum = parseFloat(amount)
       if (isNaN(amountNum) || amountNum <= 0) {
         throw new Error(t('transaction.invalidAmount'))
       }
 
-      // Validate stock deduction if enabled
-      if (deductStock) {
+      // Validate stock deduction if enabled (not supported in guest mode)
+      if (deductStock && !isGuestMode()) {
         if (!selectedInventoryItem) {
           throw new Error(t('sale.itemRequired'))
         }
@@ -148,6 +146,25 @@ export default function RecordSalePage() {
 
       // Notes without attachment metadata (attachments stored separately)
       const finalNotes = notes || ''
+
+      // Guest mode: save to local storage
+      if (isGuestMode()) {
+        const transactionId = saveGuestTransaction({
+          transaction_type: 'sale',
+          amount: amountNum,
+          payment_type: dbPaymentType,
+          notes: finalNotes || undefined,
+          transaction_date: format(selectedDate, 'yyyy-MM-dd'),
+        })
+        
+        trackEvent('record_sale')
+        return { id: transactionId }
+      }
+
+      // Authenticated mode: save to Supabase
+      if (!currentBusiness?.id) {
+        throw new Error(t('transaction.noBusiness'))
+      }
 
       // Save transaction first
       const { data: transaction, error } = await supabase

@@ -2,13 +2,37 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase/supabaseClient'
 import { useBusiness } from '@/contexts/BusinessContext'
 import { Transaction } from '@/types'
+import { isGuestMode, getGuestTransactions } from '@/lib/guest-storage'
 
 export function useTransactions() {
   const { currentBusiness } = useBusiness()
+  const guestMode = typeof window !== 'undefined' ? isGuestMode() : false
   
   return useQuery<Transaction[]>({
-    queryKey: ['transactions', currentBusiness?.id],
+    queryKey: ['transactions', currentBusiness?.id, guestMode],
     queryFn: async () => {
+      // Guest mode: return guest transactions
+      if (guestMode) {
+        const guestTransactions = getGuestTransactions()
+        // Convert guest transactions to Transaction format
+        return guestTransactions.map(t => ({
+          id: t.id,
+          business_id: 'guest',
+          transaction_type: t.transaction_type,
+          amount: t.amount,
+          payment_type: t.payment_type,
+          payment_method: t.payment_method,
+          payment_provider: t.payment_provider,
+          payment_reference: t.payment_reference,
+          expense_category: t.expense_category,
+          notes: t.notes,
+          transaction_date: t.transaction_date,
+          created_at: t.created_at,
+          updated_at: t.created_at,
+          deleted_at: null,
+        })) as Transaction[]
+      }
+
       if (!currentBusiness?.id) {
         console.log('[useTransactions] No business ID, returning empty array')
         return []
@@ -97,8 +121,8 @@ export function useTransactions() {
       
       return sortedData
     },
-    enabled: !!currentBusiness?.id,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    enabled: guestMode || !!currentBusiness?.id,
+    refetchOnWindowFocus: !guestMode, // Don't refetch in guest mode
+    refetchOnMount: !guestMode,
   })
 }

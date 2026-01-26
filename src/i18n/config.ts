@@ -4,6 +4,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
 import bm from './locales/bm.json'
+import krio from './locales/krio.json'
 
 const savedLanguage = typeof window !== 'undefined' 
   ? localStorage.getItem('tally-language') || 'en'
@@ -15,6 +16,7 @@ i18n
     resources: {
       en: { translation: en },
       bm: { translation: bm },
+      krio: { translation: krio },
     },
     lng: savedLanguage,
     fallbackLng: 'en',

@@ -1,0 +1,481 @@
+key,en,bm,krio,status
+account.about,About Tally,Mengenai Tally,Tentang,OK
+account.aboutDesc,Learn what Tally is about,Ketahui tentang Tally,,MISSING_KRIO
+account.addBusinessName,Add business name,Tambah nama bisnes,Ad bisnes nem,OK
+account.addYourName,Add your name,Tambah nama anda,Ad yu nem,OK
+account.area,Area,Kawasan,Æria,OK
+account.areaPlaceholder,"e.g., Petaling Jaya",Contoh: Petaling Jaya,,MISSING_KRIO
+account.businessName,Business Name,Nama Bisnes,Bisnes nem,OK
+account.businessNamePlaceholder,Enter business name,Masukkan nama bisnes,Put bisnes nem,OK
+account.businessNameRequired,Business name is required,Nama bisnes diperlukan,,MISSING_KRIO
+account.businessProfile,Business Profile,Profil Bisnes,Bisnes pofil,OK
+account.cancel,Cancel,Batal,Kansul,OK
+account.category,Category,Kategori,Kain,OK
+account.categoryPlaceholder,"e.g., Retail, Food & Beverage","Contoh: Runcit, Makanan & Minuman",,MISSING_KRIO
+account.change,Change,Tukar,Chenj,OK
+account.contact,Contact,Hubungi,Kontakt,OK
+account.contactDesc,Get in touch with us,Hubungi kami,,MISSING_KRIO
+account.country,Country,Negara,Kontri,OK
+account.countryPlaceholder,"e.g., Malaysia",Contoh: Malaysia,,MISSING_KRIO
+account.countryRequired,Country is required,Negara diperlukan,,MISSING_KRIO
+account.currency,Currency,Mata Wang,Moni kain,OK
+account.edit,Edit,Edit,Edit,SAME_AS_EN_BM
+account.editProfile,Edit Profile,Edit Profil,,MISSING_KRIO
+account.export,Export,Eksport,Tek aot,OK
+account.location,Location,Lokasi,Ples,OK
+account.logo,Logo,Logo,Logo,SAME_AS_EN_BM
+account.notSet,Not set,Tidak ditetapkan,,MISSING_KRIO
+account.ownerName,Owner Name,Nama Pemilik,Owna nem,OK
+account.ownerNamePlaceholder,Enter your name,Masukkan nama anda,Put owna nem,OK
+account.ownerNameRequired,Owner name is required,Nama pemilik diperlukan,,MISSING_KRIO
+account.preferences,Preferences,Pilihan,Chois dem,OK
+account.privacy,Privacy,Privasi,Privasi,OK
+account.privacyDesc,Your data stays private,Data anda kekal peribadi,,MISSING_KRIO
+account.profileSaved,Profile saved,Profil disimpan,Pofil don sev,OK
+account.removeLogo,Remove Logo,Buang Logo,Pol logo,OK
+account.replaceLogo,Replace Logo,Ganti Logo,,MISSING_KRIO
+account.save,Save,Simpan,Sev,OK
+account.saveProfile,Save Profile,Simpan Profil,,MISSING_KRIO
+account.showIntro,Show Intro,Tunjukkan Pengenalan,,MISSING_KRIO
+account.state,State/Region,Negeri/Wilayah,Stet,OK
+account.statePlaceholder,"e.g., Selangor",Contoh: Selangor,,MISSING_KRIO
+account.support,Support,Sokongan,Elp,OK
+account.title,Account,Akaun,Akaunt,OK
+account.uploadLogo,Upload Logo,Muat Naik Logo,Ap-lod logo,OK
+attachment.cannotPreview,Preview not available for this file type,Pratonton tidak tersedia untuk jenis fail ini,,MISSING_KRIO
+attachment.download,Download,Muat turun,,MISSING_KRIO
+attachment.downloadInstead,Download instead,Muat turun,,MISSING_KRIO
+attachment.loadError,Could not load attachment,Tidak dapat memuatkan lampiran,,MISSING_KRIO
+attachment.preview,Preview,Pratonton,,MISSING_KRIO
+auth.devBypassError,Could not skip login,Tidak dapat langkau log masuk,,MISSING_KRIO
+auth.devBypassMessage,Skipping login...,Langkau log masuk...,,MISSING_KRIO
+auth.devModeDescription,Skip login for testing,Langkau log masuk untuk ujian,,MISSING_KRIO
+auth.devModeOnly,Test mode only available in development,Mod ujian hanya tersedia dalam mod pembangunan,,MISSING_KRIO
+auth.devModeTitle,Development Mode,Mod Pembangunan,,MISSING_KRIO
+auth.enterOTP,Enter 6-digit code,Masukkan kod 6 digit,Put kod,OK
+auth.invalidOTP,Invalid OTP code. Please try again.,Kod OTP tidak sah. Cuba lagi.,Kod no kler,OK
+auth.invalidPhone,Please enter a valid phone number,masukkan nombor telefon yang sah,Fon nomba no kler,OK
+auth.login,Login,Log Masuk,Log in,OK
+auth.loginSuccess,Login successful,Berjaya masuk,Log in don wok,OK
+auth.logout,Log Out,Log Keluar,Log ot,OK
+auth.otpPlaceholder,123456,123456,Put kod,OK
+auth.otpSent,Code has been sent,Kod telah dihantar,Kod don sen,OK
+auth.phone,Phone Number,Nombor Telefon,Fon nomba,OK
+auth.phonePlaceholder,012-345 6789,012-345 6789,Put fon nomba,SAME_AS_EN_BM
+auth.resendOTP,Send new code,Hantar kod baru,Sen kod agen,OK
+auth.sendError,Could not send OTP. Please try again.,Tak dapat hantar OTP. Cuba lagi.,No ebul fo sen kod,OK
+auth.sendOTP,Send OTP Code,Hantar Kod OTP,Sen kod,OK
+auth.sending,Sending...,Menghantar...,De sen,OK
+auth.skipLoginButton,Skip Login (Test),Langkau Log Masuk (Ujian),,MISSING_KRIO
+auth.testModeMessage,Test mode: Skip OTP. Use test code: {{code}},Mod ujian: Langkau OTP. Gunakan kod ujian: {{code}},,MISSING_KRIO
+auth.verifyError,Could not verify. Please try again.,Tak dapat sahkan. Cuba lagi.,,MISSING_KRIO
+auth.verifyOTP,Verify OTP Code,Sahkan Kod OTP,Chek kod,OK
+auth.verifying,Verifying...,Mengesahkan...,De chek,OK
+balanceSheet.assets,ASSETS,ASET,Tins we yu get,OK
+balanceSheet.balanceCheck,Check: Assets = Liabilities + Equity,Semakan: Aset = Liabiliti + Ekuiti,,MISSING_KRIO
+balanceSheet.balanced,Balanced ✓,Seimbang ✓,E balons,OK
+balanceSheet.bank,Bank,Bank,Bank,SAME_AS_EN_BM
+balanceSheet.cash,Cash,Tunai,Kash,OK
+balanceSheet.currentAssets,Current Assets,Aset Semasa,,MISSING_KRIO
+balanceSheet.currentLiabilities,Current Liabilities,Liabiliti Semasa,,MISSING_KRIO
+balanceSheet.description,"View assets, liabilities, and equity","Lihat aset, liabiliti, dan ekuiti",,MISSING_KRIO
+balanceSheet.equity,EQUITY,EKUITI,Yu own moni,OK
+balanceSheet.exportPDF,Export to PDF,Eksport ke PDF,Tek aot PDF,OK
+balanceSheet.inventory,Inventory,Stok,Stok,OK
+balanceSheet.liabilities,LIABILITIES,LIABILITI,Tins we yu de,OK
+balanceSheet.loans,Loans,Pinjaman,,MISSING_KRIO
+balanceSheet.notBalanced,Not balanced,Tidak seimbang,No balons,OK
+balanceSheet.payables,Accounts Payable,Akaun Belum Bayar,,MISSING_KRIO
+balanceSheet.receivables,Accounts Receivable,Akaun Belum Terima,,MISSING_KRIO
+balanceSheet.retainedEarnings,Retained Earnings,Untung Tertahan,,MISSING_KRIO
+balanceSheet.startingCapital,Starting Capital,Modal Permulaan,,MISSING_KRIO
+balanceSheet.title,Balance Sheet,Lembaran Imbangan,Balons ripot,OK
+balanceSheet.totalAssets,TOTAL ASSETS,JUMLAH ASET,Æ†l tins we yu get,OK
+balanceSheet.totalEquity,TOTAL EQUITY,JUMLAH EKUITI,Æ†l yu own moni,OK
+balanceSheet.totalLiabilities,TOTAL LIABILITIES,JUMLAH LIABILITI,Æ†l tins we yu de,OK
+businessTypes.home,Home Business,Bisnes Rumah,,MISSING_KRIO
+businessTypes.online,Online Shop,Kedai Online,,MISSING_KRIO
+businessTypes.other,Other,Lain-lain,,MISSING_KRIO
+businessTypes.retail,Retail Shop,Kedai Runcit,,MISSING_KRIO
+businessTypes.service,Service,Perkhidmatan,,MISSING_KRIO
+businessTypes.stall,Stall/Kiosk,Warung/Gerai,,MISSING_KRIO
+common.back,Back,Kembali,Go bak,OK
+common.cancel,Cancel,Batal,Kansul,OK
+common.close,Close,Tutup,Klos,OK
+common.couldntDelete,Couldn't delete. Try again.,Tak dapat padam. Cuba lagi.,,MISSING_KRIO
+common.couldntSave,Couldn't save. Try again.,Tak dapat simpan. Cuba lagi.,,MISSING_KRIO
+common.delete,Delete,Padam,Dilit,OK
+common.edit,Edit,Edit,Edit,SAME_AS_EN_BM
+common.loading,Loading...,Memuatkan...,De lod,OK
+common.next,Next,Seterusnya,Neks,OK
+common.open,Open,Buka,Opin,OK
+common.optional,optional,pilihan,No bobo,OK
+common.save,Save,Simpan,Sev,OK
+common.saved,Saved,Disimpan,E sev,OK
+common.saving,Saving...,Menyimpan...,De sev,OK
+confirm.cancel,Cancel,Batal,,MISSING_KRIO
+confirm.continue,Continue,Teruskan,,MISSING_KRIO
+confirm.negativeStockBody,This will reduce stock below zero. Do you want to continue?,Ini akan mengurangkan stok di bawah sifar. Adakah anda mahu teruskan?,,MISSING_KRIO
+confirm.negativeStockTitle,Stock will go below zero,Stok akan menjadi negatif,,MISSING_KRIO
+csv.expense,Expense,Belanja,,MISSING_KRIO
+csv.exportSuccess,CSV exported successfully,CSV berjaya dieksport,,MISSING_KRIO
+csv.headers.amount,Amount,Jumlah,,MISSING_KRIO
+csv.headers.category,Category,Kategori,,MISSING_KRIO
+csv.headers.date,Date,Tarikh,,MISSING_KRIO
+csv.headers.notes,Notes,Nota,,MISSING_KRIO
+csv.headers.payment,Payment,Pembayaran,,MISSING_KRIO
+csv.headers.type,Type,Jenis,,MISSING_KRIO
+csv.noTransactions,No transactions to export,Tiada transaksi untuk dieksport,,MISSING_KRIO
+csv.sale,Sale,Jualan,,MISSING_KRIO
+dateRange.apply,Apply,Guna,,MISSING_KRIO
+dateRange.customRange,Custom Range,Julat Tersuai,,MISSING_KRIO
+dateRange.endDate,End Date,Tarikh Akhir,,MISSING_KRIO
+dateRange.last14days,Last 14 days,14 Hari Lepas,,MISSING_KRIO
+dateRange.last21days,Last 21 days,21 Hari Lepas,,MISSING_KRIO
+dateRange.last30days,Last 30 days,30 Hari Lepas,,MISSING_KRIO
+dateRange.last60days,Last 60 days,60 Hari Lepas,,MISSING_KRIO
+dateRange.last7days,Last 7 days,7 Hari Lepas,,MISSING_KRIO
+dateRange.last90days,Last 90 days,90 Hari Lepas,,MISSING_KRIO
+dateRange.startDate,Start Date,Tarikh Mula,,MISSING_KRIO
+dateRange.today,Today,Hari Ini,,MISSING_KRIO
+dateRange.yesterday,Yesterday,Semalam,,MISSING_KRIO
+errors.unitMismatch,Unit mismatch. Selected item uses different unit.,Unit tidak sepadan. Item yang dipilih menggunakan unit yang berbeza.,,MISSING_KRIO
+expenseCategories.food,Food,Makanan,Chop,OK
+expenseCategories.maintenance,Maintenance,Penyelenggaraan,Fiks wok,OK
+expenseCategories.other,Other,Lain-lain,,MISSING_KRIO
+expenseCategories.rent,Rent,Sewa,Rent,SAME_AS_EN_KRIO
+expenseCategories.salaries,Salaries,Gaji,Salri,OK
+expenseCategories.stock_purchase,Stock,Stok,Stok beles,OK
+expenseCategories.supplies,Supplies,Bekalan,,MISSING_KRIO
+expenseCategories.transport,Transport,Pengangkutan,Transpot,OK
+expenseCategories.utilities,Utilities,Utiliti,Lait en wata,OK
+expenseCategories.wages,Wages,Gaji,,MISSING_KRIO
+health.betterClarity,Record both sales and expenses for better clarity,Rekod kedua-dua jualan dan belanja untuk kejelasan yang lebih baik,Put kler not,OK
+health.betterConsistency,Record transactions daily for better consistency,Rekod transaksi setiap hari untuk konsistensi yang lebih baik,Rekod mo,OK
+health.clarity,Clarity,Kejelasan,Kler,OK
+health.clarityDesc,Record both sales and expenses in last 7 days,Rekod kedua-dua jualan dan belanja dalam 7 hari lepas,,MISSING_KRIO
+health.consistency,Consistency,Konsistensi,Stey stedi,OK
+health.consistencyDesc,{{days}} days with records in last 14 days,{{days}} hari dengan rekod dalam 14 hari lepas,,MISSING_KRIO
+health.keepGoing,Keep recording transactions consistently,Teruskan rekod transaksi anda dengan konsisten,Kip go,OK
+health.logTransaction,Log 1 transaction today,Rekod 1 transaksi hari ini,Rekod wan rekod,OK
+health.score,Score,Skor,Sko,OK
+health.stability,Stability,Kestabilan,Stebiliti,OK
+health.stabilityDesc,Based on your record consistency,Berdasarkan konsistensi rekod anda,,MISSING_KRIO
+health.subtitle,Based on what you logged,Berdasarkan apa yang anda rekod,Ow yu bisnes de go,OK
+health.suggestion,Suggestion,Cadangan,,MISSING_KRIO
+health.title,Business Check-in,Pemeriksaan Bisnes,Bisnes helt,OK
+help.contact,Contact Us,Hubungi Kami,,MISSING_KRIO
+help.email,Email,Email,,MISSING_KRIO
+help.faq,FAQ,Soalan Lazim,,MISSING_KRIO
+help.guide,Guide,Panduan,,MISSING_KRIO
+help.howToExportPDF,How to Export PDF,Cara Eksport PDF,,MISSING_KRIO
+help.howToRecordExpense,How to Record Expense,Cara Rekod Belanja,,MISSING_KRIO
+help.howToRecordSale,How to Record Sale,Cara Rekod Jualan,,MISSING_KRIO
+help.howToViewReports,How to View Reports,Cara Lihat Laporan,,MISSING_KRIO
+help.title,Help & Support,Bantuan & Sokongan,,MISSING_KRIO
+help.tutorials,Tutorials,Tutorial,,MISSING_KRIO
+help.whatsapp,WhatsApp,WhatsApp,,MISSING_KRIO
+history.30days,30 Days,30 Hari,,MISSING_KRIO
+history.7days,7 Days,7 Hari,,MISSING_KRIO
+history.filteredEmpty,"{{count}} transactions found, but none for selected period","{{count}} transaksi dijumpai, tetapi tiada untuk tempoh yang dipilih",,MISSING_KRIO
+history.loadingError,Error loading transactions,Ralat memuatkan transaksi,,MISSING_KRIO
+history.noTransactions,No transactions yet,Belum ada transaksi,,MISSING_KRIO
+history.title,Transaction History,Sejarah Transaksi,,MISSING_KRIO
+history.today,Today,Hari Ini,,MISSING_KRIO
+history.transactions,Transactions,Transaksi,,MISSING_KRIO
+history.transactionsCount,{{count}} transactions,{{count}} transaksi,,MISSING_KRIO
+history.yesterday,Yesterday,Semalam,,MISSING_KRIO
+home.bestDay,Best Day,Hari Terbaik,,MISSING_KRIO
+home.businessFallback,Business,Bisnes,,MISSING_KRIO
+home.cashIn,Cash In,Wang Masuk,Moni we kam in,OK
+home.cashOut,Cash Out,Wang Keluar,Moni we go ot,OK
+home.expenses,Expenses,Belanja,Beles dem,OK
+home.loadingError,Could not load transactions,Tak dapat memuatkan transaksi,,MISSING_KRIO
+home.monthProfit,This Month's Profit,Untung Bulan Ini,Dis mont untin,OK
+home.noTransactions,No transactions yet,Belum ada transaksi,No rekod yet,OK
+home.recentActivity,Recent Activity,Aktiviti Terkini,,MISSING_KRIO
+home.recentTransactions,Recent Transactions,Transaksi Terkini,Niu rekod dem,OK
+home.recordExpense,RECORD EXPENSE,REKOD BELANJA,Rekod beles,OK
+home.recordSale,RECORD SALE,REKOD JUALAN,Rekod sel,OK
+home.revenue,Revenue,Hasil,Moni we kom in,OK
+home.title,Home,Utama,Hom,OK
+home.todayProfit,Today's Profit,Untung Hari Ini,Tide untin,OK
+home.todaysBalance,Today's Balance,Baki Hari Ini,Tide balons,OK
+home.todaysSummary,Today's Summary,Ringkasan Hari Ini,,MISSING_KRIO
+home.viewAll,View all,Lihat semua,Si ol,OK
+home.weekProfit,This Week's Profit,Untung Minggu Ini,Dis wik untin,OK
+inventory.added,Added,Ditambah,,MISSING_KRIO
+inventory.adjusted,Adjusted,Dilaras,,MISSING_KRIO
+inventory.history,History,Sejarah,,MISSING_KRIO
+inventory.noHistory,No movement history,Tiada sejarah pergerakan,,MISSING_KRIO
+inventory.sold,Sold,Dijual,,MISSING_KRIO
+inventory.viewTransaction,View transaction,Lihat transaksi,,MISSING_KRIO
+nav.account,Account,Akaun,Akaunt,OK
+nav.home,Home,Utama,Hom,OK
+nav.records,Records,Rekod,Rekod,OK
+nav.reports,Reports,Laporan,Ripot,OK
+nav.stock,Stock,Stok,Stok,OK
+paymentTypes.bank_transfer,Bank Transfer,Pindahan Bank,Bank tronsfa,OK
+paymentTypes.boost,Boost,Boost,,MISSING_KRIO
+paymentTypes.cash,Cash,Tunai,Kash,OK
+paymentTypes.credit,Credit,Kredit,,MISSING_KRIO
+paymentTypes.duitnow,DuitNow,DuitNow,,MISSING_KRIO
+paymentTypes.grabpay,GrabPay,GrabPay,,MISSING_KRIO
+paymentTypes.mobile_money,Mobile Money,Wang Elektronik,Mobil moni,OK
+paymentTypes.other,Other,Lain-lain,Nata,OK
+paymentTypes.shopeepay,ShopeePay,ShopeePay,,MISSING_KRIO
+paymentTypes.tng,TNG,TNG,,MISSING_KRIO
+pwa.install.button,Install,Pasang,,MISSING_KRIO
+pwa.install.cancelled,Installation cancelled,Pemasangan dibatalkan,,MISSING_KRIO
+pwa.install.how,How,Cara,,MISSING_KRIO
+pwa.install.subtitle.canInstall,Add to your device for quick access,Tambah ke peranti anda untuk akses pantas,,MISSING_KRIO
+pwa.install.subtitle.installed,Installed,Dipasang,,MISSING_KRIO
+pwa.install.subtitle.ios,Use Share then Add to Home Screen,Gunakan Kongsi kemudian Tambah ke Skrin Utama,,MISSING_KRIO
+pwa.install.success,Tally installed successfully!,Tally berjaya dipasang!,,MISSING_KRIO
+pwa.install.title,Install Tally,Pasang Tally,,MISSING_KRIO
+pwa.installableChip.subtitle,You can install this on your phone or desktop,Anda boleh memasang ini pada telefon atau desktop anda,,MISSING_KRIO
+pwa.installableChip.title,Installable PWA,PWA Boleh Dipasang,,MISSING_KRIO
+pwa.iosModal.step1.description,"Tap the Share button in your browser's toolbar (bottom on iPhone, top on iPad)","Ketuk butang Kongsi dalam bar alat pelayar anda (bawah pada iPhone, atas pada iPad)",,MISSING_KRIO
+pwa.iosModal.step1.title,Tap Share,Ketuk Kongsi,,MISSING_KRIO
+pwa.iosModal.step2.description,"Scroll down and tap 'Add to Home Screen', then confirm","Tatal ke bawah dan ketuk 'Tambah ke Skrin Utama', kemudian sahkan",,MISSING_KRIO
+pwa.iosModal.step2.title,Add to Home Screen,Tambah ke Skrin Utama,,MISSING_KRIO
+pwa.iosModal.title,Install Tally on iOS,Pasang Tally pada iOS,,MISSING_KRIO
+report.balanceSheet.asAt,As at,Sehingga,,MISSING_KRIO
+report.balanceSheet.balanceHint,Check opening balances and inventory value.,Semak baki pembukaan dan nilai stok.,,MISSING_KRIO
+report.balanceSheet.balanced,Books are balanced,Buku seimbang,,MISSING_KRIO
+report.balanceSheet.bankAccount,Bank Account,Akaun Bank,,MISSING_KRIO
+report.balanceSheet.cashOnHand,Cash on Hand,Wang Tunai,,MISSING_KRIO
+report.balanceSheet.inventoryValue,Inventory Value,Nilai Stok,,MISSING_KRIO
+report.balanceSheet.loans,Loans,Pinjaman,,MISSING_KRIO
+report.balanceSheet.notBalanced,Not balanced,Tidak seimbang,,MISSING_KRIO
+report.balanceSheet.otherAssets,Other Assets,Aset Lain,,MISSING_KRIO
+report.balanceSheet.ownersEquity,Owner's Equity,Ekuiti Pemilik,,MISSING_KRIO
+report.balanceSheet.payables,Payables,Hutang,,MISSING_KRIO
+report.balanceSheet.title,Balance Sheet,Lembaran Imbangan,,MISSING_KRIO
+report.balanceSheet.totalAssets,Total Assets,Jumlah Aset,,MISSING_KRIO
+report.balanceSheet.totalEquity,Total Equity,Jumlah Ekuiti,,MISSING_KRIO
+report.balanceSheet.totalLiabilities,Total Liabilities,Jumlah Liabiliti,,MISSING_KRIO
+report.businessHealth.cashIn,Cash in,Wang masuk,,MISSING_KRIO
+report.businessHealth.cashOut,Cash out,Wang keluar,,MISSING_KRIO
+report.businessHealth.cashflowBalance,Cashflow balance,Imbangan aliran tunai,,MISSING_KRIO
+report.businessHealth.daysRecorded,{{count}} of last {{total}} days recorded,{{count}} daripada {{total}} hari terakhir direkodkan,,MISSING_KRIO
+report.businessHealth.emptyStateMessage,We need at least 3 days of entries to show insights,Kami memerlukan sekurang-kurangnya 3 hari entri untuk menunjukkan pandangan,,MISSING_KRIO
+report.businessHealth.emptyStateTitle,Keep recording daily to see trends,Teruskan merekod setiap hari untuk melihat trend,,MISSING_KRIO
+report.businessHealth.last30Days,Last 30 days,30 hari lepas,,MISSING_KRIO
+report.businessHealth.last7Days,Last 7 days,7 hari lepas,,MISSING_KRIO
+report.businessHealth.last90Days,Last 90 days,90 hari lepas,,MISSING_KRIO
+report.businessHealth.netProfit,Net profit,Untung bersih,,MISSING_KRIO
+report.businessHealth.period,Period,Tempoh,,MISSING_KRIO
+report.businessHealth.profitTrend,Profit trend,Trend Untung,,MISSING_KRIO
+report.businessHealth.recordExpense,Record Expense,Rekod Belanja,,MISSING_KRIO
+report.businessHealth.recordSale,Record Sale,Rekod Jualan,,MISSING_KRIO
+report.businessHealth.recordingConsistency,Recording consistency,Konsistensi rekod,,MISSING_KRIO
+report.businessHealth.title,Business Health,Kesihatan Bisnes,,MISSING_KRIO
+report.businessHealth.topExpenseCategory,Top expense category,Kategori perbelanjaan teratas,,MISSING_KRIO
+report.businessHealth.trendDown,Down,Turun,,MISSING_KRIO
+report.businessHealth.trendStable,Stable,Stabil,,MISSING_KRIO
+report.businessHealth.trendUp,Up,Naik,,MISSING_KRIO
+report.common.asAt,As at,Sehingga,,MISSING_KRIO
+report.common.custom,Custom,Tersuai,,MISSING_KRIO
+report.common.exportPDF,Export PDF,Eksport PDF,Tek aot PDF,OK
+report.common.last6Months,Last 6 Months,6 Bulan Lepas,,MISSING_KRIO
+report.common.lastMonth,Last Month,Bulan Lepas,Las mont,OK
+report.common.period,Period,Tempoh,Tem padi,OK
+report.common.thisMonth,This Month,Bulan Ini,Dis mont,OK
+report.common.thisWeek,This Week,Minggu Ini,Dis wik,OK
+report.common.thisYear,This Year,Tahun Ini,Dis yia,OK
+report.profitLoss.bankTransfer,Bank Transfer,Pindahan Bank,,MISSING_KRIO
+report.profitLoss.cash,Cash,Tunai,,MISSING_KRIO
+report.profitLoss.expenses,EXPENSES,PERBELANJAAN,Beles dem,OK
+report.profitLoss.lossMessage,You had {{amount}} loss in this period.,Anda mengalami kerugian {{amount}} dalam tempoh ini.,Yu los moni,OK
+report.profitLoss.mobileMoney,Mobile Money,Wang Mudah Alih,,MISSING_KRIO
+report.profitLoss.netProfit,Net Profit,Untung Bersih,Klen untin,OK
+report.profitLoss.other,Other,Lain-lain,,MISSING_KRIO
+report.profitLoss.period,Period,Tempoh,,MISSING_KRIO
+report.profitLoss.profitMessage,You made {{amount}} profit in this period.,Anda membuat untung {{amount}} dalam tempoh ini.,Yu mek untin,OK
+report.profitLoss.revenue,REVENUE,PENDAPATAN,Moni we kam in,OK
+report.profitLoss.title,Profit and Loss,Untung dan Rugi,Untin en Los,OK
+report.profitLoss.totalExpenses,Total Expenses,Jumlah Perbelanjaan,Æ†l beles dem,OK
+report.profitLoss.totalRevenue,Total Revenue,Jumlah Pendapatan,Æ†l moni we kam in,OK
+sale.deductStockOptional,Deduct from stock (optional),Tolak dari stok (pilihan),,MISSING_KRIO
+sale.deductStockToggle,Deduct stock for this sale,Tolak stok untuk jualan ini,,MISSING_KRIO
+sale.itemLabel,Item,Item,,MISSING_KRIO
+sale.itemRequired,Please select an item,pilih item,,MISSING_KRIO
+sale.quantityRequired,Please enter quantity sold,masukkan kuantiti dijual,,MISSING_KRIO
+sale.quantitySoldLabel,Quantity sold,Kuantiti dijual,,MISSING_KRIO
+sale.selectItem,Select an item,Pilih item,,MISSING_KRIO
+sale.unitLabel,Unit,Unit,,MISSING_KRIO
+settings.aboutTally,About Tally,Mengenai Tally,Tentang TALLY,OK
+settings.bahasaMalaysia,Bahasa Malaysia,Bahasa Malaysia,,MISSING_KRIO
+settings.businessCheck,Business Check-in,Pemeriksaan Bisnes,,MISSING_KRIO
+settings.businessCheckDesc,Business Check-in,Business Check-in,,MISSING_KRIO
+settings.businessName,Business Name,Nama Bisnes,Bisnes nem,OK
+settings.businessType,Business Type,Jenis Bisnes,Kain bisnes,OK
+settings.city,City/District,Bandar/Daerah,,MISSING_KRIO
+settings.data,Data,Data,Deta,SAME_AS_EN_BM
+settings.editProfile,Edit Business Profile,Edit Profil Bisnes,,MISSING_KRIO
+settings.email,Email,Email,Email,SAME_AS_EN_BM
+settings.english,English,English,Inglish,SAME_AS_EN_BM
+settings.exportCSV,Export CSV,Eksport CSV,Tek aot CSV,OK
+settings.exportCSVDesc,Download CSV,Muat turun CSV,,MISSING_KRIO
+settings.krio,Krio,,Krio,MISSING_BM
+settings.language,Language,Bahasa,Langwij,OK
+settings.languageChanged,Bahasa ditukar ke Bahasa Malaysia,Bahasa ditukar ke Bahasa Malaysia,,MISSING_KRIO
+settings.languageChangedEn,Language changed to English,Language changed to English,,MISSING_KRIO
+settings.languageChangedKrio,Language changed to Krio,,,MISSING_BM
+settings.languageError,Cannot change language,Tidak dapat menukar bahasa,,MISSING_KRIO
+settings.legal,Legal,Undang-undang,Legal,SAME_AS_EN_KRIO
+settings.location,Location,Lokasi,Ples,OK
+settings.logout,Log Out,Log Keluar,Log ot,OK
+settings.noTransactionsExport,No transactions to export,Tiada transaksi untuk dieksport,,MISSING_KRIO
+settings.privacy,Privacy Policy,Polisi Privasi,Privasi,OK
+settings.profile,Profile,Profil,Pofil,OK
+settings.state,State,Negeri,,MISSING_KRIO
+settings.support,Support,Sokongan,Elp,OK
+settings.terms,Terms,Terma,Tem dem,OK
+settings.title,Settings,Tetapan,Setin,OK
+settings.updated,Updated,Dikemaskini,Don chenj,OK
+settings.version,Version,Versi,Vashon,OK
+settings.view,View,Lihat,,MISSING_KRIO
+settings.whatsapp,Contact via WhatsApp,Hubungi melalui WhatsApp,WhatsApp,OK
+setup.agreeTermsError,Please agree to Terms & Privacy Policy,setuju dengan Terma & Polisi Privasi,,MISSING_KRIO
+setup.agreeToTerms,I agree to,Saya setuju,,MISSING_KRIO
+setup.businessName,Business Name,Nama Bisnes,,MISSING_KRIO
+setup.businessNamePlaceholder,"e.g., Ali's Coffee Shop",Contoh: Kedai Runcit Ali,,MISSING_KRIO
+setup.businessType,Business Type,Jenis Bisnes,,MISSING_KRIO
+setup.city,City/District,Bandar/Daerah,,MISSING_KRIO
+setup.cityPlaceholder,"e.g., Petaling Jaya",Contoh: Petaling Jaya,,MISSING_KRIO
+setup.completeAllFields,Please complete all required fields,lengkapkan semua maklumat yang diperlukan,,MISSING_KRIO
+setup.finish,Complete,Selesai,,MISSING_KRIO
+setup.pleaseLogin,Please login first,log masuk terlebih dahulu,,MISSING_KRIO
+setup.privacy,Privacy Policy,Polisi Privasi,,MISSING_KRIO
+setup.selectState,Select state,Pilih negeri,,MISSING_KRIO
+setup.startingBank,Starting Bank Balance,Baki Bank Permulaan,,MISSING_KRIO
+setup.startingCash,Starting Cash,Wang Tunai Permulaan,,MISSING_KRIO
+setup.state,State,Negeri,,MISSING_KRIO
+setup.subtitle,Step {{step}} of {{total}},Langkah {{step}} daripada {{total}},,MISSING_KRIO
+setup.success,Business created successfully!,Bisnes berjaya dicipta!,,MISSING_KRIO
+setup.terms,Terms,Terma,,MISSING_KRIO
+setup.title,Set Up Your Business,Sediakan Perniagaan Anda,,MISSING_KRIO
+setup.typeOther,Specify business type (brief),Nyatakan jenis bisnes (ringkas),,MISSING_KRIO
+setup.typeOtherPlaceholder,"e.g., Cake Shop, Clothing Store, etc.","Contoh: Kedai Kek, Kedai Pakaian, dll",,MISSING_KRIO
+setup.typeOtherRequired,Please specify business type,nyatakan jenis bisnes,,MISSING_KRIO
+stock.addItem,Add Item,Tambah Item,,MISSING_KRIO
+stock.deleteConfirm,Delete Item,Padam Item,,MISSING_KRIO
+stock.deleteConfirmMessage,Are you sure you want to delete {{name}}?,Adakah anda pasti mahu memadam {{name}}?,,MISSING_KRIO
+stock.deleteError,Unable to delete item. Please try again.,Tidak dapat memadam item. cuba lagi.,,MISSING_KRIO
+stock.editItem,Edit Item,Edit Item,,MISSING_KRIO
+stock.invalidQuantity,Please enter a valid quantity,masukkan kuantiti yang sah,,MISSING_KRIO
+stock.itemAdded,Item added,Item ditambah,,MISSING_KRIO
+stock.itemName,Item Name,Nama Item,,MISSING_KRIO
+stock.itemNamePlaceholder,"e.g., Rice (bag)",Contoh: Beras (beg),,MISSING_KRIO
+stock.itemUpdated,Item updated,Item dikemaskini,,MISSING_KRIO
+stock.items,items,item,,MISSING_KRIO
+stock.lowStock,Low stock,Stok rendah,,MISSING_KRIO
+stock.lowStockThreshold,Low Stock Threshold,Ambang Stok Rendah,,MISSING_KRIO
+stock.lowStockThresholdPlaceholder,Alert when quantity reaches this,Amaran apabila kuantiti mencapai ini,,MISSING_KRIO
+stock.nameRequired,Item name is required,Nama item diperlukan,,MISSING_KRIO
+stock.noBusiness,No business selected,Tiada bisnes dipilih,,MISSING_KRIO
+stock.noItems,No items yet,Belum ada item,,MISSING_KRIO
+stock.quantity,Quantity,Kuantiti,,MISSING_KRIO
+stock.saveError,Unable to save item. Please try again.,Tidak dapat menyimpan item. cuba lagi.,,MISSING_KRIO
+stock.tableNotReady,Inventory table not set up yet. Please run the SQL setup.,Jadual stok belum disediakan. jalankan SQL setup.,,MISSING_KRIO
+stock.title,Inventory,Stok,,MISSING_KRIO
+stock.unit,Unit,Unit,,MISSING_KRIO
+stock.units.g,g,g,,MISSING_KRIO
+stock.units.kg,kg,kg,,MISSING_KRIO
+stock.units.l,l,l,,MISSING_KRIO
+stock.units.ml,ml,ml,,MISSING_KRIO
+stock.units.pack,pack,pek,,MISSING_KRIO
+stock.units.pcs,pcs,unit,,MISSING_KRIO
+summary.cashSales,Cash Sales,Jualan Tunai,,MISSING_KRIO
+summary.creditSales,Credit Sales,Jualan Kredit,,MISSING_KRIO
+summary.customDateRange,Custom Date Range,Julat Tarikh Tersuai,,MISSING_KRIO
+summary.endDate,End Date,Tarikh Akhir,,MISSING_KRIO
+summary.expenses,EXPENSES,PERBELANJAAN,,MISSING_KRIO
+summary.exportComprehensive,Export Comprehensive Package,Eksport Pakej Lengkap,,MISSING_KRIO
+summary.exportP&L,Export P&L Statement,Eksport Penyata Untung Rugi,,MISSING_KRIO
+summary.exportPDF,Export to PDF,Export to PDF,Tek aot PDF,SAME_AS_EN_BM
+summary.financialStatements,Financial Statements,Penyata Kewangan,,MISSING_KRIO
+summary.netProfit,Net Profit,Untung Bersih,Klen untin,OK
+summary.periodDisplay,{{start}} to {{end}},{{start}} hingga {{end}},,MISSING_KRIO
+summary.periods.180days,6 Months,6 Bulan,,MISSING_KRIO
+summary.periods.30days,30 Days,30 Hari,,MISSING_KRIO
+summary.periods.365days,1 Year,1 Tahun,,MISSING_KRIO
+summary.periods.7days,7 Days,7 Hari,,MISSING_KRIO
+summary.periods.90days,90 Days,90 Hari,,MISSING_KRIO
+summary.periods.custom,Custom,Pilih Tarikh,,MISSING_KRIO
+summary.periods.month,This Month,Bulan Ini,,MISSING_KRIO
+summary.periods.week,This Week,Minggu Ini,,MISSING_KRIO
+summary.periods.year,This Year,Tahun Ini,,MISSING_KRIO
+summary.profitLoss,Profit & Loss Statement,Penyata Untung Rugi,,MISSING_KRIO
+summary.profitMargin,Profit Margin,Margin Untung,,MISSING_KRIO
+summary.profitTrend,Profit Trend,Trend Untung,Untin tren,OK
+summary.revenue,REVENUE,PENDAPATAN,,MISSING_KRIO
+summary.startDate,Start Date,Tarikh Mula,,MISSING_KRIO
+summary.title,Financial Report,Laporan Kewangan,Somari,OK
+summary.totalExpenses,Total Expenses,Jumlah Belanja,Æ†l beles dem,OK
+summary.totalExpensesLabel,TOTAL EXPENSES,JUMLAH PERBELANJAAN,,MISSING_KRIO
+summary.totalRevenue,Total Revenue,Jumlah Pendapatan,Æ†l moni we kam in,OK
+summary.totalRevenueLabel,TOTAL REVENUE,JUMLAH PENDAPATAN,,MISSING_KRIO
+transaction.addNotesPlaceholder,Add any notes...,Tambah nota...,,MISSING_KRIO
+transaction.addPhotoOrFile,Add photo or file,Tambah foto atau fail,,MISSING_KRIO
+transaction.amount,Amount,Jumlah,Amont,OK
+transaction.attachment,Attachment,Lampiran,,MISSING_KRIO
+transaction.attachmentAdded,Attachment added,Lampiran ditambah,,MISSING_KRIO
+transaction.attachments,Attachments,Lampiran,Fayl dem,OK
+transaction.attachmentsReadOnly,Attachments cannot be edited,Lampiran tidak boleh diubah,,MISSING_KRIO
+transaction.category,Category,Kategori,Kain,OK
+transaction.chooseFile,Choose File,Pilih Fail,Chus fayl,OK
+transaction.date,Date,Tarikh,Det,OK
+transaction.delete,Delete Transaction,Padam Transaksi,,MISSING_KRIO
+transaction.deleteConfirm,Delete this transaction?,Padam transaksi ini?,,MISSING_KRIO
+transaction.deleteConfirmDesc,You can undo within 30 seconds.,Anda boleh batal dalam 30 saat.,,MISSING_KRIO
+transaction.deleteConfirmMessage,Are you sure you want to delete this transaction?,Adakah anda pasti mahu memadam transaksi ini?,,MISSING_KRIO
+transaction.deleted,Transaction deleted,Transaksi dipadam,,MISSING_KRIO
+transaction.deleting,Deleting...,Memadam...,,MISSING_KRIO
+transaction.edit,Edit Transaction,Edit Transaksi,,MISSING_KRIO
+transaction.editTitle,Edit Transaction,Edit Transaksi,,MISSING_KRIO
+transaction.expense,Expense,Belanja,Beles,OK
+transaction.invalidAmount,Please enter a valid amount,masukkan jumlah yang sah,Amont no kler,OK
+transaction.noBusiness,No business selected,Tiada bisnes dipilih,,MISSING_KRIO
+transaction.notFound,Transaction not found,Transaksi tidak dijumpai,,MISSING_KRIO
+transaction.notes,Notes,Nota,Not,OK
+transaction.notesPlaceholder,Enter notes...,Masukkan nota...,Put not,OK
+transaction.otherDescription,What was it for?,Untuk apa?,,MISSING_KRIO
+transaction.otherDescriptionPlaceholder,"e.g. Repair, supplies","cth. Baiki, bekalan",,MISSING_KRIO
+transaction.otherPaymentPlaceholder,"e.g., Credit",cth. Kredit,,MISSING_KRIO
+transaction.otherPaymentType,Specify other payment type,Nyatakan cara bayar lain,,MISSING_KRIO
+transaction.paymentType,Payment Type,Jenis Pembayaran,We yu pay,OK
+transaction.quickAmount,Quick Amount,Jumlah Pantas,,MISSING_KRIO
+transaction.receipt,Receipt/Invoice,Resit/Invois,RisÃ­t,OK
+transaction.recordExpense,Record Expense,Rekod Belanja,Rekod beles,OK
+transaction.recordSale,Record Sale,Rekod Jualan,Rekod sel,OK
+transaction.restored,Transaction restored,Transaksi dipulihkan,,MISSING_KRIO
+transaction.sale,Sale,Jualan,Sel,OK
+transaction.save,SAVE,SIMPAN,,MISSING_KRIO
+transaction.saveExpense,Save Expense,Simpan Belanja,Sev beles,OK
+transaction.saveSale,Save Sale,Simpan Jualan,Sev sel,OK
+transaction.saving,Saving...,Menyimpan...,,MISSING_KRIO
+transaction.takePhoto,Take Photo,Ambil Gambar,Tek foto,OK
+transaction.time,Time,Masa,Tem,OK
+transaction.type,Type,Jenis,,MISSING_KRIO
+transaction.undo,Undo,Batal,,MISSING_KRIO
+transaction.updated,Updated,Dikemaskini,,MISSING_KRIO
+warnings.lowStock,Low stock for {{item}},Stok rendah untuk {{item}},,MISSING_KRIO
+warnings.stockNotUpdated,Sale saved. Stock was not updated.,Jualan disimpan. Stok tidak dikemaskini.,,MISSING_KRIO
+welcome.getStarted,Get Started,Mula Guna,,MISSING_KRIO
+welcome.next,Next,Seterusnya,,MISSING_KRIO
+welcome.skip,Skip,Langkau,,MISSING_KRIO
+welcome.slide1.description,"Enter amount, select payment, save. Done!","Masukkan jumlah, pilih pembayaran, simpan. Selesai!",,MISSING_KRIO
+welcome.slide1.title,Record Sales in < 15 Seconds,Rekod Jualan dalam < 15 Saat,,MISSING_KRIO
+welcome.slide2.description,"P&L, Balance Sheet, and complete reports for banks","P&L, Kunci Kira-Kira, dan laporan lengkap untuk bank",,MISSING_KRIO
+welcome.slide2.title,Auto-Generate Financial Reports,Laporan Kewangan Automatik,,MISSING_KRIO
+welcome.slide3.description,Consistent records = higher score = access to financing,Rekod konsisten = skor lebih tinggi = akses pembiayaan,,MISSING_KRIO
+welcome.slide3.title,Build Your Credit Score,Bina Skor Kredit Anda,,MISSING_KRIO
+welcome.slide4.description,Be Noor Capital - fair loans for small businesses,Be Noor Capital - pinjaman adil untuk bisnes kecil,,MISSING_KRIO
+welcome.slide4.title,Access Ethical Financing,Akses Pembiayaan Beretika,,MISSING_KRIO
+welcome.slide5.description,TALLY + Academy + Capital = complete business growth,TALLY + Academy + Capital = pertumbuhan bisnes lengkap,,MISSING_KRIO
+welcome.slide5.title,Join Be Noor Ecosystem,Sertai Ekosistem Be Noor,,MISSING_KRIO
+welcome.subtitle,Digital account book for small businesses,Buku akaun digital untuk bisnes kecil,,MISSING_KRIO
+welcome.title,Welcome to TALLY,Selamat Datang ke TALLY,,MISSING_KRIO

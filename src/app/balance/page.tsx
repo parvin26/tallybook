@@ -97,22 +97,47 @@ export default function BalanceSheetPage() {
       const startingCash = currentBusiness.starting_cash || 0
       const startingBank = currentBusiness.starting_bank || 0
 
+      // Helper function to check if expense was paid with cash
+      const isCashPayment = (t: any) => {
+        // Check new payment_method field first, fallback to payment_type for backward compatibility
+        if (t.payment_method === 'cash') return true
+        if (t.payment_method) return false // If payment_method exists but not cash, it's not cash
+        return t.payment_type === 'cash' // Backward compatibility
+      }
+
+      // Helper function to check if expense was paid with bank transfer
+      const isBankPayment = (t: any) => {
+        if (t.payment_method === 'bank_transfer') return true
+        if (t.payment_method === 'e_wallet') return true // E-wallet treated as bank for now
+        if (t.payment_method) return false
+        return t.payment_type === 'bank_transfer' || t.payment_type === 'duitnow' // Backward compatibility
+      }
+
+      // Helper function to check if expense was paid with card (credit)
+      const isCardPayment = (t: any) => {
+        if (t.payment_method === 'card') return true
+        if (t.payment_method) return false
+        return t.payment_type === 'credit' // Backward compatibility
+      }
+
+      // Calculate Cash
       const cashSales = transactions
         .filter(t => t.transaction_type === 'sale' && t.payment_type === 'cash')
         .reduce((sum, t) => sum + t.amount, 0)
 
       const cashExpenses = transactions
-        .filter(t => t.transaction_type === 'expense' && t.payment_type === 'cash')
+        .filter(t => t.transaction_type === 'expense' && isCashPayment(t))
         .reduce((sum, t) => sum + t.amount, 0)
 
       const currentCash = startingCash + cashSales - cashExpenses
 
+      // Calculate Bank (includes bank transfers and e-wallets)
       const bankSales = transactions
         .filter(t => t.transaction_type === 'sale' && (t.payment_type === 'bank_transfer' || t.payment_type === 'duitnow'))
         .reduce((sum, t) => sum + t.amount, 0)
 
       const bankExpenses = transactions
-        .filter(t => t.transaction_type === 'expense' && (t.payment_type === 'bank_transfer' || t.payment_type === 'duitnow'))
+        .filter(t => t.transaction_type === 'expense' && isBankPayment(t))
         .reduce((sum, t) => sum + t.amount, 0)
 
       const currentBank = startingBank + bankSales - bankExpenses
@@ -125,9 +150,17 @@ export default function BalanceSheetPage() {
       const otherAssets = 0
 
       // Calculate Liabilities
-      const payables = transactions
-        .filter(t => t.transaction_type === 'expense' && t.payment_type === 'credit')
+      // Card expenses increase credit balance (liability)
+      const creditExpenses = transactions
+        .filter(t => t.transaction_type === 'expense' && isCardPayment(t))
         .reduce((sum, t) => sum + t.amount, 0)
+
+      // Other payables (for backward compatibility with old credit expenses)
+      const otherPayables = transactions
+        .filter(t => t.transaction_type === 'expense' && t.payment_type === 'credit' && !isCardPayment(t))
+        .reduce((sum, t) => sum + t.amount, 0)
+
+      const payables = creditExpenses + otherPayables
 
       const loans = 0
 

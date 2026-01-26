@@ -1,10 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { BusinessProvider } from '@/contexts/BusinessContext';
-import { AuthGuard } from '@/components/AuthGuard';
-import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'TALLY',
@@ -33,14 +29,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          <AuthProvider>
-            <BusinessProvider>
-              <AuthGuard>
-                {children}
-                <Toaster position="top-center" />
-              </AuthGuard>
-            </BusinessProvider>
-          </AuthProvider>
+          {children}
         </Providers>
       </body>
     </html>

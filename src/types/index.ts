@@ -18,6 +18,9 @@ export interface Transaction {
   transaction_type: 'sale' | 'expense' | 'payment_received' | 'payment_made'
   amount: number
   payment_type: 'cash' | 'bank_transfer' | 'duitnow' | 'tng' | 'boost' | 'grabpay' | 'shopeepay' | 'credit'
+  payment_method?: 'cash' | 'bank_transfer' | 'card' | 'e_wallet' // New field for expense payment method
+  payment_provider?: string | null // Provider name (e.g., Maybank, Visa, DuitNow)
+  payment_reference?: string | null // Reference number or last 4 digits
   expense_category?: string
   notes?: string
   transaction_date: string

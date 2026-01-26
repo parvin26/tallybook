@@ -92,7 +92,15 @@ export function TransactionListLovable({ transactions, limit }: TransactionListL
     // Secondary label (note or time)
     const txDate = parseISO(transaction.transaction_date)
     const timeStr = format(txDate, 'h:mm a')
-    const secondaryLabel = transaction.notes || timeStr
+    
+    // Strip attachment metadata from notes if present
+    let cleanNotes = transaction.notes || ''
+    if (cleanNotes) {
+      // Remove pattern: [Attachment: ...] or Attachment: ... at start
+      cleanNotes = cleanNotes.replace(/^\[?Attachment:\s*[^\]]*\]?\s*/i, '').trim()
+    }
+    
+    const secondaryLabel = cleanNotes || timeStr
 
     return (
       <div

@@ -261,6 +261,36 @@ export default function ProfitLossPage() {
           </div>
         ) : (
           <>
+            {/* Summary Cards Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
+                <CardContent className="p-4">
+                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('report.profitLoss.totalRevenue')}</p>
+                  <p className="text-lg font-bold text-[var(--tally-text)]">{formatCurrency(plData.totalRevenue)}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
+                <CardContent className="p-4">
+                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('report.profitLoss.totalExpenses')}</p>
+                  <p className="text-lg font-bold text-[var(--tally-text)]">{formatCurrency(plData.totalExpenses)}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
+                <CardContent className="p-4">
+                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('report.profitLoss.netProfit')}</p>
+                  <p className={`text-lg font-bold ${plData.netProfit >= 0 ? 'text-[#2E7D5B]' : 'text-[#B94A3A]'}`}>
+                    {formatCurrency(plData.netProfit)}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
+                <CardContent className="p-4">
+                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('summary.profitMargin')}</p>
+                  <p className="text-lg font-bold text-[var(--tally-text)]">{plData.profitMargin.toFixed(1)}%</p>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Main Card */}
             <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
               <CardContent className="p-6 space-y-6">

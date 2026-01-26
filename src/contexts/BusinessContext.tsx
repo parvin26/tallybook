@@ -21,10 +21,11 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Check for dev mode bypass
+      // Check for dev mode or test mode bypass
       const devBypass = typeof window !== 'undefined' && sessionStorage.getItem('dev-bypass-auth') === 'true'
+      const allowTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_MODE === 'true'
       
-      if (devBypass && process.env.NODE_ENV === 'development') {
+      if (devBypass && (process.env.NODE_ENV === 'development' || allowTestMode)) {
         // In dev mode with bypass, get the first active business (for testing)
         const { data, error } = await supabase
           .from('businesses')
@@ -55,6 +56,10 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
+        // User is not authenticated - reset business state immediately
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[BusinessContext] No user found, resetting business state')
+        }
         setCurrentBusiness(null);
         setIsLoading(false);
         return;
@@ -94,8 +99,21 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     loadBusiness();
     
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      loadBusiness();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // If user signed out, immediately reset business state
+      if (event === 'SIGNED_OUT' || !session) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[BusinessContext] Auth signed out, resetting business state')
+        }
+        setCurrentBusiness(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Only reload business if user signed in or token refreshed
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        loadBusiness();
+      }
     });
     
     return () => subscription.unsubscribe();

@@ -18,17 +18,26 @@
   "auth": {
     "login": "Login",
     "phone": "Phone Number",
+    "email": "Email",
+    "phoneOTP": "Phone OTP",
+    "emailMagicLink": "Email Link",
     "sendOTP": "Send OTP Code",
+    "sendMagicLink": "Send Magic Link",
     "verifyOTP": "Verify OTP Code",
     "otpSent": "Code has been sent",
+    "magicLinkSent": "Magic link sent to your email",
+    "magicLinkSentMessage": "We've sent a magic link to your email. Click the link to sign in. Check your spam folder if you don't see it.",
+    "backToLogin": "Back to Login",
     "enterOTP": "Enter 6-digit code",
     "resendOTP": "Send new code",
     "logout": "Log Out",
     "phonePlaceholder": "012-345 6789",
+    "emailPlaceholder": "your@email.com",
     "otpPlaceholder": "123456",
     "sending": "Sending...",
     "verifying": "Verifying...",
     "invalidPhone": "Please enter a valid phone number",
+    "invalidEmail": "Please enter a valid email address",
     "invalidOTP": "Invalid OTP code. Please try again.",
     "verifyError": "Could not verify. Please try again.",
     "loginSuccess": "Login successful",
@@ -39,7 +48,34 @@
     "skipLoginButton": "Skip Login (Test)",
     "devBypassMessage": "Skipping login...",
     "devBypassError": "Could not skip login",
-    "devModeOnly": "Test mode only available in development"
+    "devModeOnly": "Test mode only available in development",
+    "continueWithoutLogin": "Continue without login",
+    "guestModeEnabled": "Guest mode enabled. Your data will be stored locally",
+    "guestModeDescription": "Use Tally without an account. Data stored on this device only."
+  },
+  "telemetry": {
+    "title": "Help Improve Tally",
+    "description": "We'd like to collect anonymous usage data to improve Tally. This helps us understand how the app is used without tracking personal information.",
+    "whatWeTrack": "We track:",
+    "trackScreenViews": "Which screens you visit",
+    "trackActions": "Actions like recording sales and expenses (not amounts)",
+    "trackPreferences": "Language and country selections",
+    "whatWeDontTrack": "We do NOT track:",
+    "noPersonalData": "Phone numbers, emails, or personal information",
+    "noExactAmounts": "Exact transaction amounts (only ranges)",
+    "noNotes": "Transaction notes or attachment filenames",
+    "accept": "Yes, help improve Tally",
+    "decline": "No thanks"
+  },
+  "guest": {
+    "mode": "Guest Mode",
+    "importTitle": "Import Guest Data?",
+    "importDescription": "You have {{count}} transactions saved in guest mode. Would you like to import them into your account?",
+    "importButton": "Import Data",
+    "discardButton": "Discard",
+    "importSuccess": "{{count}} transactions imported successfully",
+    "importError": "Failed to import transactions",
+    "noDataToImport": "No guest data to import"
   },
   "setup": {
     "title": "Set Up Your Business",
@@ -248,7 +284,48 @@
     "stabilityDesc": "Based on your record consistency",
     "betterConsistency": "Record transactions daily for better consistency",
     "betterClarity": "Record both sales and expenses for better clarity",
-    "keepGoing": "Keep recording transactions consistently"
+    "keepGoing": "Keep recording transactions consistently",
+    "emptyState": {
+      "title": "Start recording to see insights",
+      "message": "Record your first sale or expense to get personalized insights about your business."
+    },
+    "insights": {
+      "consistencyGood": "Recording is consistent",
+      "consistencyGoodMessage": "You recorded transactions on {{count}} of the last {{total}} days",
+      "consistencyModerate": "Recording could be more regular",
+      "consistencyModerateMessage": "You recorded transactions on {{count}} of the last {{total}} days",
+      "consistencyLow": "Recording needs attention",
+      "consistencyLowMessage": "You recorded transactions on {{count}} of the last {{total}} days. {{gaps}} days had no records.",
+      "consistencyGuidance": "Try recording every day for better insights",
+      "cashDirectionPositive": "More money coming in",
+      "cashDirectionPositiveMessage": "More money came in than went out this period",
+      "cashDirectionNegative": "More money going out",
+      "cashDirectionNegativeMessage": "Expenses exceeded sales on most days",
+      "cashDirectionMixed": "Mixed cash flow",
+      "cashDirectionMixedMessage": "Cash in and out were balanced",
+      "cashDirectionGuidance": "Consider reviewing expenses or focusing on sales",
+      "momentumUp": "Business activity increased",
+      "momentumUpMessage": "{{change}}% more transactions than the previous period",
+      "momentumDown": "Business activity decreased",
+      "momentumDownMessage": "{{change}}% fewer transactions than the previous period",
+      "momentumStable": "Business activity is stable",
+      "momentumStableMessage": "Transaction count is similar to the previous period",
+      "stabilityGood": "Expenses are stable",
+      "stabilityGoodMessage": "No unusually large expenses or sales were recorded",
+      "stabilityExpenseSpike": "Large expense detected",
+      "stabilityExpenseSpikeMessage": "{{count}} unusually large expense was recorded",
+      "stabilityGuidance": "Review large expenses to ensure they're necessary",
+      "heroProduct": "Top selling method",
+      "heroProductMessage": "Most sales came from {{category}} ({{count}} transactions)",
+      "heroProductGuidance": "This payment method works well for your business",
+      "weakProduct": "Low activity category",
+      "weakProductMessage": "{{category}} had very low activity",
+      "weakProductGuidance": "Consider reviewing pricing or promotion for this category",
+      "paymentMethodDominant": "Payment method pattern",
+      "paymentMethodDominantMessage": "{{percent}}% of expenses were paid with {{method}}",
+      "paymentMethodCreditGuidance": "Frequent credit usage should be monitored closely",
+      "paymentMethodCashGuidance": "High cash usage may affect cash flow visibility"
+    }
   },
   "welcome": {
     "title": "Welcome to TALLY",
@@ -257,24 +334,24 @@
     "next": "Next",
     "getStarted": "Get Started",
     "slide1": {
-      "title": "Record Sales in < 15 Seconds",
-      "description": "Enter amount, select payment, save. Done!"
+      "title": "Record money as it moves",
+      "description": "Add sales and expenses as they happen. Each entry keeps your notebook up to date."
     },
     "slide2": {
-      "title": "Auto-Generate Financial Reports",
-      "description": "P&L, Balance Sheet, and complete reports for banks"
+      "title": "See where you stand today",
+      "description": "Check cash in, cash out and balance at a glance. No calculations needed."
     },
     "slide3": {
-      "title": "Build Your Credit Score",
-      "description": "Consistent records = higher score = access to financing"
+      "title": "Keep track of what is owed",
+      "description": "See who owes you and what you need to pay. Nothing gets missed."
     },
     "slide4": {
-      "title": "Access Ethical Financing",
-      "description": "Be Noor Capital - fair loans for small businesses"
+      "title": "Export reports when needed",
+      "description": "Generate P&L and balance sheet reports for banks and lenders."
     },
     "slide5": {
-      "title": "Join Be Noor Ecosystem",
-      "description": "TALLY + Academy + Capital = complete business growth"
+      "title": "Your data stays yours",
+      "description": "We do not sell data. Tally is not a loan app and will never broker loans."
     }
   },
   "balanceSheet": {
@@ -370,6 +447,19 @@
     "itemRequired": "Please select an item",
     "quantityRequired": "Please enter quantity sold"
   },
+  "expense": {
+    "paymentMethod": {
+      "title": "Payment Method",
+      "card": "Card",
+      "eWallet": "E Wallet",
+      "providerName": "Provider Name",
+      "providerNamePlaceholder": "e.g., Maybank, Visa",
+      "reference": "Reference",
+      "referencePlaceholder": "Last 4 digits or reference number",
+      "walletName": "Wallet Name",
+      "walletNamePlaceholder": "e.g., DuitNow, TNG, GrabPay"
+    }
+  },
   "inventory": {
     "history": "History",
     "sold": "Sold",
@@ -441,6 +531,8 @@
     "addYourName": "Add your name",
     "category": "Category",
     "categoryPlaceholder": "e.g., Retail, Food & Beverage",
+    "selectCategory": "Select category",
+    "specifyCategory": "Specify category",
     "country": "Country",
     "countryPlaceholder": "e.g., Malaysia",
     "state": "State/Region",
@@ -569,6 +661,27 @@
       "emptyStateMessage": "We need at least 3 days of entries to show insights",
       "recordSale": "Record Sale",
       "recordExpense": "Record Expense"
+    }
+  },
+  "onboarding": {
+    "tagline": "Your business notebook",
+    "country": {
+      "question": "Where is your business?",
+      "selectPlaceholder": "Select your country",
+      "availableNow": "Available now",
+      "comingSoon": "Coming soon",
+      "notAvailableYet": "Not available yet. We will notify you when your country is supported."
+    },
+    "language": {
+      "question": "Choose your language"
+    },
+    "about": {
+      "title": "What TALLY Is",
+      "description": "TALLY helps you record daily business money simply and stay in control"
+    },
+    "start": {
+      "message": "Ready to start?",
+      "button": "Start"
     }
   }
 }

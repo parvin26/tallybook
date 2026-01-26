@@ -6,24 +6,31 @@ import { useBusiness } from '@/contexts/BusinessContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase/supabaseClient'
 import { useTransactions } from '@/hooks/useTransactions'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AppShell } from '@/components/AppShell'
-import { Globe, Download, MessageCircle, FileText, LogOut, Upload, Camera, X, Building2, User as UserIcon, MapPin, Tag, HelpCircle, Shield, Mail, Play } from 'lucide-react'
+import { Globe, Download, MessageCircle, FileText, LogOut, Upload, Camera, X, Building2, User as UserIcon, MapPin, Tag, HelpCircle, Shield, Mail, Play, Smartphone } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getBusinessProfile, saveBusinessProfile, BusinessProfile } from '@/lib/businessProfile'
+import { canInstall, isIOS, isStandalone, promptInstall } from '@/lib/pwa'
+import { isGuestMode } from '@/lib/guest-storage'
 
 export default function AccountPage() {
   const router = useRouter()
   const { currentBusiness, refreshBusiness } = useBusiness()
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
   const { data: transactions } = useTransactions()
+  const queryClient = useQueryClient()
   const { t, i18n } = useTranslation()
+  const guestMode = typeof window !== 'undefined' ? isGuestMode() : false
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false)
+  const [isIOSModalOpen, setIsIOSModalOpen] = useState(false)
+  const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
   const [profile, setProfile] = useState<BusinessProfile | null>(null)
   const [profileEditData, setProfileEditData] = useState<BusinessProfile>({
     ownerName: '',
@@ -34,6 +41,49 @@ export default function AccountPage() {
     area: '',
     logoDataUrl: '',
   })
+  // Category dropdown state
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [customCategory, setCustomCategory] = useState<string>('')
+  
+  // Predefined business categories
+  const businessCategories = [
+    'Retail',
+    'Food and Beverage',
+    'Home Based Business',
+    'Fashion and Apparel',
+    'Beauty and Personal Care',
+    'Agriculture and Farming',
+    'Food Processing',
+    'Wholesale and Trading',
+    'Services General',
+    'Transportation and Delivery',
+    'Repair and Maintenance',
+    'Construction and Trades',
+    'Education and Training',
+    'Health and Wellness',
+    'Digital and Online Business',
+    'Manufacturing Small Scale',
+    'Hospitality and Lodging',
+    'Arts and Crafts',
+    'Other',
+  ]
+  
+  const [pwaState, setPwaState] = useState({
+    canInstall: false,
+    isIOS: false,
+    isStandalone: false,
+  })
+
+  // Check PWA state on mount and when component updates
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPwaState({
+        canInstall: canInstall(),
+        isIOS: isIOS(),
+        isStandalone: isStandalone(),
+      })
+    }
+  }, [])
 
   // Load profile on mount
   useEffect(() => {
@@ -41,6 +91,19 @@ export default function AccountPage() {
     setProfile(loadedProfile)
     if (loadedProfile) {
       setProfileEditData(loadedProfile)
+      // Initialize category dropdown state
+      const savedCategory = loadedProfile.businessCategory || ''
+      if (savedCategory && businessCategories.includes(savedCategory)) {
+        setSelectedCategory(savedCategory)
+        setCustomCategory('')
+      } else if (savedCategory) {
+        // Saved category doesn't match predefined options, use "Other"
+        setSelectedCategory('Other')
+        setCustomCategory(savedCategory)
+      } else {
+        setSelectedCategory('')
+        setCustomCategory('')
+      }
     } else if (currentBusiness) {
       // Initialize from current business if profile doesn't exist
       setProfileEditData({
@@ -52,14 +115,23 @@ export default function AccountPage() {
         area: currentBusiness.city || '',
         logoDataUrl: '',
       })
+      setSelectedCategory('')
+      setCustomCategory('')
     }
   }, [currentBusiness])
 
-  const handleLanguageChange = (lang: 'bm' | 'en') => {
+  const handleLanguageChange = (lang: 'bm' | 'en' | 'krio') => {
+    setIsLanguageModalOpen(false) // Close modal first
     try {
       i18n.changeLanguage(lang).then(() => {
         localStorage.setItem('tally-language', lang)
-        toast.success(lang === 'bm' ? t('settings.languageChanged') : t('settings.languageChangedEn'))
+        let message = t('settings.languageChangedEn')
+        if (lang === 'bm') {
+          message = t('settings.languageChanged')
+        } else if (lang === 'krio') {
+          message = t('settings.languageChangedKrio', { defaultValue: 'Language changed to Krio' })
+        }
+        toast.success(message)
         setTimeout(() => {
           window.location.reload()
         }, 500)
@@ -71,6 +143,13 @@ export default function AccountPage() {
       console.error('Error changing language:', err)
       toast.error(t('settings.languageError'))
     }
+  }
+
+  const getCurrentLanguageName = (): string => {
+    const current = i18n.language
+    if (current === 'bm') return t('settings.bahasaMalaysia')
+    if (current === 'krio') return t('settings.krio')
+    return t('settings.english')
   }
 
   const handleExportCSV = () => {
@@ -117,8 +196,31 @@ export default function AccountPage() {
   }
 
   const handleLogout = async () => {
-    await signOut()
-    router.push('/login')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Settings] Logout initiated from:', window.location.pathname)
+    }
+    
+    try {
+      // Clear React Query cache to prevent stale data after logout
+      queryClient.clear()
+      
+      // Sign out and clear auth state
+      await signOut()
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Settings] Sign out completed, redirecting to /login')
+      }
+      
+      // Use replace to prevent redirect loops and avoid adding to history
+      router.replace('/login')
+      
+      // Force a refresh to ensure all state is cleared
+      router.refresh()
+    } catch (error) {
+      console.error('[Settings] Logout error:', error)
+      // Even on error, redirect to login
+      router.replace('/login')
+    }
   }
 
   const handleSaveProfile = async () => {
@@ -137,16 +239,31 @@ export default function AccountPage() {
     }
 
     try {
+      // Determine final category value
+      let finalCategory = ''
+      if (selectedCategory === 'Other') {
+        finalCategory = customCategory.trim()
+      } else if (selectedCategory) {
+        finalCategory = selectedCategory
+      }
+      
+      // Update profile data with category
+      const updatedProfile = {
+        ...profileEditData,
+        businessCategory: finalCategory,
+      }
+      
       // Save to localStorage (single source of truth)
-      saveBusinessProfile(profileEditData)
-      setProfile(profileEditData)
+      saveBusinessProfile(updatedProfile)
+      setProfile(updatedProfile)
+      setProfileEditData(updatedProfile)
 
       // Also update business name in Supabase if business exists (for backward compatibility)
       // Note: Business Profile is the primary source, Supabase is secondary
-      if (currentBusiness?.id && profileEditData.businessName !== currentBusiness.name) {
+      if (currentBusiness?.id && updatedProfile.businessName !== currentBusiness.name) {
         const { error } = await supabase
           .from('businesses')
-          .update({ name: profileEditData.businessName })
+          .update({ name: updatedProfile.businessName })
           .eq('id', currentBusiness.id)
 
         if (error) {
@@ -210,6 +327,19 @@ export default function AccountPage() {
                   const loadedProfile = getBusinessProfile()
                   if (loadedProfile) {
                     setProfileEditData(loadedProfile)
+                    // Initialize category dropdown state
+                    const savedCategory = loadedProfile.businessCategory || ''
+                    if (savedCategory && businessCategories.includes(savedCategory)) {
+                      setSelectedCategory(savedCategory)
+                      setCustomCategory('')
+                    } else if (savedCategory) {
+                      // Saved category doesn't match predefined options, use "Other"
+                      setSelectedCategory('Other')
+                      setCustomCategory(savedCategory)
+                    } else {
+                      setSelectedCategory('')
+                      setCustomCategory('')
+                    }
                   } else if (currentBusiness) {
                     setProfileEditData({
                       ownerName: '',
@@ -220,6 +350,8 @@ export default function AccountPage() {
                       area: currentBusiness.city || '',
                       logoDataUrl: '',
                     })
+                    setSelectedCategory('')
+                    setCustomCategory('')
                   }
                   setIsProfileEditOpen(true)
                 }}
@@ -259,6 +391,11 @@ export default function AccountPage() {
                     <span className="italic">{t('account.addYourName')}</span>
                   )}
                 </p>
+                {guestMode && (
+                  <p className="text-xs text-amber-600 mt-2 font-medium">
+                    {t('guest.mode')}
+                  </p>
+                )}
               </div>
 
               {/* Category */}
@@ -312,14 +449,14 @@ export default function AccountPage() {
                   <div>
                     <p className="text-sm font-medium text-[var(--tally-text)]">{t('settings.language')}</p>
                     <p className="text-xs text-[var(--tally-text-muted)]">
-                      {i18n.language === 'bm' ? t('settings.bahasaMalaysia') : t('settings.english')}
+                      {getCurrentLanguageName()}
                     </p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleLanguageChange(i18n.language === 'bm' ? 'en' : 'bm')}
+                  onClick={() => setIsLanguageModalOpen(true)}
                   className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]"
                 >
                   {t('account.change')}
@@ -343,6 +480,63 @@ export default function AccountPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Install Tally Section - Only show if not already installed */}
+        {!pwaState.isStandalone && (
+          <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center flex-shrink-0">
+                    <Smartphone className="w-5 h-5 text-[#29978C]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('pwa.install.title')}</p>
+                    <p className="text-xs text-[var(--tally-text-muted)]">
+                      {pwaState.canInstall
+                        ? t('pwa.install.subtitle.canInstall')
+                        : pwaState.isIOS
+                        ? t('pwa.install.subtitle.ios')
+                        : 'Not available yet'}
+                    </p>
+                  </div>
+                </div>
+                {pwaState.canInstall && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const installed = await promptInstall()
+                      if (installed) {
+                        toast.success(t('pwa.install.success'))
+                        setPwaState({
+                          canInstall: false,
+                          isIOS: pwaState.isIOS,
+                          isStandalone: true,
+                        })
+                      } else {
+                        toast.error(t('pwa.install.cancelled'))
+                      }
+                    }}
+                    className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)] flex-shrink-0 ml-3"
+                  >
+                    {t('pwa.install.button')}
+                  </Button>
+                )}
+                {pwaState.isIOS && !pwaState.canInstall && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsIOSModalOpen(true)}
+                    className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)] flex-shrink-0 ml-3"
+                  >
+                    {t('pwa.install.how')}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Data and Export Section */}
         <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
@@ -412,7 +606,16 @@ export default function AccountPage() {
                   </div>
                 </div>
               </a>
-              <Link href="/welcome" className="block">
+              <button
+                onClick={() => {
+                  // Reset onboarding to allow replay
+                  localStorage.removeItem('tally_onboarding_completed')
+                  sessionStorage.removeItem('tally_intro_seen_session')
+                  // Navigate to onboarding start
+                  router.push('/onboarding/country')
+                }}
+                className="block w-full"
+              >
                 <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors">
                   <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
                     <Play className="w-5 h-5 text-[#29978C]" />
@@ -421,7 +624,7 @@ export default function AccountPage() {
                     <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.showIntro')}</p>
                   </div>
                 </div>
-              </Link>
+              </button>
             </div>
           </CardContent>
         </Card>
@@ -560,11 +763,36 @@ export default function AccountPage() {
                 <label className="block text-sm font-medium mb-2 text-[var(--tally-text)]">
                   {t('account.category')} ({t('common.optional')})
                 </label>
-                <Input
-                  value={profileEditData.businessCategory}
-                  onChange={(e) => setProfileEditData({ ...profileEditData, businessCategory: e.target.value })}
-                  placeholder={t('account.categoryPlaceholder')}
-                />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    const newValue = e.target.value
+                    setSelectedCategory(newValue)
+                    if (newValue !== 'Other') {
+                      setCustomCategory('')
+                    }
+                  }}
+                  className="w-full h-10 rounded-[var(--tally-radius)] border border-[var(--tally-border)] bg-[var(--tally-surface)] px-3 py-2 text-sm text-[var(--tally-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(41,151,140,0.25)] focus-visible:border-[#29978C] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-150"
+                >
+                  <option value="">{t('account.selectCategory') || 'Select category'}</option>
+                  {businessCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                {selectedCategory === 'Other' && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium mb-2 text-[var(--tally-text)]">
+                      {t('account.specifyCategory') || 'Specify category'} ({t('common.optional')})
+                    </label>
+                    <Input
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      placeholder={t('account.categoryPlaceholder')}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Country - Required */}
@@ -626,6 +854,117 @@ export default function AccountPage() {
                   {t('account.saveProfile')}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* iOS Install Instructions Modal */}
+        <Dialog open={isIOSModalOpen} onOpenChange={setIsIOSModalOpen}>
+          <DialogContent className="max-w-[480px] bg-[var(--tally-bg)]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
+                {t('pwa.iosModal.title')}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6 pt-4">
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#29978C] text-white flex items-center justify-center font-bold flex-shrink-0">
+                    1
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[var(--tally-text)] mb-1">
+                      {t('pwa.iosModal.step1.title')}
+                    </p>
+                    <p className="text-xs text-[var(--tally-text-muted)]">
+                      {t('pwa.iosModal.step1.description')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#29978C] text-white flex items-center justify-center font-bold flex-shrink-0">
+                    2
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[var(--tally-text)] mb-1">
+                      {t('pwa.iosModal.step2.title')}
+                    </p>
+                    <p className="text-xs text-[var(--tally-text-muted)]">
+                      {t('pwa.iosModal.step2.description')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={() => setIsIOSModalOpen(false)}
+                className="w-full bg-[#29978C] hover:bg-[#238579] text-white"
+              >
+                {t('common.close')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Language Selection Modal */}
+        <Dialog open={isLanguageModalOpen} onOpenChange={setIsLanguageModalOpen}>
+          <DialogContent className="max-w-[480px] bg-[var(--tally-bg)]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
+                {t('settings.language')}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 pt-4">
+              <button
+                onClick={() => handleLanguageChange('en')}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  i18n.language === 'en'
+                    ? 'border-[#29978C] bg-[rgba(41,151,140,0.1)]'
+                    : 'border-[var(--tally-border)] hover:bg-[var(--tally-surface-2)]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium text-[var(--tally-text)]">
+                    {t('settings.english')}
+                  </span>
+                  {i18n.language === 'en' && (
+                    <span className="text-[#29978C] text-sm font-semibold">✓</span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => handleLanguageChange('bm')}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  i18n.language === 'bm'
+                    ? 'border-[#29978C] bg-[rgba(41,151,140,0.1)]'
+                    : 'border-[var(--tally-border)] hover:bg-[var(--tally-surface-2)]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium text-[var(--tally-text)]">
+                    {t('settings.bahasaMalaysia')}
+                  </span>
+                  {i18n.language === 'bm' && (
+                    <span className="text-[#29978C] text-sm font-semibold">✓</span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => handleLanguageChange('krio')}
+                className={`w-full p-4 rounded-lg border-2 text-left transition-colors ${
+                  i18n.language === 'krio'
+                    ? 'border-[#29978C] bg-[rgba(41,151,140,0.1)]'
+                    : 'border-[var(--tally-border)] hover:bg-[var(--tally-surface-2)]'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium text-[var(--tally-text)]">
+                    {t('settings.krio')}
+                  </span>
+                  {i18n.language === 'krio' && (
+                    <span className="text-[#29978C] text-sm font-semibold">✓</span>
+                  )}
+                </div>
+              </button>
             </div>
           </DialogContent>
         </Dialog>

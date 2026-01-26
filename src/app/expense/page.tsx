@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { AmountInput } from '@/components/AmountInput'
 import { QuickAmountSelectorLovable } from '@/components/QuickAmountSelectorLovable'
 import { CategorySelectorLovable } from '@/components/CategorySelectorLovable'
+import { PaymentMethodSelector, PaymentMethod } from '@/components/PaymentMethodSelector'
 import { AttachmentInputLovable } from '@/components/AttachmentInputLovable'
 import { DatePickerLovable } from '@/components/DatePickerLovable'
 import { AppShell } from '@/components/AppShell'
@@ -16,6 +17,8 @@ import { useBusiness } from '@/contexts/BusinessContext'
 import { supabase } from '@/lib/supabase/supabaseClient'
 import { format } from 'date-fns'
 import { uploadAttachment, saveAttachmentMetadata } from '@/lib/attachments'
+import { isGuestMode, saveGuestTransaction } from '@/lib/guest-storage'
+import { trackEvent } from '@/lib/telemetry'
 
 // Map Lovable categories to database categories
 const categoryMap: Record<string, string> = {
@@ -39,51 +42,43 @@ export default function RecordExpensePage() {
   const draftKey = currentBusiness?.id ? `expense-draft-${currentBusiness.id}` : null
   
   // Load draft on mount
-  const [amount, setAmount] = useState(() => {
+  const loadDraft = () => {
     if (typeof window !== 'undefined' && draftKey) {
       const draft = localStorage.getItem(draftKey)
       if (draft) {
         try {
           const parsed = JSON.parse(draft)
           if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            return parsed.amount || ''
+            return parsed
           }
         } catch (e) {}
       }
     }
-    return ''
-  })
-  
-  const [paymentType, setPaymentType] = useState<'cash' | 'bank_transfer' | 'duitnow' | 'tng' | 'boost' | 'grabpay' | 'shopeepay' | 'credit'>('cash')
-  
-  const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | undefined>(undefined)
-  
-  const [notes, setNotes] = useState(() => {
-    if (typeof window !== 'undefined' && draftKey) {
-      const draft = localStorage.getItem(draftKey)
-      if (draft) {
-        try {
-          const parsed = JSON.parse(draft)
-          if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-            return parsed.notes || ''
-          }
-        } catch (e) {}
-      }
-    }
-    return ''
-  })
+    return null
+  }
 
-  const [otherText, setOtherText] = useState('')
+  const draft = loadDraft()
+  
+  const [amount, setAmount] = useState(draft?.amount || '')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(draft?.paymentMethod || 'cash')
+  const [paymentProvider, setPaymentProvider] = useState(draft?.paymentProvider || '')
+  const [paymentReference, setPaymentReference] = useState(draft?.paymentReference || '')
+  const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | undefined>(undefined)
+  const [notes, setNotes] = useState(draft?.notes || '')
+
+  const [otherText, setOtherText] = useState(draft?.otherText || '')
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [category, setCategory] = useState<'supplies' | 'transport' | 'utilities' | 'rent' | 'wages' | 'food' | 'maintenance' | 'other'>('other')
+  const [category, setCategory] = useState<'supplies' | 'transport' | 'utilities' | 'rent' | 'wages' | 'food' | 'maintenance' | 'other'>(draft?.category || 'other')
 
   // Auto-save draft
   useEffect(() => {
     if (draftKey && (amount || notes || otherText)) {
       const draft = {
         amount,
-        paymentType,
+        paymentMethod,
+        paymentProvider,
+        paymentReference,
         category,
         otherText,
         notes,
@@ -91,14 +86,10 @@ export default function RecordExpensePage() {
       }
       localStorage.setItem(draftKey, JSON.stringify(draft))
     }
-  }, [amount, paymentType, category, otherText, notes, draftKey])
+  }, [amount, paymentMethod, paymentProvider, paymentReference, category, otherText, notes, draftKey])
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!currentBusiness?.id) {
-        throw new Error(t('transaction.noBusiness'))
-      }
-
       const amountNum = parseFloat(amount)
       if (isNaN(amountNum) || amountNum <= 0) {
         throw new Error(t('transaction.invalidAmount'))
@@ -113,6 +104,44 @@ export default function RecordExpensePage() {
       // Notes without attachment metadata (attachments stored separately)
       const finalNotes = combinedNotes || null
 
+      // Map payment method to database payment_type
+      // For backward compatibility, map to existing payment_type values
+      let dbPaymentType: string
+      if (paymentMethod === 'cash') {
+        dbPaymentType = 'cash'
+      } else if (paymentMethod === 'bank_transfer') {
+        dbPaymentType = 'bank_transfer'
+      } else if (paymentMethod === 'card') {
+        dbPaymentType = 'credit' // Card expenses are credit/liability
+      } else if (paymentMethod === 'e_wallet') {
+        dbPaymentType = 'duitnow' // E-wallet maps to mobile money for now
+      } else {
+        dbPaymentType = 'cash' // Default fallback
+      }
+
+      // Guest mode: save to local storage
+      if (isGuestMode()) {
+        const transactionId = saveGuestTransaction({
+          transaction_type: 'expense',
+          amount: amountNum,
+          payment_type: dbPaymentType,
+          payment_method: paymentMethod,
+          payment_provider: paymentProvider.trim() || undefined,
+          payment_reference: paymentReference.trim() || undefined,
+          expense_category: dbCategory,
+          notes: finalNotes || undefined,
+          transaction_date: format(selectedDate, 'yyyy-MM-dd'),
+        })
+        
+        trackEvent('record_expense')
+        return { id: transactionId }
+      }
+
+      // Authenticated mode: save to Supabase
+      if (!currentBusiness?.id) {
+        throw new Error(t('transaction.noBusiness'))
+      }
+
       // Save transaction first
       const { data: transaction, error } = await supabase
         .from('transactions')
@@ -120,7 +149,10 @@ export default function RecordExpensePage() {
           business_id: currentBusiness.id,
           transaction_type: 'expense',
           amount: amountNum,
-          payment_type: paymentType,
+          payment_type: dbPaymentType,
+          payment_method: paymentMethod, // New field
+          payment_provider: paymentProvider.trim() || null, // New field
+          payment_reference: paymentReference.trim() || null, // New field
           expense_category: dbCategory,
           notes: finalNotes,
           transaction_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -230,18 +262,63 @@ export default function RecordExpensePage() {
           )}
         </div>
 
-        {/* 4. Date */}
+        {/* 4. Payment Method */}
+        <div>
+          <label className="block text-sm text-[var(--tally-text-muted)] mb-3 font-medium">{t('expense.paymentMethod.title')}</label>
+          <PaymentMethodSelector value={paymentMethod} onChange={setPaymentMethod} />
+          
+          {/* Conditional fields based on payment method */}
+          {(paymentMethod === 'bank_transfer' || paymentMethod === 'card') && (
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+                  {t('expense.paymentMethod.providerName')} <span className="text-xs">({t('common.optional')})</span>
+                </label>
+                <Input
+                  value={paymentProvider}
+                  onChange={(e) => setPaymentProvider(e.target.value)}
+                  placeholder={t('expense.paymentMethod.providerNamePlaceholder')}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+                  {t('expense.paymentMethod.reference')} <span className="text-xs">({t('common.optional')})</span>
+                </label>
+                <Input
+                  value={paymentReference}
+                  onChange={(e) => setPaymentReference(e.target.value)}
+                  placeholder={t('expense.paymentMethod.referencePlaceholder')}
+                />
+              </div>
+            </div>
+          )}
+          
+          {paymentMethod === 'e_wallet' && (
+            <div className="mt-4">
+              <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+                {t('expense.paymentMethod.walletName')} <span className="text-xs">({t('common.optional')})</span>
+              </label>
+              <Input
+                value={paymentProvider}
+                onChange={(e) => setPaymentProvider(e.target.value)}
+                placeholder={t('expense.paymentMethod.walletNamePlaceholder')}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 5. Date */}
         <div>
           <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">{t('transaction.date')}</label>
           <DatePickerLovable value={selectedDate} onChange={setSelectedDate} />
         </div>
 
-        {/* 5. Attachment (optional) */}
+        {/* 6. Attachment (optional) */}
         <div>
           <AttachmentInputLovable onFilesChange={setAttachmentFiles} variant="expense" />
         </div>
 
-        {/* 6. Notes (optional) */}
+        {/* 7. Notes (optional) */}
         <div>
           <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
             {t('transaction.notes')} <span className="text-xs">({t('common.optional')})</span>
