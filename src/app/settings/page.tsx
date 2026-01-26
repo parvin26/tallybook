@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import { getBusinessProfile, saveBusinessProfile, BusinessProfile } from '@/lib/businessProfile'
 import { canInstall, isIOS, isStandalone, promptInstall } from '@/lib/pwa'
 import { isGuestMode } from '@/lib/guest-storage'
+import { useIntroContext } from '@/contexts/IntroContext'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -31,6 +32,7 @@ export default function AccountPage() {
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false)
   const [isIOSModalOpen, setIsIOSModalOpen] = useState(false)
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
+  const { openIntro } = useIntroContext()
   const [profile, setProfile] = useState<BusinessProfile | null>(null)
   const [profileEditData, setProfileEditData] = useState<BusinessProfile>({
     ownerName: '',
@@ -312,6 +314,7 @@ export default function AccountPage() {
   }
 
   return (
+    <>
     <AppShell title={t('account.title')} showBack showLogo>
       <div className="max-w-[480px] mx-auto px-6 py-6 space-y-6">
 
@@ -607,13 +610,7 @@ export default function AccountPage() {
                 </div>
               </a>
               <button
-                onClick={() => {
-                  // Reset onboarding to allow replay
-                  localStorage.removeItem('tally_onboarding_completed')
-                  sessionStorage.removeItem('tally_intro_seen_session')
-                  // Navigate to onboarding start
-                  router.push('/onboarding/country')
-                }}
+                onClick={openIntro}
                 className="block w-full"
               >
                 <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors">
@@ -622,6 +619,7 @@ export default function AccountPage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.showIntro')}</p>
+                    <p className="text-xs text-[var(--tally-text-muted)]">{t('account.showIntroDesc')}</p>
                   </div>
                 </div>
               </button>
@@ -970,5 +968,6 @@ export default function AccountPage() {
         </Dialog>
       </div>
     </AppShell>
+  </>
   )
 }

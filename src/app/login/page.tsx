@@ -64,16 +64,6 @@ export default function LoginPage() {
     try {
       const formattedPhone = formatPhoneNumber(phone)
       
-      // TEST MODE: Skip OTP sending and go directly to verify page
-      const TEST_MODE = process.env.NODE_ENV === 'development'
-      
-      if (TEST_MODE) {
-        sessionStorage.setItem('phone', formattedPhone)
-        toast.info(t('auth.testModeMessage', { code: '123456' }))
-        router.push(`/verify?phone=${formattedPhone}`)
-        setIsLoading(false)
-        return
-      }
 
       const { error } = await supabase.auth.signInWithOtp({
         phone: `+${formattedPhone}`,
@@ -83,13 +73,6 @@ export default function LoginPage() {
       })
 
       if (error) {
-        if (process.env.NODE_ENV === 'development') {
-          toast.info(t('auth.testModeMessage', { code: '123456' }))
-          sessionStorage.setItem('phone', formattedPhone)
-          router.push(`/verify?phone=${formattedPhone}`)
-          setIsLoading(false)
-          return
-        }
         toast.error(t('auth.sendError'))
         setIsLoading(false)
         return
@@ -99,14 +82,6 @@ export default function LoginPage() {
       toast.success(t('auth.otpSent'))
       router.push(`/verify?phone=${formattedPhone}`)
     } catch (err) {
-      if (process.env.NODE_ENV === 'development') {
-        toast.info(t('auth.testModeMessage', { code: '123456' }))
-        const formattedPhone = formatPhoneNumber(phone)
-        sessionStorage.setItem('phone', formattedPhone)
-        router.push(`/verify?phone=${formattedPhone}`)
-        setIsLoading(false)
-        return
-      }
       toast.error(t('auth.sendError'))
       setIsLoading(false)
     }
@@ -147,38 +122,10 @@ export default function LoginPage() {
 
   const handleGuestMode = () => {
     enableGuestMode()
-    toast.success(t('auth.guestModeEnabled'))
-    router.push('/')
+    // No toast - just navigate
+    router.replace('/')
   }
 
-  const handleDevBypass = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    const isDevMode = process.env.NODE_ENV === 'development'
-    const allowTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_MODE === 'true'
-    
-    if (isDevMode || allowTestMode) {
-      try {
-        console.log('Setting dev bypass flag...')
-        sessionStorage.setItem('dev-bypass-auth', 'true')
-        console.log('Dev bypass enabled, redirecting to home...')
-        toast.success(t('auth.devBypassMessage'))
-        // Force a full page reload to ensure AuthGuard picks up the change
-        setTimeout(() => {
-          window.location.href = '/'
-        }, 100)
-      } catch (err) {
-        console.error('Error in dev bypass:', err)
-        toast.error(t('auth.devBypassError'))
-      }
-    } else {
-      toast.error(t('auth.devModeOnly'))
-    }
-  }
-
-  const isDevMode = process.env.NODE_ENV === 'development'
-  const allowTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_MODE === 'true'
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -202,7 +149,7 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 authMethod === 'phone'
-                  ? 'bg-cta-primary text-cta-text'
+                  ? 'bg-cta-primary text-cta-text font-semibold border-2 border-cta-primary'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
@@ -216,27 +163,14 @@ export default function LoginPage() {
               }}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 authMethod === 'email'
-                  ? 'bg-cta-primary text-cta-text'
+                  ? 'bg-cta-primary text-cta-text font-semibold border-2 border-cta-primary'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {t('auth.emailMagicLink')}
+              {t('auth.emailSignInLink')}
             </button>
           </div>
 
-          {(isDevMode || allowTestMode) && (
-            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-sm text-amber-800 mb-3">
-                <strong>{t('auth.devModeTitle')}:</strong> {t('auth.devModeDescription')}
-              </p>
-              <Button
-                onClick={handleDevBypass}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                {t('auth.skipLoginButton')}
-              </Button>
-            </div>
-          )}
 
           {/* Phone OTP Form */}
           {authMethod === 'phone' && !emailSent && (
@@ -299,7 +233,7 @@ export default function LoginPage() {
                 disabled={isLoading || !email}
                 className="w-full h-12 bg-cta-primary hover:bg-cta-hover text-cta-text font-semibold"
               >
-                {isLoading ? t('auth.sending') : t('auth.sendMagicLink')}
+                {isLoading ? t('auth.sending') : t('auth.sendSignInLink')}
               </Button>
             </form>
           )}
@@ -309,7 +243,7 @@ export default function LoginPage() {
             <div className="space-y-6">
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800 mb-4">
-                  {t('auth.magicLinkSentMessage')}
+                  {t('auth.signInLinkSentMessage')}
                 </p>
                 <Button
                   onClick={() => {
@@ -341,7 +275,7 @@ export default function LoginPage() {
         </div>
         <div className="text-center text-sm text-text-secondary mt-4">
           <Link href="/about" className="text-[#29978C] font-semibold hover:underline">
-            What is Tally?
+            {t('onboarding.about.title')}
           </Link>
         </div>
       </div>

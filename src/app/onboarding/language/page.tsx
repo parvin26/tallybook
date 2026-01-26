@@ -21,7 +21,7 @@ export default function LanguageSelectionPage() {
   useEffect(() => {
     // Get selected country
     if (typeof window !== 'undefined') {
-      const country = localStorage.getItem('tally-onboarding-country')
+      const country = localStorage.getItem('tally-country')
       
       // If no country, redirect back to country selection
       if (!country || (country !== 'malaysia' && country !== 'sierra-leone')) {
@@ -53,7 +53,8 @@ export default function LanguageSelectionPage() {
     if (selectedLanguage) {
       localStorage.setItem('tally-language', selectedLanguage)
       i18n.changeLanguage(selectedLanguage)
-      router.push('/onboarding/about')
+      // Onboarding complete - redirect to home
+      router.push('/')
     }
   }
 

@@ -20,13 +20,13 @@
     "phone": "Phone Number",
     "email": "Email",
     "phoneOTP": "Phone OTP",
-    "emailMagicLink": "Email Link",
+    "emailSignInLink": "Email Link",
     "sendOTP": "Send OTP Code",
-    "sendMagicLink": "Send Magic Link",
+    "sendSignInLink": "Send Sign In Link",
     "verifyOTP": "Verify OTP Code",
     "otpSent": "Code has been sent",
-    "magicLinkSent": "Magic link sent to your email",
-    "magicLinkSentMessage": "We've sent a magic link to your email. Click the link to sign in. Check your spam folder if you don't see it.",
+    "signInLinkSent": "Sign in link sent to your email",
+    "signInLinkSentMessage": "We've sent a sign in link to your email. Click the link to sign in. Check your spam folder if you don't see it.",
     "backToLogin": "Back to Login",
     "enterOTP": "Enter 6-digit code",
     "resendOTP": "Send new code",
@@ -327,6 +327,28 @@
       "paymentMethodCashGuidance": "High cash usage may affect cash flow visibility"
     }
   },
+  "intro": {
+    "slides": {
+      "1": {
+        "title": "Record money as it moves",
+        "body": "Add sales and expenses as they happen. Each entry keeps your notebook up to date."
+      },
+      "2": {
+        "title": "See where you stand today",
+        "body": "Check cash in cash out and balance at a glance. No calculations needed."
+      },
+      "3": {
+        "title": "Keep track of what is owed",
+        "body": "See who owes you and what you need to pay. Nothing gets missed."
+      }
+    },
+    "actions": {
+      "next": "Next",
+      "getStarted": "Get Started",
+      "skip": "Skip",
+      "closeAria": "Close intro"
+    }
+  },
   "welcome": {
     "title": "Welcome to TALLY",
     "subtitle": "Digital account book for small businesses",
@@ -549,6 +571,7 @@
     "cancel": "Cancel",
     "profileSaved": "Profile saved",
     "showIntro": "Show Intro",
+    "showIntroDesc": "View the intro again",
     "support": "Support",
     "about": "About Tally",
     "aboutDesc": "Learn what Tally is about",

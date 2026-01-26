@@ -52,7 +52,7 @@ export default function CountrySelectionPage() {
   useEffect(() => {
     // Load stored country on mount
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('tally-onboarding-country')
+      const stored = localStorage.getItem('tally-country')
       if (stored && (stored === 'malaysia' || stored === 'sierra-leone')) {
         setSelectedCountry(stored)
       }
@@ -72,7 +72,7 @@ export default function CountrySelectionPage() {
     setShowComingSoonMessage(false)
     setSelectedCountry(value)
     // Persist immediately
-    localStorage.setItem('tally-onboarding-country', value)
+    localStorage.setItem('tally-country', value)
     console.log('[Country] selectedCountry set to:', value)
   }
 

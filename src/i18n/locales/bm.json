@@ -40,6 +40,7 @@
     "save": "Simpan",
     "saveProfile": "Simpan Profil",
     "showIntro": "Tunjukkan Pengenalan",
+    "showIntroDesc": "Lihat pengenalan sekali lagi",
     "state": "Negeri/Wilayah",
     "statePlaceholder": "Contoh: Selangor",
     "support": "Sokongan",
@@ -68,11 +69,22 @@
     "otpPlaceholder": 123456,
     "otpSent": "Kod telah dihantar",
     "phone": "Nombor Telefon",
+    "phoneOTP": "OTP Telefon",
+    "email": "Emel",
+    "emailSignInLink": "Pautan Emel",
+    "emailPlaceholder": "anda@emel.com",
     "phonePlaceholder": "012-345 6789",
     "resendOTP": "Hantar kod baru",
     "sendError": "Tak dapat hantar OTP. Cuba lagi.",
     "sendOTP": "Hantar Kod OTP",
+    "sendSignInLink": "Hantar Pautan Log Masuk",
     "sending": "Menghantar...",
+    "invalidEmail": "Masukkan alamat emel yang sah",
+    "signInLinkSent": "Pautan log masuk telah dihantar ke emel anda",
+    "signInLinkSentMessage": "Kami telah menghantar pautan log masuk ke emel anda. Klik pautan untuk log masuk. Semak folder spam jika anda tidak melihatnya.",
+    "backToLogin": "Kembali ke Log Masuk",
+    "continueWithoutLogin": "Teruskan tanpa log masuk",
+    "guestModeDescription": "Gunakan Tally tanpa akaun. Data disimpan pada peranti ini sahaja.",
     "skipLoginButton": "Langkau Log Masuk (Ujian)",
     "testModeMessage": "Mod ujian: Langkau OTP. Gunakan kod ujian: {{code}}",
     "verifyError": "Tak dapat sahkan. Cuba lagi.",
@@ -608,6 +620,28 @@
   "warnings": {
     "lowStock": "Stok rendah untuk {{item}}",
     "stockNotUpdated": "Jualan disimpan. Stok tidak dikemaskini."
+  },
+  "intro": {
+    "slides": {
+      "1": {
+        "title": "Rekod wang semasa ia bergerak",
+        "body": "Tambah jualan dan belanja semasa ia berlaku. Setiap entri memastikan buku nota anda sentiasa terkini."
+      },
+      "2": {
+        "title": "Lihat kedudukan anda hari ini",
+        "body": "Semak wang masuk, wang keluar dan baki pada satu pandangan. Tiada pengiraan diperlukan."
+      },
+      "3": {
+        "title": "Kekalkan rekod apa yang terhutang",
+        "body": "Lihat siapa yang berhutang dengan anda dan apa yang perlu anda bayar. Tiada yang terlepas."
+      }
+    },
+    "actions": {
+      "next": "Seterusnya",
+      "getStarted": "Mula Guna",
+      "skip": "Langkau",
+      "closeAria": "Tutup pengenalan"
+    }
   },
   "welcome": {
     "getStarted": "Mula Guna",

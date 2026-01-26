@@ -1,38 +1,18 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useTodayProfit } from '@/hooks/useTodayProfit'
 import { useTransactions } from '@/hooks/useTransactions'
 import { TransactionListLovable } from '@/components/TransactionListLovable'
 import { AppShell } from '@/components/AppShell'
 import { HomeHeader } from '@/components/HomeHeader'
 import { SummaryCardLovable } from '@/components/SummaryCardLovable'
-// OnboardingOverlay removed - onboarding handled by linear pages (/onboarding/*) and welcome modal (/welcome)
-// import { OnboardingOverlay } from '@/components/OnboardingOverlay'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 
 export default function MainPage() {
   const { t } = useTranslation()
-  const router = useRouter()
   const { data: profitData, isLoading: profitLoading } = useTodayProfit()
   const { data: transactions, isLoading: transactionsLoading, error: transactionsError } = useTransactions()
-
-  // Check onboarding completion on mount
-  // Note: AuthGuard also enforces onboarding completion, this is a secondary check
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const onboardingCompleted = localStorage.getItem('tally_onboarding_completed') === 'true'
-      if (!onboardingCompleted) {
-        // Check if country is selected
-        const country = localStorage.getItem('tally-onboarding-country')
-        if (!country) {
-          router.push('/onboarding/country')
-        }
-      }
-    }
-  }, [router])
 
   const revenue = profitData?.revenue || 0
   const expenses = profitData?.expenses || 0
@@ -92,7 +72,6 @@ export default function MainPage() {
           </div>
         </div>
       </AppShell>
-      {/* OnboardingOverlay removed - onboarding handled by /onboarding/* pages and /welcome modal */}
     </>
   )
 }

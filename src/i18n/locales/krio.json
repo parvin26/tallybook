@@ -18,7 +18,12 @@
   "auth": {
     "login": "",
     "phone": "",
+    "phoneOTP": "",
+    "email": "",
+    "emailSignInLink": "",
+    "emailPlaceholder": "",
     "sendOTP": "",
+    "sendSignInLink": "",
     "verifyOTP": "",
     "otpSent": "",
     "enterOTP": "",
@@ -29,10 +34,16 @@
     "sending": "",
     "verifying": "",
     "invalidPhone": "",
+    "invalidEmail": "",
     "invalidOTP": "",
     "verifyError": "",
     "loginSuccess": "",
     "sendError": "",
+    "signInLinkSent": "",
+    "signInLinkSentMessage": "",
+    "backToLogin": "",
+    "continueWithoutLogin": "",
+    "guestModeDescription": "",
     "testModeMessage": "",
     "devModeTitle": "",
     "devModeDescription": "",
@@ -247,6 +258,28 @@
     "betterConsistency": "",
     "betterClarity": "",
     "keepGoing": ""
+  },
+  "intro": {
+    "slides": {
+      "1": {
+        "title": "Rekod moni wen i de muv",
+        "body": "Ad sel an ekspens wen dɛm de apen. Evri entri mek yu notbuk de ap tu det."
+      },
+      "2": {
+        "title": "Si we yu de tude",
+        "body": "Chek cash in, cash out an balans wan luk. No kalkuleshon nid."
+      },
+      "3": {
+        "title": "Kip rekod fɔ wetin de o",
+        "body": "Si u de o yu an wetin yu nid fɔ pe. Notin go mis."
+      }
+    },
+    "actions": {
+      "next": "",
+      "getStarted": "",
+      "skip": "",
+      "closeAria": ""
+    }
   },
   "welcome": {
     "title": "",
@@ -474,6 +507,7 @@
     "cancel": "",
     "profileSaved": "",
     "showIntro": "",
+    "showIntroDesc": "",
     "support": "",
     "about": "",
     "aboutDesc": "",
@@ -567,13 +601,13 @@
     },
     "balance": {
       "inventory": {
-        "label": "Stɔk",
-        "estimatedLabel": "Stɔk (Ɛstimɛt)",
-        "manualLabel": "Stɔk (Manual)",
-        "estimatedHelper": "Dis stɔk valyu na ɛstimɛt tin yu rɛkɔd di prais fɔ stɔk yu buy.",
-        "estimatedInfo": "Sɔm item dɛm nɔ get rɛkɔd fɔ wetin dɛm buy am. Dis ɛstimɛt go chenj awtomatik wen yu ad di prais.",
-        "manualHelper": "Yu chenj dis valyu manwɛl.",
-        "manualInfo": "Manual valyu go ovayrayd di kalkuleshɔn fɔ dis rɛpɔt nɔto."
+        "label": "Stok",
+        "estimatedLabel": "Stok (Estimet)",
+        "manualLabel": "Stok (Manual)",
+        "estimatedHelper": "Dis stok valyu na estimet tin yu rekod di prais fo stok yu buy.",
+        "estimatedInfo": "Som item dem no get rekod fo wetin dem buy am. Dis estimet go chenj awtomatik wen yu ad di prais.",
+        "manualHelper": "Yu chenj dis valyu manwel.",
+        "manualInfo": "Manual valyu go ovayrayd di kalkuleshon fo dis repot noto."
       }
     },
     "businessHealth": {
