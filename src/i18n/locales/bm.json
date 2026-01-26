@@ -353,6 +353,17 @@
       "totalEquity": "Jumlah Ekuiti",
       "totalLiabilities": "Jumlah Liabiliti"
     },
+    "balance": {
+      "inventory": {
+        "label": "Inventori",
+        "estimatedLabel": "Inventori (Anggaran)",
+        "manualLabel": "Inventori (Manual)",
+        "estimatedHelper": "Nilai inventori adalah anggaran sehingga kos pembelian stok direkodkan.",
+        "estimatedInfo": "Sebahagian item tidak mempunyai kos pembelian yang direkodkan. Anggaran ini akan dikemas kini secara automatik apabila kos ditambah.",
+        "manualHelper": "Nilai ini telah dilaras secara manual.",
+        "manualInfo": "Nilai manual menggantikan pengiraan inventori untuk laporan ini sahaja."
+      }
+    },
     "businessHealth": {
       "cashIn": "Wang masuk",
       "cashOut": "Wang keluar",

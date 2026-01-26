@@ -10,7 +10,7 @@ import { format, subDays, startOfToday, startOfWeek, endOfWeek, startOfMonth, en
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Download, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Download, CheckCircle2, AlertCircle, Edit2 } from 'lucide-react'
 import { AppShell } from '@/components/AppShell'
 import { generateBalanceSheetPDF } from '@/lib/pdf-generator'
 import { getBusinessProfile } from '@/lib/businessProfile'
@@ -63,34 +63,126 @@ export default function BalanceSheetPage() {
 
       if (!transactions) return null
 
-      // Get inventory items and calculate total inventory value
+      // Calculate inventory value using Last Purchase Cost per Item method
       let inventoryValue = 0
-      try {
-        const inventoryItems = await getInventoryItems(currentBusiness.id)
-        // For MVP, calculate inventory value as sum of (quantity * estimated unit cost)
-        // We'll use a simple approach: assume average cost from stock purchase transactions
-        const stockPurchases = transactions.filter(
-          t => t.transaction_type === 'expense' && t.expense_category === 'stock_purchase'
-        )
-        const totalStockPurchases = stockPurchases.reduce((sum, t) => sum + t.amount, 0)
-        const totalStockQuantity = inventoryItems.reduce((sum, item) => sum + item.quantity, 0)
-        
-        // Simple valuation: if we have stock purchases, use average cost per unit
-        // Otherwise, use a placeholder calculation
-        if (totalStockQuantity > 0 && stockPurchases.length > 0) {
-          const avgCostPerUnit = totalStockPurchases / (totalStockQuantity + stockPurchases.length)
-          inventoryValue = totalStockQuantity * avgCostPerUnit
-        } else {
-          // Fallback: use 50% of stock purchases as inventory value
-          inventoryValue = totalStockPurchases * 0.5
+      let isInventoryEstimated = false
+      let hasManualOverride = false
+      let manualOverrideValue = 0
+      
+      // Check for manual override
+      if (typeof window !== 'undefined') {
+        const override = localStorage.getItem('tally-inventory-manual-override')
+        if (override) {
+          try {
+            const parsed = JSON.parse(override)
+            if (parsed.value !== undefined && parsed.value !== null) {
+              manualOverrideValue = parseFloat(parsed.value) || 0
+              hasManualOverride = true
+            }
+          } catch (e) {
+            // Invalid override, ignore
+          }
         }
-      } catch (error) {
-        console.error('[BalanceSheet] Error calculating inventory:', error)
-        // Fallback to transaction-based calculation
-        const stockPurchases = transactions.filter(
-          t => t.transaction_type === 'expense' && t.expense_category === 'stock_purchase'
-        )
-        inventoryValue = stockPurchases.reduce((sum, t) => sum + t.amount, 0) * 0.5
+      }
+      
+      if (hasManualOverride) {
+        inventoryValue = manualOverrideValue
+      } else {
+        try {
+          const inventoryItems = await getInventoryItems(currentBusiness.id)
+          
+          // Get all inventory movements up to as at date
+          // Handle both occurred_at (new schema) and created_at (old schema) for compatibility
+          const { data: movements } = await supabase
+            .from('inventory_movements')
+            .select('*')
+            .eq('business_id', currentBusiness.id)
+            .order('created_at', { ascending: true })
+          
+          // Filter movements by date (use occurred_at if available, otherwise created_at)
+          const filteredMovements = (movements || []).filter(m => {
+            const movementDate = m.occurred_at || m.created_at
+            if (!movementDate) return false
+            const movementDateStr = new Date(movementDate).toISOString().split('T')[0]
+            return movementDateStr <= asAtDateStr
+          })
+          
+          // Get all stock purchase transactions (expenses with stock_purchase category)
+          const stockPurchaseTransactions = transactions.filter(
+            t => t.transaction_type === 'expense' && t.expense_category === 'stock_purchase'
+          )
+          
+          // Create a map of transaction ID to transaction for quick lookup
+          const transactionMap = new Map(stockPurchaseTransactions.map(t => [t.id, t]))
+          
+          // Calculate inventory value per item
+          for (const item of inventoryItems) {
+            // Step 1: Calculate unitsOnHand from movements
+            const itemMovements = filteredMovements.filter(m => m.inventory_item_id === item.id)
+            let unitsOnHand = 0
+            
+            for (const movement of itemMovements) {
+              // Handle both quantity_delta (new schema) and quantity (old schema)
+              const delta = movement.quantity_delta !== undefined ? movement.quantity_delta : movement.quantity
+              unitsOnHand += delta || 0
+            }
+            
+            // If unitsOnHand <= 0, inventory value is 0
+            if (unitsOnHand <= 0) {
+              continue
+            }
+            
+            // Step 2: Find stock purchase transactions linked to this item via movements
+            const purchaseMovements = itemMovements.filter(m => {
+              const movementType = m.movement_type || ''
+              return (movementType === 'expense_addition' || movementType === 'restock_add') && 
+                     m.related_transaction_id
+            })
+            
+            // Step 3: Sort purchase movements by transaction date (most recent first)
+            const purchaseMovementsWithTransactions = purchaseMovements
+              .map(m => {
+                const transaction = transactionMap.get(m.related_transaction_id)
+                if (!transaction) return null
+                return {
+                  movement: m,
+                  transaction,
+                  transactionDate: new Date(transaction.transaction_date)
+                }
+              })
+              .filter(Boolean)
+              .sort((a, b) => b!.transactionDate.getTime() - a!.transactionDate.getTime())
+            
+            // Step 4: Take the most recent purchase
+            if (purchaseMovementsWithTransactions.length > 0) {
+              const mostRecent = purchaseMovementsWithTransactions[0]!
+              const movement = mostRecent.movement
+              const purchaseTransaction = mostRecent.transaction
+              
+              // Step 5: Calculate unitCost
+              const purchaseQuantity = Math.abs(movement.quantity_delta !== undefined ? movement.quantity_delta : movement.quantity)
+              
+              if (purchaseQuantity > 0) {
+                const unitCost = purchaseTransaction.amount / purchaseQuantity
+                
+                // Step 6: Calculate itemInventoryValue
+                const itemInventoryValue = unitsOnHand * unitCost
+                inventoryValue += itemInventoryValue
+              } else {
+                // Invalid purchase quantity, mark as estimated
+                isInventoryEstimated = true
+              }
+            } else {
+              // No purchase record found for this item, mark as estimated
+              isInventoryEstimated = true
+            }
+          }
+        } catch (error) {
+          console.error('[BalanceSheet] Error calculating inventory:', error)
+          // On error, set to 0 and mark as estimated
+          inventoryValue = 0
+          isInventoryEstimated = true
+        }
       }
 
       // Calculate Assets
@@ -207,6 +299,11 @@ export default function BalanceSheetPage() {
         },
         balanceCheck,
         isBalanced,
+        inventory: {
+          value: inventoryValue,
+          isEstimated: isInventoryEstimated && !hasManualOverride,
+          isManual: hasManualOverride,
+        },
       }
     },
     enabled: !!currentBusiness?.id,
@@ -334,9 +431,58 @@ export default function BalanceSheetPage() {
                 <span className="text-[var(--tally-text)]">{t('report.balanceSheet.bankAccount')}</span>
                 <span className="text-[var(--tally-text)]">{formatCurrency(balanceData.assets.bank)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--tally-text)]">{t('report.balanceSheet.inventoryValue')}</span>
-                <span className="text-[var(--tally-text)]">{formatCurrency(balanceData.assets.inventory)}</span>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[var(--tally-text)]">
+                      {balanceData.inventory?.isManual
+                        ? t('balance.inventory.manualLabel')
+                        : balanceData.inventory?.isEstimated
+                        ? t('balance.inventory.estimatedLabel')
+                        : t('balance.inventory.label')}
+                    </span>
+                    {balanceData.inventory?.isManual && (
+                      <button
+                        onClick={() => {
+                          if (typeof window !== 'undefined' && confirm('Remove manual override and use calculated value?')) {
+                            localStorage.removeItem('tally-inventory-manual-override')
+                            window.location.reload()
+                          }
+                        }}
+                        className="p-1 hover:bg-[var(--tally-surface-2)] rounded"
+                        title={t('balance.inventory.manualInfo')}
+                      >
+                        <Edit2 className="w-3 h-3 text-[var(--tally-text-muted)]" />
+                      </button>
+                    )}
+                    {!balanceData.inventory?.isManual && (
+                      <button
+                        onClick={() => {
+                          const value = prompt('Enter manual inventory value:', balanceData.assets.inventory.toString())
+                          if (value !== null) {
+                            const numValue = parseFloat(value)
+                            if (!isNaN(numValue)) {
+                              localStorage.setItem('tally-inventory-manual-override', JSON.stringify({ value: numValue }))
+                              window.location.reload()
+                            }
+                          }
+                        }}
+                        className="p-1 hover:bg-[var(--tally-surface-2)] rounded"
+                        title="Set manual inventory value"
+                      >
+                        <Edit2 className="w-3 h-3 text-[var(--tally-text-muted)]" />
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-[var(--tally-text)]">{formatCurrency(balanceData.assets.inventory)}</span>
+                </div>
+                {(balanceData.inventory?.isEstimated || balanceData.inventory?.isManual) && (
+                  <p className="text-xs text-[var(--tally-text-muted)] pl-0">
+                    {balanceData.inventory.isManual
+                      ? t('balance.inventory.manualHelper')
+                      : t('balance.inventory.estimatedHelper')}
+                  </p>
+                )}
               </div>
             </div>
             <div className="pt-2 border-t border-[var(--tally-border)]">

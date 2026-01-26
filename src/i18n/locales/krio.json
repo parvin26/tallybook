@@ -565,6 +565,17 @@
       "notBalanced": "",
       "balanceHint": ""
     },
+    "balance": {
+      "inventory": {
+        "label": "Stɔk",
+        "estimatedLabel": "Stɔk (Ɛstimɛt)",
+        "manualLabel": "Stɔk (Manual)",
+        "estimatedHelper": "Dis stɔk valyu na ɛstimɛt tin yu rɛkɔd di prais fɔ stɔk yu buy.",
+        "estimatedInfo": "Sɔm item dɛm nɔ get rɛkɔd fɔ wetin dɛm buy am. Dis ɛstimɛt go chenj awtomatik wen yu ad di prais.",
+        "manualHelper": "Yu chenj dis valyu manwɛl.",
+        "manualInfo": "Manual valyu go ovayrayd di kalkuleshɔn fɔ dis rɛpɔt nɔto."
+      }
+    },
     "businessHealth": {
       "title": "",
       "period": "",

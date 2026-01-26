@@ -8,7 +8,8 @@ import { TransactionListLovable } from '@/components/TransactionListLovable'
 import { AppShell } from '@/components/AppShell'
 import { HomeHeader } from '@/components/HomeHeader'
 import { SummaryCardLovable } from '@/components/SummaryCardLovable'
-import { OnboardingOverlay } from '@/components/OnboardingOverlay'
+// OnboardingOverlay removed - onboarding handled by linear pages (/onboarding/*) and welcome modal (/welcome)
+// import { OnboardingOverlay } from '@/components/OnboardingOverlay'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 
@@ -19,6 +20,7 @@ export default function MainPage() {
   const { data: transactions, isLoading: transactionsLoading, error: transactionsError } = useTransactions()
 
   // Check onboarding completion on mount
+  // Note: AuthGuard also enforces onboarding completion, this is a secondary check
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const onboardingCompleted = localStorage.getItem('tally_onboarding_completed') === 'true'
@@ -90,7 +92,7 @@ export default function MainPage() {
           </div>
         </div>
       </AppShell>
-      <OnboardingOverlay />
+      {/* OnboardingOverlay removed - onboarding handled by /onboarding/* pages and /welcome modal */}
     </>
   )
 }

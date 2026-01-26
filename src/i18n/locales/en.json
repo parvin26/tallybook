@@ -640,6 +640,17 @@
       "notBalanced": "Not balanced",
       "balanceHint": "Check opening balances and inventory value."
     },
+    "balance": {
+      "inventory": {
+        "label": "Inventory",
+        "estimatedLabel": "Inventory (Estimated)",
+        "manualLabel": "Inventory (Manual)",
+        "estimatedHelper": "Inventory value is estimated until stock purchase costs are recorded.",
+        "estimatedInfo": "Some items do not have recorded purchase costs. This estimate will update automatically when costs are added.",
+        "manualHelper": "This value was manually adjusted.",
+        "manualInfo": "Manual values override calculated inventory for this report only."
+      }
+    },
     "businessHealth": {
       "title": "Business Health",
       "period": "Period",
