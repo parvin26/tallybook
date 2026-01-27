@@ -4,24 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const STORAGE_KEY = "tally_intro_seen";
-
-// Hardcoded English text for intro (no i18n - shows before language selection)
-const slideTexts = [
-  {
-    title: 'Record money as it moves',
-    body: 'Add sales and expenses as they happen. Each entry keeps your notebook up to date.',
-  },
-  {
-    title: 'See where you stand today',
-    body: 'Check cash in cash out and balance at a glance. No calculations needed.',
-  },
-  {
-    title: 'Keep track of what is owed',
-    body: 'See who owes you and what you need to pay. Nothing gets missed.',
-  },
-];
 
 const slides = [
   {
@@ -35,6 +20,14 @@ const slides = [
   {
     id: 3,
     visual: "obligations" as const,
+  },
+  {
+    id: 4,
+    visual: "patterns" as const,
+  },
+  {
+    id: 5,
+    visual: "flexible" as const,
   },
 ];
 
@@ -85,7 +78,7 @@ function SummaryVisual() {
   );
 }
 
-// Visual block for slide 3 - Obligations
+// Visual block for slide 3 - Daily clarity
 function ObligationsVisual() {
   return (
     <div className="w-full max-w-[280px] rounded-2xl border border-border bg-card overflow-hidden">
@@ -99,7 +92,32 @@ function ObligationsVisual() {
   );
 }
 
-function renderVisualBlock(visual: "recording" | "summary" | "obligations") {
+// Visual block for slide 4 - Patterns
+function PatternsVisual() {
+  return (
+    <div className="w-full max-w-[280px] rounded-2xl border border-border bg-card p-4">
+      <div className="space-y-2">
+        <div className="h-2 bg-primary/20 rounded-full" />
+        <div className="h-2 bg-primary/30 rounded-full w-3/4" />
+        <div className="h-2 bg-primary/20 rounded-full w-1/2" />
+      </div>
+    </div>
+  );
+}
+
+// Visual block for slide 5 - Flexible usage
+function FlexibleVisual() {
+  return (
+    <div className="w-full max-w-[280px] rounded-2xl border border-border bg-card p-4">
+      <div className="text-center space-y-2">
+        <div className="text-2xl">📱</div>
+        <div className="text-xs text-muted-foreground">Use anytime</div>
+      </div>
+    </div>
+  );
+}
+
+function renderVisualBlock(visual: "recording" | "summary" | "obligations" | "patterns" | "flexible") {
   switch (visual) {
     case "recording":
       return <RecordingVisual />;
@@ -107,6 +125,10 @@ function renderVisualBlock(visual: "recording" | "summary" | "obligations") {
       return <SummaryVisual />;
     case "obligations":
       return <ObligationsVisual />;
+    case "patterns":
+      return <PatternsVisual />;
+    case "flexible":
+      return <FlexibleVisual />;
   }
 }
 
@@ -116,6 +138,7 @@ interface IntroOverlayProps {
 }
 
 export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -175,7 +198,9 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
   if (!isOpen) return null;
 
   const isLastSlide = currentSlide === slides.length - 1;
-  const currentText = slideTexts[currentSlide];
+  const slideNumber = currentSlide + 1;
+  const currentTitle = t(`intro.slide${slideNumber}.title`);
+  const currentBody = t(`intro.slide${slideNumber}.body`);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -197,7 +222,7 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent active:scale-95 transition-all"
-          aria-label="Close intro"
+          aria-label={t('common.close')}
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
@@ -210,10 +235,10 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
           {/* Text block */}
           <div className="text-center space-y-2">
             <h2 className="text-base font-semibold text-foreground leading-snug">
-              {currentText.title}
+              {currentTitle}
             </h2>
-            <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-[260px]">
-              {currentText.body}
+            <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-[260px] whitespace-pre-line">
+              {currentBody}
             </p>
           </div>
         </div>
@@ -243,14 +268,14 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
               onClick={handleNext}
               className="w-full tally-button-primary"
             >
-              {isLastSlide ? 'Get Started' : 'Next'}
+              {isLastSlide ? t('intro.getStarted') : t('intro.next')}
             </Button>
             
             <button
               onClick={handleSkip}
               className="w-full text-center text-sm font-medium text-muted-foreground py-2 hover:text-foreground transition-colors"
             >
-              Skip
+              {t('intro.skip')}
             </button>
           </div>
         </div>

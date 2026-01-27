@@ -76,7 +76,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     if (isGuest) {
       // Guest mode: allow access to app routes, block login/verify
       if (pathname === '/login' || pathname === '/verify') {
-        router.replace('/')
+        router.replace('/app')
       }
       return
     }
@@ -84,7 +84,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     // Skip auth checks in dev mode or test mode if bypass is enabled
     if ((isDevMode || allowTestMode) && devModeBypass) {
       if (pathname === '/login' || pathname === '/verify') {
-        router.replace('/')
+        router.replace('/app')
       }
       return
     }
@@ -99,7 +99,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     // Guest state - route to app home, block login/verify
     if (authMode === 'guest') {
       if (pathname === '/login' || pathname === '/verify') {
-        router.replace('/')
+        router.replace('/app')
         return
       }
       // Allow access to app routes in guest mode
@@ -109,7 +109,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     // Authenticated state - route to app home, block login/verify
     if (authMode === 'authenticated') {
       if (pathname === '/login' || pathname === '/verify') {
-        router.replace('/')
+        router.replace('/app')
         return
       }
     }
@@ -124,10 +124,11 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Unknown state after loading - do NOT redirect to login if on Home
-    // AuthGuard must not block access to / (Home)
-    // Only redirect to login if not on Home and not authenticated and not guest
-    if (authMode === 'unknown' && !authLoading && !isPublicRoute && !devModeBypass && pathname !== '/') {
+    // Unknown state after loading - do NOT redirect to login if on Home or /app
+    // AuthGuard must not block access to / (marketing) or /app (product)
+    // Only redirect to login if not on Home/app and not authenticated and not guest
+    const isAppRoute = pathname === '/' || pathname?.startsWith('/app')
+    if (authMode === 'unknown' && !authLoading && !isPublicRoute && !devModeBypass && !isAppRoute) {
       router.replace('/login')
       return
     }
@@ -147,9 +148,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // If logged in with business but on login/setup, redirect to home
+    // If logged in with business but on login/setup, redirect to app
     if (user && currentBusiness && (pathname === '/login' || pathname === '/verify' || pathname === '/setup')) {
-      router.replace('/')
+      router.replace('/app')
       return
     }
   }, [user, currentBusiness, authLoading, businessLoading, pathname, router, isDevMode, devModeBypass, isPublicRoute, isStaticPath, allowTestMode, authMode, onboardingRoutes, authTimeout])

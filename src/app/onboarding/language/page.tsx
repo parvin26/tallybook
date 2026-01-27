@@ -54,8 +54,13 @@ export default function LanguageSelectionPage() {
     if (selectedLanguage) {
       localStorage.setItem('tally-language', selectedLanguage)
       i18n.changeLanguage(selectedLanguage)
-      // Next always goes to /
-      router.push('/')
+      
+      // Check if intro has been seen
+      const introSeen = localStorage.getItem('tally_intro_seen')
+      
+      // If intro not seen, route to /app which will trigger intro overlay
+      // If intro already seen, go directly to /app
+      router.push('/app')
     }
   }
 

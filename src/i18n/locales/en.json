@@ -328,26 +328,29 @@
     }
   },
   "intro": {
-    "slides": {
-      "1": {
-        "title": "Record money as it moves",
-        "body": "Add sales and expenses as they happen. Each entry keeps your notebook up to date."
-      },
-      "2": {
-        "title": "See where you stand today",
-        "body": "Check cash in cash out and balance at a glance. No calculations needed."
-      },
-      "3": {
-        "title": "Keep track of what is owed",
-        "body": "See who owes you and what you need to pay. Nothing gets missed."
-      }
+    "slide1": {
+      "title": "A simple place to record today",
+      "body": "Write down what you sell\nAnd what you spend\nAs your day goes on"
     },
-    "actions": {
-      "next": "Next",
-      "getStarted": "Get Started",
-      "skip": "Skip",
-      "closeAria": "Close intro"
-    }
+    "slide2": {
+      "title": "No setup required",
+      "body": "No forms\nNo categories to learn\nJust open and record"
+    },
+    "slide3": {
+      "title": "See your day clearly",
+      "body": "At the end of the day\nYou know what happened\nWithout guessing"
+    },
+    "slide4": {
+      "title": "Things start to make sense",
+      "body": "After a few days\nPatterns appear\nWhere money comes in\nWhere it goes"
+    },
+    "slide5": {
+      "title": "Start where you are",
+      "body": "Use it daily\nOr only when you can\nTally works with you"
+    },
+    "next": "Next",
+    "skip": "Skip",
+    "getStarted": "Get started"
   },
   "welcome": {
     "title": "Welcome to TALLY",

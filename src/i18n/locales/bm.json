@@ -622,26 +622,29 @@
     "stockNotUpdated": "Jualan disimpan. Stok tidak dikemaskini."
   },
   "intro": {
-    "slides": {
-      "1": {
-        "title": "Rekod wang semasa ia bergerak",
-        "body": "Tambah jualan dan belanja semasa ia berlaku. Setiap entri memastikan buku nota anda sentiasa terkini."
-      },
-      "2": {
-        "title": "Lihat kedudukan anda hari ini",
-        "body": "Semak wang masuk, wang keluar dan baki pada satu pandangan. Tiada pengiraan diperlukan."
-      },
-      "3": {
-        "title": "Kekalkan rekod apa yang terhutang",
-        "body": "Lihat siapa yang berhutang dengan anda dan apa yang perlu anda bayar. Tiada yang terlepas."
-      }
+    "slide1": {
+      "title": "Tempat mudah untuk rekod hari ini",
+      "body": "Tulis apa yang anda jual\nDan apa yang anda belanja\nSemasa hari anda berjalan"
     },
-    "actions": {
-      "next": "Seterusnya",
-      "getStarted": "Mula Guna",
-      "skip": "Langkau",
-      "closeAria": "Tutup pengenalan"
-    }
+    "slide2": {
+      "title": "Tiada persediaan diperlukan",
+      "body": "Tiada borang\nTiada kategori untuk dipelajari\nHanya buka dan rekod"
+    },
+    "slide3": {
+      "title": "Lihat hari anda dengan jelas",
+      "body": "Pada akhir hari\nAnda tahu apa yang berlaku\nTanpa meneka"
+    },
+    "slide4": {
+      "title": "Perkara mula masuk akal",
+      "body": "Selepas beberapa hari\nCorak muncul\nDi mana wang masuk\nDi mana ia pergi"
+    },
+    "slide5": {
+      "title": "Mula di mana anda berada",
+      "body": "Gunakan setiap hari\nAtau hanya bila anda boleh\nTally bekerja dengan anda"
+    },
+    "next": "Seterusnya",
+    "skip": "Langkau",
+    "getStarted": "Mula guna"
   },
   "welcome": {
     "getStarted": "Mula Guna",

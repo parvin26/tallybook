@@ -69,17 +69,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Check intro status on mount - this happens BEFORE AuthGuard
-  // ONLY check: if tally_intro_seen is missing, show intro
-  // Do NOT depend on country or language
+  // Intro must depend on language being set - never show before language selection
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const introSeen = localStorage.getItem(INTRO_SEEN_KEY)
-      if (!introSeen) {
-        // First run - show intro overlay
+      const language = localStorage.getItem('tally-language')
+      
+      // Only show intro if:
+      // 1. Intro has not been seen (tally_intro_seen is missing)
+      // 2. Language is set (tally-language exists)
+      // This ensures intro never shows before language selection
+      if (!introSeen && language) {
+        // Language is set and intro not seen - show intro overlay
         setShowIntro(true)
         // Don't set introDecisionMade yet - wait for user to close intro
       } else {
-        // Intro already seen - allow rendering to proceed immediately
+        // Intro already seen OR language not set - allow rendering to proceed immediately
         setIntroDecisionMade(true)
       }
     } else {
@@ -92,23 +97,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(INTRO_SEEN_KEY, '1')
       
-      // After intro closes, route based on what's missing:
-      // if no tally-country go /onboarding/country
-      // else if no tally-language go /onboarding/language
-      // else go /
-      const country = localStorage.getItem('tally-country')
-      const language = localStorage.getItem('tally-language')
-      
-      if (!country) {
-        window.location.href = '/onboarding/country'
-        return
-      } else if (!language) {
-        window.location.href = '/onboarding/language'
-        return
-      } else {
-        window.location.href = '/'
-        return
-      }
+      // After intro closes, always route to /app (product)
+      // Intro only shows after language is set, so country and language should exist
+      window.location.href = '/app'
+      return
     }
     setShowIntro(false)
     setIntroDecisionMade(true)

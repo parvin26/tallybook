@@ -260,26 +260,29 @@
     "keepGoing": ""
   },
   "intro": {
-    "slides": {
-      "1": {
-        "title": "Rekod moni wen i de muv",
-        "body": "Ad sel an ekspens wen dɛm de apen. Evri entri mek yu notbuk de ap tu det."
-      },
-      "2": {
-        "title": "Si we yu de tude",
-        "body": "Chek cash in, cash out an balans wan luk. No kalkuleshon nid."
-      },
-      "3": {
-        "title": "Kip rekod fɔ wetin de o",
-        "body": "Si u de o yu an wetin yu nid fɔ pe. Notin go mis."
-      }
+    "slide1": {
+      "title": "Wan simpl ples fɔ rekod tide",
+      "body": "Rayt wetin yu sel\nAn wetin yu spen\nAz yu de go"
     },
-    "actions": {
-      "next": "",
-      "getStarted": "",
-      "skip": "",
-      "closeAria": ""
-    }
+    "slide2": {
+      "title": "No setap nid",
+      "body": "No fom\nNo kategori fɔ lan\nJus op an rekod"
+    },
+    "slide3": {
+      "title": "Si yu de klia",
+      "body": "Na di en fo di de\nYu no wetin apen\nWitout gessin"
+    },
+    "slide4": {
+      "title": "Tin dem stat fɔ mek sens",
+      "body": "Afta som de\nPatan de sho\nWe moni de kam in\nWe i de go"
+    },
+    "slide5": {
+      "title": "Stat we yu de",
+      "body": "Yu am evri de\nO na onli wen yu fit\nTally de wok wit yu"
+    },
+    "next": "Neks",
+    "skip": "Skip",
+    "getStarted": "Stat"
   },
   "welcome": {
     "title": "",
