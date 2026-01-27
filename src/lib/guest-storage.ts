@@ -45,6 +45,8 @@ export function isGuestMode(): boolean {
 export function enableGuestMode(): void {
   if (typeof window === 'undefined') return
   localStorage.setItem(GUEST_MODE_KEY, 'true')
+  // Dispatch custom event to notify AuthContext
+  window.dispatchEvent(new CustomEvent('guest-mode-changed', { detail: { enabled: true } }))
 }
 
 /**
@@ -55,6 +57,8 @@ export function disableGuestMode(): void {
   localStorage.removeItem(GUEST_MODE_KEY)
   localStorage.removeItem(GUEST_STORAGE_KEY)
   localStorage.removeItem(GUEST_BUSINESS_KEY)
+  // Dispatch custom event to notify AuthContext
+  window.dispatchEvent(new CustomEvent('guest-mode-changed', { detail: { enabled: false } }))
 }
 
 /**

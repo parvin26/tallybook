@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
+// Use official keys: tally-country, tally-language
 
 const ALL_LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -19,7 +20,7 @@ export default function LanguageSelectionPage() {
   const [availableLanguages, setAvailableLanguages] = useState(ALL_LANGUAGES)
 
   useEffect(() => {
-    // Get selected country
+    // Get selected country from official key
     if (typeof window !== 'undefined') {
       const country = localStorage.getItem('tally-country')
       
@@ -38,7 +39,7 @@ export default function LanguageSelectionPage() {
       }
       setAvailableLanguages(filtered)
 
-      // Get current language or default to first available
+      // Get current language from official key or default to first available
       const stored = localStorage.getItem('tally-language')
       if (stored && filtered.some(l => l.code === stored)) {
         setSelectedLanguage(stored)
@@ -53,18 +54,18 @@ export default function LanguageSelectionPage() {
     if (selectedLanguage) {
       localStorage.setItem('tally-language', selectedLanguage)
       i18n.changeLanguage(selectedLanguage)
-      // Onboarding complete - redirect to home
+      // Next always goes to /
       router.push('/')
     }
   }
 
   return (
-    <div className="min-h-screen bg-[var(--tally-surface,#FAF9F7)] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
         {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-[var(--tally-text-muted)] hover:text-[var(--tally-text)]"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <span>‹</span>
           <span>{t('common.back')}</span>
@@ -72,33 +73,33 @@ export default function LanguageSelectionPage() {
 
         {/* Branding */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-[#29978C]">TALLY</h1>
-          <p className="text-sm text-[var(--tally-text-muted)]">{t('onboarding.tagline')}</p>
+          <h1 className="text-3xl font-bold text-primary">TALLY</h1>
+          <p className="text-sm text-muted-foreground">{t('onboarding.tagline')}</p>
         </div>
 
         {/* Question */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-[var(--tally-text)] text-center">
+          <h2 className="text-xl font-semibold text-foreground text-center">
             {t('onboarding.language.question')}
           </h2>
           
-          {/* Language Options */}
+          {/* Language Options - Selection Cards Pattern */}
           <div className="space-y-3">
             {availableLanguages.map((language) => (
               <button
                 key={language.code}
                 onClick={() => setSelectedLanguage(language.code)}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                   selectedLanguage === language.code
-                    ? 'bg-[rgba(41,151,140,0.12)] border-[#29978C] text-[#29978C]'
-                    : 'bg-white border-[var(--tally-border)] text-[var(--tally-text)] hover:border-[var(--tally-text-muted)]'
+                    ? 'bg-accent border-primary text-foreground'
+                    : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{language.name}</span>
                   {selectedLanguage === language.code && (
-                    <div className="w-5 h-5 rounded-full bg-[#29978C] flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="w-3 h-3 text-primary-foreground" />
                     </div>
                   )}
                 </div>
@@ -111,7 +112,7 @@ export default function LanguageSelectionPage() {
         <Button
           onClick={handleContinue}
           disabled={!selectedLanguage}
-          className="w-full h-12 bg-[#29978C] hover:bg-[#238579] text-white disabled:bg-[#E5E7EB] disabled:text-[#9CA3AF]"
+          className="tally-button-primary w-full h-12"
         >
           {t('common.next')}
         </Button>

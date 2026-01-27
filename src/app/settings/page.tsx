@@ -13,13 +13,14 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AppShell } from '@/components/AppShell'
-import { Globe, Download, MessageCircle, FileText, LogOut, Upload, Camera, X, Building2, User as UserIcon, MapPin, Tag, HelpCircle, Shield, Mail, Play, Smartphone } from 'lucide-react'
+import { Globe, Download, MessageCircle, FileText, LogOut, Upload, Camera, X, Building2, User as UserIcon, MapPin, Tag, HelpCircle, Shield, Mail, Play, Smartphone, Check } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getBusinessProfile, saveBusinessProfile, BusinessProfile } from '@/lib/businessProfile'
 import { canInstall, isIOS, isStandalone, promptInstall } from '@/lib/pwa'
 import { isGuestMode } from '@/lib/guest-storage'
 import { useIntroContext } from '@/contexts/IntroContext'
+// Use official keys: tally-country, tally-language
 
 export default function AccountPage() {
   const router = useRouter()
@@ -32,6 +33,7 @@ export default function AccountPage() {
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false)
   const [isIOSModalOpen, setIsIOSModalOpen] = useState(false)
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
+  const [isCountryModalOpen, setIsCountryModalOpen] = useState(false)
   const { openIntro } = useIntroContext()
   const [profile, setProfile] = useState<BusinessProfile | null>(null)
   const [profileEditData, setProfileEditData] = useState<BusinessProfile>({
@@ -126,7 +128,7 @@ export default function AccountPage() {
     setIsLanguageModalOpen(false) // Close modal first
     try {
       i18n.changeLanguage(lang).then(() => {
-        localStorage.setItem('tally-language', lang)
+        localStorage.setItem('tally-language', lang) // Use official key
         let message = t('settings.languageChangedEn')
         if (lang === 'bm') {
           message = t('settings.languageChanged')
@@ -145,6 +147,14 @@ export default function AccountPage() {
       console.error('Error changing language:', err)
       toast.error(t('settings.languageError'))
     }
+  }
+
+  const handleCountryChange = (country: string) => {
+    setIsCountryModalOpen(false)
+    localStorage.setItem('tally-country', country) // Use official key
+    toast.success(t('settings.countryChanged', { defaultValue: 'Country updated' }))
+    // Refresh to update UI
+    window.location.reload()
   }
 
   const getCurrentLanguageName = (): string => {
@@ -431,27 +441,40 @@ export default function AccountPage() {
               {/* Country */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-[#29978C]" />
+                  <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-5 h-5 text-foreground" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.country')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">
-                      {profile?.country || t('account.notSet')}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{t('account.country')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(() => {
+                        const country = typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null
+                        if (country === 'malaysia') return 'Malaysia'
+                        if (country === 'sierra-leone') return 'Sierra Leone'
+                        return t('account.notSet')
+                      })()}
                     </p>
                   </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCountryModalOpen(true)}
+                  className="text-primary border-primary hover:bg-accent"
+                >
+                  {t('account.change')}
+                </Button>
               </div>
 
               {/* Language */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <UserIcon className="w-5 h-5 text-[#29978C]" />
+                  <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
+                    <UserIcon className="w-5 h-5 text-foreground" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('settings.language')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">{t('settings.language')}</p>
+                    <p className="text-xs text-muted-foreground">
                       {getCurrentLanguageName()}
                     </p>
                   </div>
@@ -460,7 +483,7 @@ export default function AccountPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsLanguageModalOpen(true)}
-                  className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]"
+                  className="text-primary border-primary hover:bg-accent"
                 >
                   {t('account.change')}
                 </Button>
@@ -899,6 +922,53 @@ export default function AccountPage() {
               >
                 {t('common.close')}
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Country Selection Modal */}
+        <Dialog open={isCountryModalOpen} onOpenChange={setIsCountryModalOpen}>
+          <DialogContent className="max-w-[480px] bg-background">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-foreground">
+                {t('account.country')}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 pt-4">
+              <button
+                onClick={() => handleCountryChange('malaysia')}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                  (typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'malaysia'
+                    ? 'bg-accent border-primary text-foreground'
+                    : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium">Malaysia</span>
+                  {(typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'malaysia' && (
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => handleCountryChange('sierra-leone')}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                  (typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'sierra-leone'
+                    ? 'bg-accent border-primary text-foreground'
+                    : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-medium">Sierra Leone</span>
+                  {(typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'sierra-leone' && (
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </div>
+              </button>
             </div>
           </DialogContent>
         </Dialog>

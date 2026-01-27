@@ -6,6 +6,7 @@ import { TransactionListLovable } from '@/components/TransactionListLovable'
 import { AppShell } from '@/components/AppShell'
 import { HomeHeader } from '@/components/HomeHeader'
 import { SummaryCardLovable } from '@/components/SummaryCardLovable'
+import { ContinueChoice } from '@/components/ContinueChoice'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 
@@ -36,13 +37,13 @@ export default function MainPage() {
             <div className="grid grid-cols-2 gap-4">
               <Link
                 href="/sale"
-                className="h-20 bg-[#29978C] hover:bg-[#238579] text-white text-base font-bold rounded-lg flex items-center justify-center shadow-md transition-colors active:scale-95"
+                className="tally-button-primary h-20 text-base flex items-center justify-center"
               >
                 {t('home.recordSale')}
               </Link>
               <Link
                 href="/expense"
-                className="h-20 bg-[#EA6C3C] hover:bg-[#E56E44] text-white text-base font-bold rounded-lg flex items-center justify-center shadow-md transition-colors active:scale-95"
+                className="tally-button-secondary h-20 text-base flex items-center justify-center"
               >
                 {t('home.recordExpense')}
               </Link>
@@ -51,20 +52,20 @@ export default function MainPage() {
             {/* Recent Activity Section */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-[var(--tally-text)]">{t('home.recentActivity')}</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('home.recentActivity')}</h2>
                 <Link 
                   href="/history"
-                  className="text-sm text-[#29978C] font-medium hover:underline"
+                  className="text-sm text-primary font-medium hover:underline"
                 >
                   {t('home.viewAll')}
                 </Link>
               </div>
               {transactionsError ? (
-                <div className="text-center py-8 text-[var(--tally-text-muted)]">
+                <div className="text-center py-8 text-muted-foreground">
                   <p>{t('home.loadingError')}</p>
                 </div>
               ) : transactionsLoading ? (
-                <div className="text-center py-8 text-[var(--tally-text-muted)]">{t('common.loading')}</div>
+                <div className="tally-card text-center py-8 text-muted-foreground">{t('common.loading')}</div>
               ) : (
                 <TransactionListLovable transactions={transactions || []} limit={5} />
               )}
@@ -72,6 +73,7 @@ export default function MainPage() {
           </div>
         </div>
       </AppShell>
+      <ContinueChoice />
     </>
   )
 }

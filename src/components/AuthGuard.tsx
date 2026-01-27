@@ -5,20 +5,15 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBusiness } from '@/contexts/BusinessContext'
 import { isGuestMode } from '@/lib/guest-storage'
-import { useTranslation } from 'react-i18next'
+import { TallyLogo } from '@/components/TallyLogo'
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
-  // This ensures hooks are always called in the same order on every render
-  // NO EARLY RETURNS BEFORE ALL HOOKS ARE DECLARED
-  
-  const { user, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading, authMode } = useAuth()
   const { currentBusiness, isLoading: businessLoading } = useBusiness()
   const router = useRouter()
   const pathname = usePathname()
-  const { t } = useTranslation()
   const [devModeBypass, setDevModeBypass] = useState(false)
-  const [guestMode, setGuestMode] = useState(false)
   const [authTimeout, setAuthTimeout] = useState(false)
 
   // Compute derived values (not hooks, so safe to compute)
@@ -29,32 +24,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/manifest.json') ||
     /\.(png|jpg|jpeg|gif|svg|ico|css|js|map|woff|woff2|ttf|eot)$/i.test(pathname || '')
 
-  const publicRoutes = ['/login', '/verify', '/welcome', '/about']
-  const onboardingRoutes = pathname?.startsWith('/onboarding') || false
+  const publicRoutes = ['/about', '/privacy', '/terms']
+  const onboardingRoutes = pathname?.startsWith('/onboarding') || false // Country/language selection only
   const isPublicRoute = publicRoutes.includes(pathname || '') || onboardingRoutes
   const isDevMode = process.env.NODE_ENV === 'development'
   const allowTestMode = process.env.NEXT_PUBLIC_ALLOW_TEST_MODE === 'true'
-
-  // ALL useEffect hooks must be declared before any early returns
-  // Check for guest mode on mount and when pathname changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const guest = isGuestMode()
-      if (guest !== guestMode) {
-        setGuestMode(guest)
-      }
-    }
-  }, [pathname, guestMode])
 
   // Timeout for auth loading - if auth takes more than 3 seconds, allow redirect
   useEffect(() => {
     if (authLoading && !authTimeout) {
       const timer = setTimeout(() => {
         setAuthTimeout(true)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[AuthGuard] Auth loading timeout - allowing redirect')
-        }
-      }, 3000) // 3 second timeout
+      }, 3000)
       return () => clearTimeout(timer)
     } else if (!authLoading) {
       setAuthTimeout(false)
@@ -64,22 +45,25 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   // In dev mode or test mode, allow bypassing auth
   useEffect(() => {
     if ((isDevMode || allowTestMode) && !devModeBypass) {
-      // Check if user wants to bypass auth
       const bypassAuth = sessionStorage.getItem('dev-bypass-auth') === 'true'
       if (bypassAuth) {
-        // Use requestAnimationFrame to avoid synchronous setState in effect
         requestAnimationFrame(() => {
           setDevModeBypass(true)
-          console.log('Dev bypass mode enabled')
         })
       }
     }
   }, [isDevMode, allowTestMode, devModeBypass])
 
   useEffect(() => {
-    // Skip auth checks for static paths (shouldn't reach here, but safety check)
+    // Skip auth checks for static paths
     if (isStaticPath) {
       return
+    }
+
+    // If intro is not yet seen, do not redirect. Let the IntroOverlay control first.
+    const introSeen = typeof window !== 'undefined' ? localStorage.getItem('tally_intro_seen') : null
+    if (!introSeen) {
+      return // Don't redirect, let IntroOverlay handle first
     }
 
     // ALWAYS allow onboarding routes - skip all auth checks
@@ -87,49 +71,51 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Check country and language for all non-public, non-onboarding routes
-    // This applies to both authenticated users, guest mode, and dev bypass
-    if (!isPublicRoute && !onboardingRoutes) {
-      const country = typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null
-      const language = typeof window !== 'undefined' ? localStorage.getItem('tally-language') : null
-      
-      if (!country) {
-        router.replace('/onboarding/country')
-        return
+    // Check guest mode - if true, do not redirect to /login for protected routes
+    const isGuest = typeof window !== 'undefined' ? localStorage.getItem('tally-guest-mode') === 'true' : false
+    if (isGuest) {
+      // Guest mode: allow access to app routes, block login/verify
+      if (pathname === '/login' || pathname === '/verify') {
+        router.replace('/')
       }
-      
-      if (!language) {
-        router.replace('/onboarding/language')
-        return
-      }
+      return
     }
 
     // Skip auth checks in dev mode or test mode if bypass is enabled
     if ((isDevMode || allowTestMode) && devModeBypass) {
-      // Allow access to all routes except login/verify
       if (pathname === '/login' || pathname === '/verify') {
         router.replace('/')
       }
       return
     }
 
-    // Check guest mode directly (not just state) to handle immediate navigation
-    const isGuest = typeof window !== 'undefined' ? isGuestMode() : false
+    // Handle three explicit states: unknown, guest, authenticated
     
-    // Allow guest mode access (but still requires country/language from check above)
-    if (isGuest && !isPublicRoute) {
-      // Guest mode can access most routes except login/verify
+    // Unknown state - show nothing (waiting for auth to resolve)
+    if (authMode === 'unknown' && authLoading) {
+      return
+    }
+
+    // Guest state - route to app home, block login/verify
+    if (authMode === 'guest') {
       if (pathname === '/login' || pathname === '/verify') {
         router.replace('/')
         return
       }
-      // Allow access to app routes in guest mode (country/language already checked)
+      // Allow access to app routes in guest mode
       return
     }
 
+    // Authenticated state - route to app home, block login/verify
+    if (authMode === 'authenticated') {
+      if (pathname === '/login' || pathname === '/verify') {
+        router.replace('/')
+        return
+      }
+    }
+
     // If auth is still loading, wait (but don't block if we're on a public route or timeout reached)
-    if (authLoading && !authTimeout && !isPublicRoute && !devModeBypass && !isGuest) {
-      // Only wait for auth if we're not on a public route and timeout hasn't been reached
+    if (authLoading && !authTimeout && !isPublicRoute && !devModeBypass) {
       return
     }
 
@@ -138,17 +124,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // If not logged in and not in guest mode, skip onboarding/welcome checks and redirect to login immediately
-    if (!user && !isPublicRoute && !devModeBypass && !isGuest) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AuthGuard] Unauthenticated user on protected route, redirecting to /login', { pathname })
-      }
-      // Use replace to prevent redirect loops and avoid adding to history
+    // Unknown state after loading - do NOT redirect to login if on Home
+    // AuthGuard must not block access to / (Home)
+    // Only redirect to login if not on Home and not authenticated and not guest
+    if (authMode === 'unknown' && !authLoading && !isPublicRoute && !devModeBypass && pathname !== '/') {
       router.replace('/login')
       return
     }
-
-    // Intro overlay handles onboarding - no redirect needed
 
     // Check if welcome has been seen (only for authenticated users with business)
     if (user && currentBusiness && pathname !== '/welcome' && !isPublicRoute) {
@@ -170,28 +152,27 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       router.replace('/')
       return
     }
-  }, [user, currentBusiness, authLoading, businessLoading, pathname, router, isDevMode, devModeBypass, isPublicRoute, isStaticPath, allowTestMode, guestMode, onboardingRoutes, authTimeout, t])
+  }, [user, currentBusiness, authLoading, businessLoading, pathname, router, isDevMode, devModeBypass, isPublicRoute, isStaticPath, allowTestMode, authMode, onboardingRoutes, authTimeout])
 
-  // NOW we can do early returns - all hooks have been declared
-  // Early returns for static files - don't apply any auth logic
+  // Early returns for static files
   if (isStaticPath) {
     return <>{children}</>
   }
 
-  // Early return for onboarding routes - no auth needed
+  // Early return for onboarding routes
   if (onboardingRoutes) {
     return <>{children}</>
   }
 
-  // Check guest mode directly for loading state
-  const isGuestForLoading = typeof window !== 'undefined' ? isGuestMode() : false
-  
-  // Show loading only while auth is actually loading (not when redirecting)
-  // Don't show loading if we're about to redirect - let the redirect happen
-  if (!onboardingRoutes && !devModeBypass && !isGuestForLoading && authLoading && !isPublicRoute) {
+  // Show "Preparing Tally…" while auth is loading (short message, cannot hang forever)
+  // Replace long loading state with short neutral message
+  if (authMode === 'unknown' && authLoading && !isPublicRoute && !authTimeout) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-text-muted">{t('common.loading')}</p>
+        <div className="text-center space-y-4">
+          <TallyLogo size={72} />
+          <p className="text-sm text-muted-foreground">Preparing Tally…</p>
+        </div>
       </div>
     )
   }

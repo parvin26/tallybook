@@ -4,9 +4,24 @@ import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTranslation } from "react-i18next";
 
 const STORAGE_KEY = "tally_intro_seen";
+
+// Hardcoded English text for intro (no i18n - shows before language selection)
+const slideTexts = [
+  {
+    title: 'Record money as it moves',
+    body: 'Add sales and expenses as they happen. Each entry keeps your notebook up to date.',
+  },
+  {
+    title: 'See where you stand today',
+    body: 'Check cash in cash out and balance at a glance. No calculations needed.',
+  },
+  {
+    title: 'Keep track of what is owed',
+    body: 'See who owes you and what you need to pay. Nothing gets missed.',
+  },
+];
 
 const slides = [
   {
@@ -101,7 +116,6 @@ interface IntroOverlayProps {
 }
 
 export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
-  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -113,18 +127,6 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
     if (forceOpen) {
       setIsOpen(true);
       setCurrentSlide(0);
-      return;
-    }
-    // Auto-show only after onboarding is complete
-    if (typeof window !== 'undefined') {
-      const country = localStorage.getItem('tally-country');
-      const language = localStorage.getItem('tally-language');
-      const seen = localStorage.getItem(STORAGE_KEY);
-      
-      // Only auto-show if onboarding is complete and intro hasn't been seen
-      if (country && language && !seen) {
-        setIsOpen(true);
-      }
     }
   }, [forceOpen]);
 
@@ -173,7 +175,7 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
   if (!isOpen) return null;
 
   const isLastSlide = currentSlide === slides.length - 1;
-  const slideKey = `intro.slides.${currentSlide + 1}`;
+  const currentText = slideTexts[currentSlide];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -195,7 +197,7 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent active:scale-95 transition-all"
-          aria-label={t('intro.actions.closeAria')}
+          aria-label="Close intro"
         >
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
@@ -208,10 +210,10 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
           {/* Text block */}
           <div className="text-center space-y-2">
             <h2 className="text-base font-semibold text-foreground leading-snug">
-              {t(`${slideKey}.title`)}
+              {currentText.title}
             </h2>
             <p className="text-muted-foreground text-center text-sm leading-relaxed max-w-[260px]">
-              {t(`${slideKey}.body`)}
+              {currentText.body}
             </p>
           </div>
         </div>
@@ -241,14 +243,14 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
               onClick={handleNext}
               className="w-full tally-button-primary"
             >
-              {isLastSlide ? t('intro.actions.getStarted') : t('intro.actions.next')}
+              {isLastSlide ? 'Get Started' : 'Next'}
             </Button>
             
             <button
               onClick={handleSkip}
               className="w-full text-center text-sm font-medium text-muted-foreground py-2 hover:text-foreground transition-colors"
             >
-              {t('intro.actions.skip')}
+              Skip
             </button>
           </div>
         </div>

@@ -116,7 +116,7 @@ export default function ContactsPage() {
           </Dialog>
         </div>
         
-        {isLoading && <p className="text-center text-gray-500">Memuatkan...</p>}
+        {isLoading && <p className="text-center text-gray-500">Loading...</p>}
         
         {contacts && contacts.length === 0 && (
           <div className="text-center py-12 text-gray-500">
