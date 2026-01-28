@@ -138,6 +138,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           >
             <AuthGuard>
               {children}
+              {/* Render IntroOverlay in normal flow - it will auto-open if language exists and intro not seen */}
+              <IntroOverlay forceOpen={showIntro} onClose={handleIntroClose} />
               <TelemetryConsent />
               <GuestDataImport />
               <Toaster position="top-center" />

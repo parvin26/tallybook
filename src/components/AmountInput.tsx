@@ -10,13 +10,29 @@ interface AmountInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
 export function AmountInput({ value, onChange, autoFocus, ...props }: AmountInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value
-    // Only allow numbers and one decimal point
+    // 1. Sanitize to digits and periods only
     const sanitized = input.replace(/[^0-9.]/g, '')
-    // Ensure only one decimal point
+    
+    // 2. Split by periods to handle multiple decimal points
     const parts = sanitized.split('.')
-    const formatted = parts.length > 2 
-      ? parts[0] + '.' + parts.slice(1).join('')
-      : sanitized
+    
+    // 3. If there is no period, keep digits only
+    // 4. If there is one period, keep as is
+    // 5. If there are multiple periods, keep integer part + first decimal part only
+    let formatted: string
+    if (parts.length === 1) {
+      // No period: keep digits only
+      formatted = sanitized
+    } else if (parts.length === 2) {
+      // One period: keep as is
+      formatted = sanitized
+    } else {
+      // Multiple periods: keep integer part + first decimal part only
+      const integerPart = parts[0]
+      const decimalPart = parts[1] || ''
+      formatted = `${integerPart}.${decimalPart}`
+    }
+    
     onChange(formatted)
   }
 

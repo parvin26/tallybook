@@ -50,16 +50,15 @@ export default function LanguageSelectionPage() {
     }
   }, [router])
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedLanguage) {
+      // 1. Write tally-language first
       localStorage.setItem('tally-language', selectedLanguage)
-      i18n.changeLanguage(selectedLanguage)
       
-      // Check if intro has been seen
-      const introSeen = localStorage.getItem('tally_intro_seen')
+      // 2. Change i18n language and await if async
+      await i18n.changeLanguage(selectedLanguage)
       
-      // If intro not seen, route to /app which will trigger intro overlay
-      // If intro already seen, go directly to /app
+      // 3. Route to /app - IntroOverlay will auto-open if intro not seen
       router.push('/app')
     }
   }

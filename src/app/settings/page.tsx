@@ -329,10 +329,10 @@ export default function AccountPage() {
       <div className="max-w-[480px] mx-auto px-6 py-6 space-y-6">
 
         {/* Business Profile Card - Top Section */}
-        <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
+        <Card className="bg-card border border-border shadow-sm">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-[var(--tally-text)]">{t('account.businessProfile')}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{t('account.businessProfile')}</h2>
               <Button
                 variant="outline"
                 size="sm"
@@ -382,11 +382,11 @@ export default function AccountPage() {
                     <img
                       src={profile.logoDataUrl}
                       alt="Business logo"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-[var(--tally-border)]"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-border"
                     />
                   </div>
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-[rgba(41,151,140,0.12)] border-2 border-[var(--tally-border)] flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-[rgba(41,151,140,0.12)] border-2 border-border flex items-center justify-center">
                     <Building2 className="w-10 h-10 text-[#29978C]" />
                   </div>
                 )}
@@ -394,12 +394,12 @@ export default function AccountPage() {
 
               {/* Business Name and Owner Name */}
               <div className="text-center">
-                <p className="text-base font-medium text-[var(--tally-text)] mb-1">
+                <p className="text-base font-medium text-foreground mb-1">
                   {profile?.businessName || (
-                    <span className="text-[var(--tally-text-muted)] italic">{t('account.addBusinessName')}</span>
+                    <span className="text-muted-foreground italic">{t('account.addBusinessName')}</span>
                   )}
                 </p>
-                <p className="text-sm text-[var(--tally-text-muted)]">
+                <p className="text-sm text-muted-foreground">
                   {profile?.ownerName || (
                     <span className="italic">{t('account.addYourName')}</span>
                   )}
@@ -414,8 +414,8 @@ export default function AccountPage() {
               {/* Category */}
               {profile?.businessCategory && (
                 <div className="flex items-center justify-center gap-2">
-                  <Tag className="w-4 h-4 text-[var(--tally-text-muted)]" />
-                  <p className="text-sm text-[var(--tally-text-muted)]">{profile.businessCategory}</p>
+                  <Tag className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">{profile.businessCategory}</p>
                 </div>
               )}
 
@@ -686,9 +686,9 @@ export default function AccountPage() {
 
         {/* Edit Business Profile Modal */}
         <Dialog open={isProfileEditOpen} onOpenChange={setIsProfileEditOpen}>
-          <DialogContent className="max-w-[480px] max-h-[90vh] overflow-y-auto bg-[var(--tally-bg)]">
+          <DialogContent className="max-w-[480px] max-h-[90vh] overflow-y-auto bg-background">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
+              <DialogTitle className="text-xl font-bold text-foreground">
                 {t('account.editProfile')}
               </DialogTitle>
             </DialogHeader>
@@ -853,7 +853,7 @@ export default function AccountPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-[var(--tally-border)]">
+              <div className="flex gap-3 pt-4 border-t border-border">
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -866,13 +866,13 @@ export default function AccountPage() {
                   }}
                   className="flex-1"
                 >
-                  {t('account.cancel')}
+                  {t('account.cancel') || t('common.cancel')}
                 </Button>
                 <Button
                   onClick={handleSaveProfile}
-                  className="flex-1 bg-[#29978C] hover:bg-[#238579] text-white"
+                  className="flex-1 tally-button-primary"
                 >
-                  {t('account.saveProfile')}
+                  {t('account.saveProfile') || t('common.save')}
                 </Button>
               </div>
             </div>
@@ -1036,6 +1036,54 @@ export default function AccountPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Debug Panel - Development Only */}
+        {process.env.NODE_ENV === 'development' && (
+          <Card className="bg-card border border-border shadow-sm">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Debug Panel</h2>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Guest Mode:</p>
+                  <p className="text-foreground">{guestMode ? 'true' : 'false'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Auth State:</p>
+                  <p className="text-foreground">{user ? `Authenticated (${user.email || user.id})` : 'Not authenticated'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Business ID (Context):</p>
+                  <p className="text-foreground">{currentBusiness?.id || 'null'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Business Name:</p>
+                  <p className="text-foreground">{currentBusiness?.name || 'null'}</p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">Business ID (localStorage):</p>
+                  <p className="text-foreground">
+                    {typeof window !== 'undefined' ? localStorage.getItem('tally-business-id') || 'null' : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-muted-foreground mb-1">localStorage Keys (tally-*):</p>
+                  <div className="bg-background p-2 rounded text-xs font-mono text-muted-foreground max-h-32 overflow-y-auto">
+                    {typeof window !== 'undefined' 
+                      ? Object.keys(localStorage)
+                          .filter(key => key.startsWith('tally-'))
+                          .map(key => (
+                            <div key={key} className="mb-1">
+                              <span className="font-semibold">{key}:</span>{' '}
+                              <span>{localStorage.getItem(key) || '(empty)'}</span>
+                            </div>
+                          ))
+                      : 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppShell>
   </>

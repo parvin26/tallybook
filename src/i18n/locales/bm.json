@@ -522,6 +522,9 @@
     "lowStockThresholdPlaceholder": "Amaran apabila kuantiti mencapai ini",
     "nameRequired": "Nama item diperlukan",
     "noBusiness": "Tiada bisnes dipilih",
+    "setupTitle": "Sediakan perniagaan anda",
+    "setupBody": "Tambah perniagaan sebelum anda mula menjejaki stok.",
+    "setupCta": "Sediakan sekarang",
     "noItems": "Belum ada item",
     "quantity": "Kuantiti",
     "saveError": "Tidak dapat menyimpan item. cuba lagi.",
@@ -642,9 +645,11 @@
       "title": "Mula di mana anda berada",
       "body": "Gunakan setiap hari\nAtau hanya bila anda boleh\nTally bekerja dengan anda"
     },
-    "next": "Seterusnya",
-    "skip": "Langkau",
-    "getStarted": "Mula guna"
+    "actions": {
+      "next": "Seterusnya",
+      "skip": "Langkau",
+      "getStarted": "Mula guna"
+    }
   },
   "welcome": {
     "getStarted": "Mula Guna",

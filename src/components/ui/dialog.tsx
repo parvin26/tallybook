@@ -18,18 +18,46 @@ interface DialogContextValue {
 const DialogContext = React.createContext<DialogContextValue | undefined>(undefined)
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
+  // Lock body scroll when modal is open
+  React.useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   return (
     <DialogContext.Provider value={{ open: open ?? false, onOpenChange: onOpenChange ?? (() => {}) }}>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <>
+          {/* Full screen overlay - z-index 1000, blocks pointer events */}
           <div 
-            className="fixed inset-0 bg-black/50"
+            className="fixed z-[1000]"
+            style={{ 
+              top: 0, 
+              right: 0, 
+              bottom: 0, 
+              left: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.35)',
+              pointerEvents: 'auto'
+            }}
             onClick={() => onOpenChange?.(false)}
+            onPointerDown={(e) => e.preventDefault()}
           />
-          <div className="relative z-50 w-full max-w-md mx-4">
-            {children}
+          {/* Modal container - z-index 1050, centered */}
+          <div 
+            className="fixed inset-0 z-[1050] flex items-center justify-center p-4 pointer-events-none"
+            style={{ top: 0, right: 0, bottom: 0, left: 0 }}
+          >
+            <div className="pointer-events-auto w-full max-w-md">
+              {children}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </DialogContext.Provider>
   )
@@ -66,12 +94,12 @@ export function DialogContent({
   
   return (
     <div className={cn(
-      "bg-[var(--tally-surface)] rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto border border-[var(--tally-border)]",
+      "bg-card rounded-2xl shadow-[var(--shadow-card)] p-6 max-h-[90vh] overflow-y-auto relative",
       className
     )}>
       <button
         onClick={() => context.onOpenChange(false)}
-        className="absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100 text-[var(--tally-text-muted)]"
+        className="absolute top-4 right-4 rounded-full w-8 h-8 flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-accent text-muted-foreground transition-colors"
         aria-label="Close"
       >
         <X className="h-4 w-4" />

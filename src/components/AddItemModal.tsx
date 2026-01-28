@@ -86,9 +86,9 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] bg-[var(--tally-bg)]">
+      <DialogContent className="max-w-[480px] bg-background">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
+          <DialogTitle className="text-xl font-bold text-foreground">
             {t('stock.addItem')}
           </DialogTitle>
         </DialogHeader>
@@ -96,7 +96,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           {/* Item Name */}
           <div>
-            <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+            <label className="block text-sm text-muted-foreground mb-2 font-medium">
               {t('stock.itemName')}
             </label>
             <Input
@@ -109,7 +109,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
 
           {/* Quantity */}
           <div>
-            <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+            <label className="block text-sm text-muted-foreground mb-2 font-medium">
               {t('stock.quantity')}
             </label>
             <Input
@@ -123,7 +123,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
 
           {/* Unit Selector */}
           <div>
-            <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+            <label className="block text-sm text-muted-foreground mb-2 font-medium">
               {t('stock.unit')}
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -135,8 +135,8 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
                   className={`px-4 py-3 rounded-lg border-2 transition-all ${
                     unit === u
                       ? 'bg-[rgba(41,151,140,0.12)] border-[#29978C] text-[#29978C]'
-                      : 'bg-[var(--tally-surface)] border-[var(--tally-border)] text-[var(--tally-text)]'
-                  } hover:border-[var(--tally-text-muted)] active:scale-95 relative`}
+                      : 'bg-card border-border text-foreground'
+                  } hover:border-muted-foreground active:scale-95 relative`}
                 >
                   {unit === u && (
                     <Check className="w-4 h-4 absolute top-1 right-1" />
@@ -149,7 +149,7 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
 
           {/* Low Stock Threshold (Optional) */}
           <div>
-            <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+            <label className="block text-sm text-muted-foreground mb-2 font-medium">
               {t('stock.lowStockThreshold')} <span className="text-xs">({t('common.optional')})</span>
             </label>
             <Input

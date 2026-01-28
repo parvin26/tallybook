@@ -280,9 +280,11 @@
       "title": "Stat we yu de",
       "body": "Yu am evri de\nO na onli wen yu fit\nTally de wok wit yu"
     },
-    "next": "Neks",
-    "skip": "Skip",
-    "getStarted": "Stat"
+    "actions": {
+      "next": "Neks",
+      "skip": "Skip",
+      "getStarted": "Stat"
+    }
   },
   "welcome": {
     "title": "",
@@ -458,6 +460,9 @@
     "nameRequired": "",
     "invalidQuantity": "",
     "noBusiness": "",
+    "setupTitle": "Set up yu biznes",
+    "setupBody": "Ad biznes bifo yu stat fɔ trak stok.",
+    "setupCta": "Set up now",
     "tableNotReady": "",
     "saveError": "",
     "deleteError": "",

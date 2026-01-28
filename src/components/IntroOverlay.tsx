@@ -27,7 +27,7 @@ const slides = [
   },
   {
     id: 5,
-    visual: "flexible" as const,
+    visual: "start" as const,
   },
 ];
 
@@ -96,28 +96,31 @@ function ObligationsVisual() {
 function PatternsVisual() {
   return (
     <div className="w-full max-w-[280px] rounded-2xl border border-border bg-card p-4">
-      <div className="space-y-2">
-        <div className="h-2 bg-primary/20 rounded-full" />
-        <div className="h-2 bg-primary/30 rounded-full w-3/4" />
-        <div className="h-2 bg-primary/20 rounded-full w-1/2" />
+      <div className="space-y-3">
+        <div className="text-xs text-muted-foreground mb-2">Most days you spend on</div>
+        <div className="h-3 bg-secondary/20 rounded-full" />
+        <div className="h-3 bg-secondary/30 rounded-full w-4/5" />
+        <div className="h-3 bg-secondary/20 rounded-full w-3/5" />
       </div>
     </div>
   );
 }
 
-// Visual block for slide 5 - Flexible usage
-function FlexibleVisual() {
+// Visual block for slide 5 - Start
+function StartVisual() {
   return (
-    <div className="w-full max-w-[280px] rounded-2xl border border-border bg-card p-4">
-      <div className="text-center space-y-2">
-        <div className="text-2xl">📱</div>
-        <div className="text-xs text-muted-foreground">Use anytime</div>
+    <div className="w-full max-w-[280px] space-y-4">
+      <button className="w-full rounded-xl bg-primary text-primary-foreground px-6 py-4 text-lg font-medium">
+        Get started
+      </button>
+      <div className="text-xs text-center text-muted-foreground">
+        Start recording today
       </div>
     </div>
   );
 }
 
-function renderVisualBlock(visual: "recording" | "summary" | "obligations" | "patterns" | "flexible") {
+function renderVisualBlock(visual: "recording" | "summary" | "obligations" | "patterns" | "start") {
   switch (visual) {
     case "recording":
       return <RecordingVisual />;
@@ -127,8 +130,8 @@ function renderVisualBlock(visual: "recording" | "summary" | "obligations" | "pa
       return <ObligationsVisual />;
     case "patterns":
       return <PatternsVisual />;
-    case "flexible":
-      return <FlexibleVisual />;
+    case "start":
+      return <StartVisual />;
   }
 }
 
@@ -148,13 +151,35 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
 
   useEffect(() => {
     if (forceOpen) {
+      // Force open always works (e.g., from Settings)
       setIsOpen(true);
       setCurrentSlide(0);
+    } else {
+      // Auto-open rule: only if language is set AND intro not seen
+      if (typeof window !== 'undefined') {
+        const introSeen = localStorage.getItem(STORAGE_KEY);
+        const language = localStorage.getItem('tally-language');
+        
+        if (!introSeen && language) {
+          setIsOpen(true);
+          setCurrentSlide(0);
+        } else {
+          setIsOpen(false);
+        }
+      }
     }
   }, [forceOpen]);
 
   const handleClose = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, "1");
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, "1");
+      
+      // If we're on onboarding language page, normalize to /app
+      if (window.location.pathname === '/onboarding/language') {
+        window.location.href = '/app';
+        return;
+      }
+    }
     setIsOpen(false);
     onClose?.();
   }, [onClose]);
@@ -199,8 +224,23 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
 
   const isLastSlide = currentSlide === slides.length - 1;
   const slideNumber = currentSlide + 1;
-  const currentTitle = t(`intro.slide${slideNumber}.title`);
-  const currentBody = t(`intro.slide${slideNumber}.body`);
+  
+  // Use i18n with fallbacks to master copy English strings
+  const currentTitle = t(`intro.slide${slideNumber}.title`, {
+    defaultValue: slideNumber === 1 ? 'A simple place to record today' :
+                  slideNumber === 2 ? 'No setup required' :
+                  slideNumber === 3 ? 'See your day clearly' :
+                  slideNumber === 4 ? 'Things start to make sense' :
+                  'Start where you are'
+  });
+  
+  const currentBody = t(`intro.slide${slideNumber}.body`, {
+    defaultValue: slideNumber === 1 ? 'Write down what you sell\nAnd what you spend\nAs your day goes on' :
+                  slideNumber === 2 ? 'No forms\nNo categories to learn\nJust open and record' :
+                  slideNumber === 3 ? 'At the end of the day\nYou know what happened\nWithout guessing' :
+                  slideNumber === 4 ? 'After a few days\nPatterns appear\nWhere money comes in\nWhere it goes' :
+                  'Use it daily\nOr only when you can\nTally works with you'
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -268,14 +308,17 @@ export function IntroOverlay({ forceOpen, onClose }: IntroOverlayProps) {
               onClick={handleNext}
               className="w-full tally-button-primary"
             >
-              {isLastSlide ? t('intro.getStarted') : t('intro.next')}
+              {isLastSlide 
+                ? t('intro.actions.getStarted', { defaultValue: 'Get started' })
+                : t('intro.actions.next', { defaultValue: 'Next' })
+              }
             </Button>
             
             <button
               onClick={handleSkip}
               className="w-full text-center text-sm font-medium text-muted-foreground py-2 hover:text-foreground transition-colors"
             >
-              {t('intro.skip')}
+              {t('intro.actions.skip', { defaultValue: 'Skip' })}
             </button>
           </div>
         </div>

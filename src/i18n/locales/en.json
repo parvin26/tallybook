@@ -51,7 +51,8 @@
     "devModeOnly": "Test mode only available in development",
     "continueWithoutLogin": "Continue without login",
     "guestModeEnabled": "Guest mode enabled. Your data will be stored locally",
-    "guestModeDescription": "Use Tally without an account. Data stored on this device only."
+    "guestModeDescription": "Use Tally without an account. Data stored on this device only.",
+    "pleaseLogin": "Please sign in to continue."
   },
   "telemetry": {
     "title": "Help Improve Tally",
@@ -80,12 +81,21 @@
   "setup": {
     "title": "Set Up Your Business",
     "subtitle": "Step {{step}} of {{total}}",
+    "subtitleSingle": "Add your business details to get started",
     "businessName": "Business Name",
     "businessNamePlaceholder": "e.g., Ali's Coffee Shop",
+    "businessNameRequired": "Business name is required",
     "businessType": "Business Type",
+    "businessCategory": "Business Category",
+    "selectCategory": "Select category",
+    "categoryRequired": "Business category is required",
+    "categoryOtherRequired": "Please specify business category",
+    "categoryOtherPlaceholder": "Specify business type",
+    "country": "Country",
     "typeOther": "Specify business type (brief)",
     "typeOtherPlaceholder": "e.g., Cake Shop, Clothing Store, etc.",
     "state": "State",
+    "statePlaceholder": "State",
     "selectState": "Select state",
     "city": "City/District",
     "cityPlaceholder": "e.g., Petaling Jaya",
@@ -97,6 +107,7 @@
     "privacy": "Privacy Policy",
     "agreeTermsError": "Please agree to Terms & Privacy Policy",
     "completeAllFields": "Please complete all required fields",
+    "completeSetup": "Complete setup",
     "success": "Business created successfully!",
     "finish": "Complete",
     "pleaseLogin": "Please login first"
@@ -348,9 +359,11 @@
       "title": "Start where you are",
       "body": "Use it daily\nOr only when you can\nTally works with you"
     },
-    "next": "Next",
-    "skip": "Skip",
-    "getStarted": "Get started"
+    "actions": {
+      "next": "Next",
+      "skip": "Skip",
+      "getStarted": "Get started"
+    }
   },
   "welcome": {
     "title": "Welcome to TALLY",
@@ -526,6 +539,9 @@
     "nameRequired": "Item name is required",
     "invalidQuantity": "Please enter a valid quantity",
     "noBusiness": "No business selected",
+    "setupTitle": "Set up your business",
+    "setupBody": "Add a business before you start tracking stock.",
+    "setupCta": "Set up now",
     "tableNotReady": "Inventory table not set up yet. Please run the SQL setup.",
     "saveError": "Unable to save item. Please try again.",
     "deleteError": "Unable to delete item. Please try again.",

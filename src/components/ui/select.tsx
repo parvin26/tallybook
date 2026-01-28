@@ -51,12 +51,12 @@ export function SelectTrigger({ className, children }: SelectTriggerProps) {
       type="button"
       onClick={() => context.onOpenChange(!context.open)}
       className={cn(
-        'select-trigger flex w-full items-center justify-between rounded-xl border-2 border-[var(--tally-border)] bg-[var(--tally-surface)] px-4 py-3 text-base text-[var(--tally-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(41,151,140,0.25)] focus:border-[#29978C] transition-all',
+        'select-trigger flex w-full items-center justify-between rounded-xl border-2 border-border bg-card px-4 py-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition-all',
         className
       )}
     >
       {children}
-      <ChevronDown className={cn('h-4 w-4 text-[var(--tally-text-muted)] transition-transform', context.open && 'rotate-180')} />
+      <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', context.open && 'rotate-180')} />
     </button>
   )
 }
@@ -67,7 +67,7 @@ export function SelectValue({ placeholder, displayValue }: { placeholder?: strin
 
   const valueToShow = displayValue || context.value || placeholder
 
-  return <span className={context.value ? 'text-[var(--tally-text)]' : 'text-[var(--tally-text-muted)]'}>
+  return <span className={context.value ? 'text-foreground' : 'text-muted-foreground'}>
     {valueToShow}
   </span>
 }
@@ -110,7 +110,7 @@ export function SelectContent({ className, children }: SelectContentProps) {
   return (
     <div 
       ref={contentRef}
-      className="select-content absolute z-50 w-full mt-2 rounded-lg border border-[var(--tally-border)] bg-[var(--tally-surface)] shadow-lg max-h-[300px] overflow-y-auto"
+      className="select-content absolute z-50 w-full mt-2 rounded-lg border border-border bg-card shadow-[var(--shadow-card)] max-h-[300px] overflow-y-auto"
     >
       <div className={cn('p-1', className)}>{children}</div>
     </div>
@@ -132,7 +132,7 @@ interface SelectLabelProps {
 
 export function SelectLabel({ className, children }: SelectLabelProps) {
   return (
-    <div className={cn('px-2 py-2 text-xs font-semibold text-[var(--tally-text-muted)] uppercase tracking-wide', className)}>
+    <div className={cn('px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide', className)}>
       {children}
     </div>
   )
@@ -164,9 +164,9 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
       className={cn(
         'w-full flex items-center justify-between px-3 py-3 text-base rounded-lg transition-colors text-left',
         disabled
-          ? 'opacity-50 cursor-not-allowed text-[var(--tally-text-muted)]'
-          : 'cursor-pointer hover:bg-[var(--tally-surface-2)] text-[var(--tally-text)]',
-        isSelected && !disabled && 'bg-[rgba(41,151,140,0.12)] text-[#29978C]',
+          ? 'opacity-50 cursor-not-allowed text-muted-foreground'
+          : 'cursor-pointer hover:bg-accent text-foreground',
+        isSelected && !disabled && 'bg-accent text-primary',
         className
       )}
     >

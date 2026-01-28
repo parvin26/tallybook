@@ -7,39 +7,39 @@
     /* Lovable TALLY Design System - HSL Format */
     
     /* Base Colors */
-    --background: 38 24% 96%; /* #FAF7F2 - warm paper-like */
-    --foreground: 220 13% 18%; /* #0F172A - dark text */
+    --background: 40 33% 96%; /* #FAF7F2 - warm paper-like */
+    --foreground: 0 0% 18%; /* #2F2F2F - dark text */
     
     /* Surface Colors */
     --card: 0 0% 100%; /* #FFFFFF - white cards */
-    --card-foreground: 220 13% 18%;
+    --card-foreground: 0 0% 18%;
     
     /* Muted Colors */
     --muted: 38 12% 90%; /* #E6E2DB - soft borders */
-    --muted-foreground: 215 16% 47%; /* #64748B - muted text */
+    --muted-foreground: 165 5% 46%; /* #6F7A77 - muted text */
     
     /* Accent Colors */
-    --accent: 38 12% 90%; /* #E6E2DB - soft accent background */
-    --accent-foreground: 220 13% 18%;
+    --accent: 156 30% 92%; /* #E3F1EC - soft accent background */
+    --accent-foreground: 0 0% 18%;
     
     /* Primary (Sage) */
-    --primary: 168 48% 38%; /* #2F8F7A - sage green */
+    --primary: 164 50% 37%; /* #2F8F7A - sage green */
     --primary-foreground: 0 0% 100%; /* white text on primary */
     
     /* Secondary (Clay) */
-    --secondary: 18 73% 60%; /* #E58A5D - clay orange */
+    --secondary: 19 73% 63%; /* #E58A5D - clay orange */
     --secondary-foreground: 0 0% 100%; /* white text on secondary */
     
     /* Border */
-    --border: 38 12% 86%; /* #E6E2DB - soft borders */
+    --border: 36 17% 88%; /* #E6E2DB - soft borders */
     
     /* Input */
     --input: 38 12% 90%;
-    --ring: 168 48% 38%; /* primary color for focus rings */
+    --ring: 164 50% 37%; /* primary color for focus rings */
     
     /* Shadows */
-    --shadow-soft: 0 2px 8px hsl(220 13% 18% / 0.04);
-    --shadow-card: 0 4px 12px hsl(220 13% 18% / 0.06);
+    --shadow-soft: 0 2px 8px hsl(0 0% 18% / 0.04);
+    --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.06);
     
     /* Radius */
     --radius: 0.75rem; /* 12px */
@@ -90,11 +90,22 @@
   
   /* Tally Button Primary - Sage green primary actions */
   .tally-button-primary {
-    @apply bg-primary text-primary-foreground font-semibold rounded-xl;
-    @apply hover:bg-primary/90 active:scale-[0.98];
-    @apply disabled:bg-disabled-bg disabled:text-disabled-text disabled:cursor-not-allowed;
-    @apply transition-all;
+    @apply bg-primary text-primary-foreground rounded-xl px-6 py-4 text-lg font-medium transition-all;
     box-shadow: var(--shadow-soft);
+  }
+  
+  .tally-button-primary:not(:disabled):hover {
+    @apply bg-primary/90;
+  }
+  
+  .tally-button-primary:not(:disabled):active {
+    @apply scale-[0.98];
+  }
+  
+  .tally-button-primary:disabled {
+    @apply bg-muted text-muted-foreground cursor-not-allowed;
+    opacity: 1;
+    box-shadow: none;
   }
   
   /* Tally Button Secondary - Clay orange for expenses */
