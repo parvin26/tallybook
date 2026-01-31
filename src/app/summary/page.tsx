@@ -16,6 +16,7 @@ import { RevenueExpenseBarChart } from '@/components/reports/RevenueExpenseBarCh
 import { StatCard } from '@/components/reports/StatCard'
 import { generateBusinessReportPDF } from '@/lib/pdf-generator'
 import { getBusinessProfile } from '@/lib/businessProfile'
+import { getExpenseCategoryLabel } from '@/lib/expense-categories'
 import { Input } from '@/components/ui/input'
 
 type PeriodPreset = 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom'
@@ -34,13 +35,13 @@ export default function ProfitLossPage() {
   const [customStartDate, setCustomStartDate] = useState<string>('')
   const [customEndDate, setCustomEndDate] = useState<string>('')
 
-  // Calculate date range based on preset
+  // Calculate date range based on preset. "This month" = full calendar month (matches Reports/Business Snapshot).
   const getDateRange = () => {
     switch (periodPreset) {
       case 'thisWeek':
         return { start: startOfWeek(today, { weekStartsOn: 1 }), end: today }
       case 'thisMonth':
-        return { start: startOfMonth(today), end: today }
+        return { start: startOfMonth(today), end: endOfMonth(today) }
       case 'lastMonth':
         const lastMonthStart = startOfMonth(subDays(today, 30))
         const lastMonthEnd = endOfMonth(subDays(today, 30))
@@ -51,7 +52,7 @@ export default function ProfitLossPage() {
           end: customEndDate ? new Date(customEndDate) : today
         }
       default:
-        return { start: startOfMonth(today), end: today }
+        return { start: startOfMonth(today), end: endOfMonth(today) }
     }
   }
 
@@ -285,7 +286,7 @@ export default function ProfitLossPage() {
                     />
                     <div className="relative flex items-center justify-between px-3 py-2">
                       <span className="text-sm font-medium text-gray-800">
-                        {t(`expenseCategories.${category}`) || category}
+                        {getExpenseCategoryLabel(category, t)}
                       </span>
                       <span className="text-sm font-semibold tabular-nums text-gray-800">
                         {formatCurrency(amount)} ({pct.toFixed(0)}%)

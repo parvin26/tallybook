@@ -26,25 +26,25 @@ export function SummaryCardLovable(props: SummaryCardLovableProps) {
 
   return (
     <div className="tally-card p-6">
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      {/* Today's Balance: dominant (~36sp Bold); label 15sp Medium muted */}
+      <div className="border-b border-border pb-4 mb-4">
+        <p className="text-[15px] font-medium text-muted-foreground mb-1">{t('home.todaysBalance')}</p>
+        <p className="text-[36px] font-bold leading-tight tabular-nums text-foreground">
+          {formatCurrency(balance)}
+        </p>
+      </div>
+      {/* Cash In / Cash Out: values ~20sp SemiBold; labels 14sp Medium muted */}
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="text-xs text-muted-foreground mb-1">{t('home.cashIn')}</p>
-          <p className="text-xl font-bold tabular-nums text-primary">
+          <p className="text-sm font-medium text-muted-foreground mb-1">{t('home.cashIn')}</p>
+          <p className="text-[20px] font-semibold tabular-nums text-[#2E7D5B]">
             {formatCurrency(cashIn)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted-foreground mb-1">{t('home.cashOut')}</p>
-          <p className="text-xl font-bold tabular-nums text-secondary">
+          <p className="text-sm font-medium text-muted-foreground mb-1">{t('home.cashOut')}</p>
+          <p className="text-[20px] font-semibold tabular-nums text-[#B94A3A]">
             {formatCurrency(cashOut)}
-          </p>
-        </div>
-      </div>
-      <div className="border-t border-border pt-4">
-        <div className="flex justify-between items-center">
-          <p className="text-sm font-medium text-foreground">{t('home.todaysBalance')}</p>
-          <p className="text-2xl font-bold tabular-nums text-foreground">
-            {formatCurrency(balance)}
           </p>
         </div>
       </div>

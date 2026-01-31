@@ -6,6 +6,7 @@ import { canInstall, isStandalone, isIOSSafari, promptInstall } from '@/lib/pwa'
 import { STORAGE_KEYS } from '@/lib/storage-keys'
 
 const DISMISS_DURATION_MS = 5 * 24 * 60 * 60 * 1000 // 5 days
+const MAX_DISMISS_COUNT = 3
 
 interface PWAInstallBannerProps {
   /** Only show after Home has been visible and eligibility checks pass (e.g. after 10s + meaningful action). */
@@ -23,6 +24,10 @@ export function PWAInstallBanner({ showAfterDelay }: PWAInstallBannerProps) {
     const installable = canInstall()
     const iosSafari = isIOSSafari()
     if (!installable && !iosSafari) return
+
+    const dismissCountRaw = localStorage.getItem(STORAGE_KEYS.PWA_INSTALL_BANNER_DISMISS_COUNT)
+    const dismissCount = parseInt(dismissCountRaw ?? '0', 10)
+    if (!isNaN(dismissCount) && dismissCount >= MAX_DISMISS_COUNT) return
 
     const raw = localStorage.getItem(STORAGE_KEYS.PWA_INSTALL_BANNER_DISMISSED_AT)
     if (raw) {
@@ -49,6 +54,9 @@ export function PWAInstallBanner({ showAfterDelay }: PWAInstallBannerProps) {
 
   const handleNotNow = () => {
     localStorage.setItem(STORAGE_KEYS.PWA_INSTALL_BANNER_DISMISSED_AT, String(Date.now()))
+    const countRaw = localStorage.getItem(STORAGE_KEYS.PWA_INSTALL_BANNER_DISMISS_COUNT)
+    const count = parseInt(countRaw ?? '0', 10)
+    localStorage.setItem(STORAGE_KEYS.PWA_INSTALL_BANNER_DISMISS_COUNT, String(isNaN(count) ? 1 : count + 1))
     setVisible(false)
   }
 
@@ -59,10 +67,10 @@ export function PWAInstallBanner({ showAfterDelay }: PWAInstallBannerProps) {
   return (
     <div className="mx-4 mb-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm max-w-[480px]">
       <h2 className="text-tally-section-title font-semibold text-gray-900">
-        {t('pwa.installBanner.title') || 'Install Tally on your phone'}
+        {t('pwa.installBanner.title', { defaultValue: 'Install Tally on this device' })}
       </h2>
       <p className="text-tally-body text-gray-600 mt-1">
-        {t('pwa.installBanner.body') || 'Faster access works offline and feels like an app'}
+        {t('pwa.installBanner.body', { defaultValue: 'Add Tally to your home screen for faster access.' })}
       </p>
       {isIOS && (
         <p className="text-tally-caption text-gray-500 mt-2">

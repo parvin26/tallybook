@@ -113,7 +113,9 @@ export default function BalanceSheetPage() {
     const bankExpenses = filtered
       .filter((t) => t.transaction_type === 'expense' && isBankPayment(t))
       .reduce((sum, t) => sum + Number(t.amount), 0)
-    const currentBank = startingBank + bankSales - bankExpenses
+    const bankBalanceRaw = startingBank + bankSales - bankExpenses
+    const bankOverdraft = bankBalanceRaw < 0 ? Math.abs(bankBalanceRaw) : 0
+    const currentBank = bankBalanceRaw > 0 ? bankBalanceRaw : 0
 
     const receivables = filtered
       .filter((t) => t.transaction_type === 'sale' && t.payment_method === 'card')
@@ -141,7 +143,7 @@ export default function BalanceSheetPage() {
     const totalEquity = startingCapital + retainedEarnings
 
     const totalAssets = currentCash + currentBank + receivables + inventoryValue
-    const totalLiabilities = payables + loans
+    const totalLiabilities = payables + loans + bankOverdraft
     const balanceCheck = Math.abs(totalAssets - (totalLiabilities + totalEquity))
     const isBalanced = balanceCheck < 0.01
 
@@ -153,7 +155,7 @@ export default function BalanceSheetPage() {
         inventory: inventoryValue,
         total: totalAssets,
       },
-      liabilities: { payables, loans, total: totalLiabilities },
+      liabilities: { payables, loans, bankOverdraft, total: totalLiabilities },
       equity: { startingCapital, retainedEarnings, total: totalEquity },
       balanceCheck,
       isBalanced,
@@ -376,6 +378,12 @@ export default function BalanceSheetPage() {
                 <span className="text-[var(--tally-text)]">{t('report.balanceSheet.payables')}</span>
                 <span className="text-[var(--tally-text)]">{formatCurrency(balanceData.liabilities.payables)}</span>
               </div>
+              {balanceData.liabilities.bankOverdraft != null && balanceData.liabilities.bankOverdraft > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-[var(--tally-text)]">{t('report.balanceSheet.bankOverdraft')}</span>
+                  <span className="text-[var(--tally-text)]">{formatCurrency(balanceData.liabilities.bankOverdraft)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-[var(--tally-text)]">{t('report.balanceSheet.loans')}</span>
                 <span className="text-[var(--tally-text)]">{formatCurrency(balanceData.liabilities.loans)}</span>

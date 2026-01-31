@@ -3,21 +3,27 @@
 import { useState, useEffect, useCallback } from 'react'
 import { STORAGE_KEYS } from '@/lib/storage-keys'
 
+const MAX_PRESETS_PER_TYPE = 5
 const DEFAULT_SALE_PRESETS = [10, 20, 50, 100, 200]
 const DEFAULT_EXPENSE_PRESETS = [5, 10, 20, 50, 100, 1000]
 const DEFAULT_INVENTORY_PRESETS = [10, 20, 50, 100, 200]
 
 function parsePresets(key: string, defaultPresets: number[]): number[] {
-  if (typeof window === 'undefined') return defaultPresets
+  if (typeof window === 'undefined') return defaultPresets.slice(0, MAX_PRESETS_PER_TYPE)
   try {
     const raw = localStorage.getItem(key)
-    if (!raw) return defaultPresets
+    if (!raw) return defaultPresets.slice(0, MAX_PRESETS_PER_TYPE)
     const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return defaultPresets
+    if (!Array.isArray(parsed)) return defaultPresets.slice(0, MAX_PRESETS_PER_TYPE)
     const numbers = parsed.filter((n: unknown) => typeof n === 'number' && Number.isFinite(n) && n >= 0)
-    return numbers.length > 0 ? numbers : defaultPresets
+    const result = numbers.length > 0 ? numbers : defaultPresets
+    const trimmed = result.slice(0, MAX_PRESETS_PER_TYPE)
+    if (result.length > MAX_PRESETS_PER_TYPE) {
+      savePresetsToStorage(key, trimmed)
+    }
+    return trimmed
   } catch {
-    return defaultPresets
+    return defaultPresets.slice(0, MAX_PRESETS_PER_TYPE)
   }
 }
 
@@ -45,19 +51,19 @@ export function useQuickAmounts() {
   }, [])
 
   const saveSalePresets = useCallback((presets: number[]) => {
-    const sorted = [...presets].filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b)
+    const sorted = [...presets].filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b).slice(0, MAX_PRESETS_PER_TYPE)
     setSalePresetsState(sorted)
     savePresetsToStorage(STORAGE_KEYS.SALE_PRESETS, sorted)
   }, [])
 
   const saveExpensePresets = useCallback((presets: number[]) => {
-    const sorted = [...presets].filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b)
+    const sorted = [...presets].filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b).slice(0, MAX_PRESETS_PER_TYPE)
     setExpensePresetsState(sorted)
     savePresetsToStorage(STORAGE_KEYS.EXPENSE_PRESETS, sorted)
   }, [])
 
   const saveInventoryPresets = useCallback((presets: number[]) => {
-    const sorted = [...presets].filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b)
+    const sorted = [...presets].filter((n) => Number.isFinite(n) && n >= 0).sort((a, b) => a - b).slice(0, MAX_PRESETS_PER_TYPE)
     setInventoryPresetsState(sorted)
     savePresetsToStorage(STORAGE_KEYS.INVENTORY_PRESETS, sorted)
   }, [])

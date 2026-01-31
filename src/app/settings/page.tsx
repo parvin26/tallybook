@@ -17,14 +17,15 @@ import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getBusinessProfile, saveBusinessProfile, BusinessProfile } from '@/lib/businessProfile'
 import { canInstall, isIOS, isStandalone, promptInstall } from '@/lib/pwa'
-import { isGuestMode, getGuestBusiness, saveGuestBusiness } from '@/lib/guest-storage'
+import { isGuestMode, getGuestBusiness, saveGuestBusiness, clearAllGuestData } from '@/lib/guest-storage'
 import { useIntroContext } from '@/contexts/IntroContext'
 import { STORAGE_KEYS } from '@/lib/storage-keys'
-import { useQuickAmounts } from '@/hooks/useQuickAmounts'
 import { useCurrency } from '@/hooks/useCurrency'
 import { COUNTRIES } from '@/lib/countries'
 import { getCurrencyFromCountry, normalizeCountryCode } from '@/lib/currency'
 import { getWhatsAppSupportUrl } from '@/lib/constants'
+import { getExpenseCategoryLabel } from '@/lib/expense-categories'
+import { QuickAmountsManager } from '@/components/QuickAmountsManager'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -38,6 +39,8 @@ export default function AccountPage() {
   const [isIOSModalOpen, setIsIOSModalOpen] = useState(false)
   const [isLanguageModalOpen, setIsLanguageModalOpen] = useState(false)
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [clearDataConfirmOpen, setClearDataConfirmOpen] = useState(false)
   const { openIntro } = useIntroContext()
   const [profile, setProfile] = useState<BusinessProfile | null>(null)
   const [profileEditData, setProfileEditData] = useState<BusinessProfile>({
@@ -82,20 +85,7 @@ export default function AccountPage() {
     isStandalone: false,
   })
 
-  const {
-    salePresets,
-    expensePresets,
-    inventoryPresets,
-    saveSalePresets,
-    saveExpensePresets,
-    saveInventoryPresets,
-  } = useQuickAmounts()
-  const [saleNewValue, setSaleNewValue] = useState('')
-  const [expenseNewValue, setExpenseNewValue] = useState('')
-  const [inventoryNewValue, setInventoryNewValue] = useState('')
-  const [showAddSale, setShowAddSale] = useState(false)
-  const [showAddExpense, setShowAddExpense] = useState(false)
-  const [showAddInventory, setShowAddInventory] = useState(false)
+  const [quickAmountsManagerOpen, setQuickAmountsManagerOpen] = useState(false)
   const [openingCash, setOpeningCash] = useState('')
   const [openingBank, setOpeningBank] = useState('')
 
@@ -254,7 +244,7 @@ export default function AccountPage() {
       transaction.transaction_type === 'sale' ? t('csv.sale') : t('csv.expense'),
       transaction.amount,
       t(`paymentTypes.${transaction.payment_method === 'card' ? 'credit' : transaction.payment_method === 'e_wallet' ? 'mobile_money' : transaction.payment_method}`) || transaction.payment_method,
-      transaction.expense_category ? (t(`expenseCategories.${transaction.expense_category}`) || transaction.expense_category) : '',
+      transaction.expense_category ? getExpenseCategoryLabel(transaction.expense_category, t) : '',
       transaction.notes || '',
     ])
 
@@ -271,32 +261,27 @@ export default function AccountPage() {
     toast.success(t('csv.exportSuccess'))
   }
 
-  const handleLogout = async () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Settings] Logout initiated from:', window.location.pathname)
-    }
-    
+  /** Logged-in only: auth-only sign out after confirmation. */
+  const handleLogoutConfirm = async () => {
+    setLogoutConfirmOpen(false)
     try {
-      // Clear React Query cache to prevent stale data after logout
       queryClient.clear()
-      
-      // Sign out and clear auth state
       await signOut()
-      
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Settings] Sign out completed, redirecting to /login')
-      }
-      
-      // Use replace to prevent redirect loops and avoid adding to history
       router.replace('/login')
-      
-      // Force a refresh to ensure all state is cleared
       router.refresh()
     } catch (error) {
       console.error('[Settings] Logout error:', error)
-      // Even on error, redirect to login
       router.replace('/login')
     }
+  }
+
+  /** Guest only: clear all guest data on this device after confirmation. */
+  const handleClearDataConfirm = () => {
+    setClearDataConfirmOpen(false)
+    clearAllGuestData()
+    queryClient.clear()
+    router.replace('/login')
+    router.refresh()
   }
 
   const handleSaveProfile = async () => {
@@ -396,7 +381,8 @@ export default function AccountPage() {
     <AppShell title={t('account.title')} showBack showLogo>
       <div className="min-h-screen bg-gray-50 pb-32 pt-4 px-4 space-y-3 sm:space-y-4 max-w-[480px] mx-auto">
 
-        {/* Card 1: Profile — Avatar left, Name/Business middle, Edit right */}
+        {/* Section: Business information */}
+        <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1">{t('account.sectionBusinessInfo', { defaultValue: 'Business information' })}</h2>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0">
@@ -463,9 +449,10 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Card: Opening balance — compact, 2-col grid on >=360px, stacked on smaller */}
+        {/* Section: Financial setup */}
+        <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1 mt-4">{t('account.sectionFinancialSetup', { defaultValue: 'Financial setup' })}</h2>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
-          <h2 className="text-tally-section-title font-semibold text-gray-900 mb-1.5">{t('settings.openingBalance') || 'Opening balance'}</h2>
+          <h3 className="text-tally-section-title font-semibold text-gray-900 mb-1.5">{t('settings.openingBalance') || 'Opening balance'}</h3>
           <p className="text-tally-caption text-gray-500 mb-3">{t('settings.openingBalanceHint') || 'Used for Balance Sheet. Set your starting cash and bank balance.'}</p>
           <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
             <div>
@@ -529,249 +516,19 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Card 3: Quick Amounts — chips/pills, horizontal scroll if needed */}
+        {/* Section: Quick amounts — title, subtitle, Manage row only */}
+        <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1 mt-4">{t('account.sectionQuickAmounts', { defaultValue: 'Quick amounts' })}</h2>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h2 className="text-base font-semibold text-gray-900 mb-3">{t('settings.quickAmounts')}</h2>
-            <div className="space-y-3">
-              {/* Sale row: chips + [+] */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-xs text-gray-500 flex-shrink-0 mr-1">{t('settings.saleButtons')}</span>
-                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                {salePresets.map((val) => (
-                  <span
-                    key={val}
-                    className="inline-flex items-center gap-0.5 pl-2 pr-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-900"
-                  >
-                    {val}
-                    <button
-                      type="button"
-                      onClick={() => saveSalePresets(salePresets.filter((x) => x !== val))}
-                      className="p-0.5 rounded-full hover:bg-gray-200 text-gray-500"
-                      aria-label="Remove"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                {showAddSale ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step="any"
-                      placeholder="0"
-                      value={saleNewValue}
-                      onChange={(e) => setSaleNewValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const num = parseFloat(saleNewValue.replace(/,/g, ''))
-                          if (Number.isFinite(num) && num >= 0 && !salePresets.includes(num)) {
-                            saveSalePresets([...salePresets, num])
-                            setSaleNewValue('')
-                            setShowAddSale(false)
-                          } else if (Number.isFinite(num) && num >= 0) setShowAddSale(false)
-                        }
-                        if (e.key === 'Escape') setShowAddSale(false)
-                      }}
-                      className="w-14 h-7 text-xs py-0 px-1.5 rounded-full border-gray-200"
-                      autoFocus
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-full"
-                      onClick={() => {
-                        const num = parseFloat(saleNewValue.replace(/,/g, ''))
-                        if (!Number.isFinite(num) || num < 0) {
-                          toast.error(t('settings.invalidPreset'))
-                          return
-                        }
-                        if (salePresets.includes(num)) {
-                          setSaleNewValue('')
-                          setShowAddSale(false)
-                          return
-                        }
-                        saveSalePresets([...salePresets, num])
-                        setSaleNewValue('')
-                        setShowAddSale(false)
-                      }}
-                    >
-                      +
-                    </Button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddSale(true)}
-                    className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-sm flex-shrink-0"
-                    aria-label="Add"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                </div>
-              </div>
-              {/* Expense row: chips + [+] */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-xs text-gray-500 flex-shrink-0 mr-1">{t('settings.expenseButtons')}</span>
-                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                {expensePresets.map((val) => (
-                  <span
-                    key={val}
-                    className="inline-flex items-center gap-0.5 pl-2 pr-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-900"
-                  >
-                    {val}
-                    <button
-                      type="button"
-                      onClick={() => saveExpensePresets(expensePresets.filter((x) => x !== val))}
-                      className="p-0.5 rounded-full hover:bg-gray-200 text-gray-500"
-                      aria-label="Remove"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                {showAddExpense ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      min={0}
-                      step="any"
-                      placeholder="0"
-                      value={expenseNewValue}
-                      onChange={(e) => setExpenseNewValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const num = parseFloat(expenseNewValue.replace(/,/g, ''))
-                          if (Number.isFinite(num) && num >= 0 && !expensePresets.includes(num)) {
-                            saveExpensePresets([...expensePresets, num])
-                            setExpenseNewValue('')
-                            setShowAddExpense(false)
-                          } else if (Number.isFinite(num) && num >= 0) setShowAddExpense(false)
-                        }
-                        if (e.key === 'Escape') setShowAddExpense(false)
-                      }}
-                      className="w-14 h-7 text-xs py-0 px-1.5 rounded-full border-gray-200"
-                      autoFocus
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-full"
-                      onClick={() => {
-                        const num = parseFloat(expenseNewValue.replace(/,/g, ''))
-                        if (!Number.isFinite(num) || num < 0) {
-                          toast.error(t('settings.invalidPreset'))
-                          return
-                        }
-                        if (expensePresets.includes(num)) {
-                          setExpenseNewValue('')
-                          setShowAddExpense(false)
-                          return
-                        }
-                        saveExpensePresets([...expensePresets, num])
-                        setExpenseNewValue('')
-                        setShowAddExpense(false)
-                      }}
-                    >
-                      +
-                    </Button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddExpense(true)}
-                    className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-sm flex-shrink-0"
-                    aria-label="Add"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                </div>
-              </div>
-
-              {/* Inventory row: chips + [+] */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                <span className="text-xs text-gray-500 flex-shrink-0 mr-1">{t('settings.inventoryButtons')}</span>
-                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                {inventoryPresets.map((val) => (
-                  <span
-                    key={val}
-                    className="inline-flex items-center gap-0.5 pl-2 pr-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-900"
-                  >
-                    {val}
-                    <button
-                      type="button"
-                      onClick={() => saveInventoryPresets(inventoryPresets.filter((x) => x !== val))}
-                      className="p-0.5 rounded-full hover:bg-gray-200 text-gray-500"
-                      aria-label="Remove"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-                {showAddInventory ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      step="1"
-                      placeholder="0"
-                      value={inventoryNewValue}
-                      onChange={(e) => setInventoryNewValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          const num = parseFloat(inventoryNewValue.replace(/,/g, ''))
-                          if (Number.isFinite(num) && num >= 0 && !inventoryPresets.includes(num)) {
-                            saveInventoryPresets([...inventoryPresets, num])
-                            setInventoryNewValue('')
-                            setShowAddInventory(false)
-                          } else if (Number.isFinite(num) && num >= 0) setShowAddInventory(false)
-                        }
-                        if (e.key === 'Escape') setShowAddInventory(false)
-                      }}
-                      className="w-14 h-7 text-xs py-0 px-1.5 rounded-full border-gray-200"
-                      autoFocus
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-7 w-7 p-0 rounded-full"
-                      onClick={() => {
-                        const num = parseFloat(inventoryNewValue.replace(/,/g, ''))
-                        if (!Number.isFinite(num) || num < 0) {
-                          toast.error(t('settings.invalidPreset'))
-                          return
-                        }
-                        if (inventoryPresets.includes(num)) {
-                          setInventoryNewValue('')
-                          setShowAddInventory(false)
-                          return
-                        }
-                        saveInventoryPresets([...inventoryPresets, num])
-                        setInventoryNewValue('')
-                        setShowAddInventory(false)
-                      }}
-                    >
-                      +
-                    </Button>
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowAddInventory(true)}
-                    className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-sm flex-shrink-0"
-                    aria-label="Add"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                </div>
-              </div>
-            </div>
+          <p className="text-sm text-gray-500 mb-3">{t('settings.quickAmountsSubtitle', { defaultValue: 'Set up to 5 shortcuts for each type.' })}</p>
+          <button
+            type="button"
+            onClick={() => setQuickAmountsManagerOpen(true)}
+            className="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-gray-200 bg-gray-50/50 hover:bg-gray-100 transition-colors text-left"
+          >
+            <span className="text-sm font-medium text-gray-900">{t('settings.manageQuickAmounts', { defaultValue: 'Manage quick amounts' })}</span>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+          </button>
+          <QuickAmountsManager open={quickAmountsManagerOpen} onOpenChange={setQuickAmountsManagerOpen} />
         </div>
 
         {/* Card 4: Support — About, Privacy, Contact, Show Intro (side by side) */}
@@ -796,17 +553,22 @@ export default function AccountPage() {
               {t('account.showIntro')}
             </button>
           </div>
+          <p className="text-sm text-gray-500 mt-4">
+            {t('account.offlineHelp', { defaultValue: 'Tally works even when you are offline. New records are saved on this device and will sync when you are online again.' })}
+            {' '}
+            {t('account.offlineHelpExport', { defaultValue: 'Exports and some reports require an internet connection.' })}
+          </p>
         </div>
 
+        {/* Section: Data & tools */}
+        <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1 mt-4">{t('account.sectionDataTools', { defaultValue: 'Data & tools' })}</h2>
         {/* Install PWA — white card (only if not installed) */}
         {!pwaState.isStandalone && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900">{t('pwa.install.title')}</p>
-                <p className="text-xs text-gray-500">
-                  {pwaState.canInstall ? t('pwa.install.subtitle.canInstall') : pwaState.isIOS ? t('pwa.install.subtitle.ios') : 'Not available yet'}
-                </p>
+                <p className="text-sm font-medium text-gray-900">{t('pwa.installOnDeviceTitle', { defaultValue: 'Install Tally on this device' })}</p>
+                <p className="text-xs text-gray-500">{t('pwa.installOnDeviceSubtitle', { defaultValue: 'Add Tally to your home screen as an app.' })}</p>
               </div>
               {pwaState.canInstall && (
                 <Button variant="outline" size="sm" onClick={async () => {
@@ -832,8 +594,8 @@ export default function AccountPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm font-medium text-gray-900">{t('settings.exportCSV')}</p>
-              <p className="text-xs text-gray-500">{t('settings.exportCSVDesc')}</p>
+              <p className="text-sm font-medium text-gray-900">{t('settings.exportYourData', { defaultValue: 'Export your data' })}</p>
+              <p className="text-xs text-gray-500">{t('settings.exportYourDataSubtitle', { defaultValue: 'Download your sales and expense records as a CSV file for this business.' })}</p>
             </div>
             <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]">
               {t('account.export')}
@@ -841,20 +603,84 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* Footer: Red Log Out button */}
-        <Button
-          variant="outline"
-          className="w-full bg-white border-red-600 text-red-600 hover:bg-red-50"
-          onClick={handleLogout}
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          {t('settings.logout')}
-        </Button>
+        {/* Section: Account */}
+        <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1 mt-4">{t('account.sectionAccount', { defaultValue: 'Account' })}</h2>
+        {guestMode ? (
+          <Button
+            variant="outline"
+            className="w-full border-red-600 text-red-600 hover:bg-red-50"
+            onClick={() => setClearDataConfirmOpen(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            {t('settings.clearDataOnDevice', { defaultValue: 'Clear data on this device' })}
+          </Button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setLogoutConfirmOpen(true)}
+            className="w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <LogOut className="w-4 h-4 inline-block mr-2 align-middle" />
+            {t('settings.logout')}
+          </button>
+        )}
 
         {/* Version — small gray text at the very bottom */}
         <div className="text-center text-xs text-gray-500 pb-2">
           {t('settings.version')} 0.1.0
         </div>
+
+        {/* Log out confirmation (logged-in only) */}
+        <Dialog open={logoutConfirmOpen} onOpenChange={setLogoutConfirmOpen}>
+          <DialogContent className="max-w-[400px] bg-background">
+            <DialogHeader>
+              <DialogTitle>
+                {t('settings.logoutConfirmTitle', { defaultValue: 'Log out of Tally?' })}
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              {t('settings.logoutConfirmBody', { defaultValue: 'You can log in again anytime. Your data will not be deleted.' })}
+            </p>
+            <div className="flex gap-3 justify-end pt-4">
+              <Button variant="outline" onClick={() => setLogoutConfirmOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                variant="outline"
+                className="border-red-600 text-red-600 hover:bg-red-50"
+                onClick={handleLogoutConfirm}
+              >
+                {t('auth.logout', { defaultValue: 'Log out' })}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Clear all data confirmation (guest only) */}
+        <Dialog open={clearDataConfirmOpen} onOpenChange={setClearDataConfirmOpen}>
+          <DialogContent className="max-w-[400px] bg-background">
+            <DialogHeader>
+              <DialogTitle>
+                {t('settings.clearDataConfirmTitle', { defaultValue: 'Clear all data on this device?' })}
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-muted-foreground">
+              {t('settings.clearDataConfirmBody', { defaultValue: 'This will remove your records from this device. You cannot undo this.' })}
+            </p>
+            <div className="flex gap-3 justify-end pt-4">
+              <Button variant="outline" onClick={() => setClearDataConfirmOpen(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                variant="outline"
+                className="border-red-600 text-red-600 hover:bg-red-50"
+                onClick={handleClearDataConfirm}
+              >
+                {t('settings.clearDataButton', { defaultValue: 'Clear data' })}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Edit Business Profile Modal */}
         <Dialog open={isProfileEditOpen} onOpenChange={setIsProfileEditOpen}>

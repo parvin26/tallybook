@@ -3,13 +3,14 @@ import { format } from 'date-fns'
 
 /**
  * Derived hook for dashboard stats.
- * Uses useTransactions as single source of truth — filters for today's transactions (local time).
+ * Single source of truth for "today" in the app: format(new Date(), 'yyyy-MM-dd').
+ * Uses useTransactions; filters for today's transactions (local time).
  * Calculates cashIn (sales), cashOut (expenses), balance, and count.
  */
 export function useDashboardStats() {
   const { data: transactions = [], isLoading } = useTransactions()
 
-  // Get today's date in local timezone (YYYY-MM-DD format)
+  // Canonical "today" for Today's Summary (local YYYY-MM-DD)
   const today = format(new Date(), 'yyyy-MM-dd')
 
   // Filter transactions for today (match transaction_date string)

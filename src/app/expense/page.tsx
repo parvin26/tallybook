@@ -208,7 +208,7 @@ export default function RecordExpensePage() {
   }
 
   return (
-    <AppShell title={t('transaction.recordExpense')} showBack showLogo>
+    <AppShell title={t('transaction.recordExpense')} showBack showLogo hideBottomNav>
       <div className="max-w-[480px] mx-auto px-6 py-6 pb-48 space-y-6">
         {/* 1. Amount — text-5xl, font-bold, text-center, no borders, transparent; currency from stored country */}
         <div className="p-6">

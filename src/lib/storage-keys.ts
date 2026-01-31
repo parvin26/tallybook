@@ -22,4 +22,6 @@ export const STORAGE_KEYS = {
   INVENTORY_PRESETS: 'tally-inventory-presets',
   /** PWA install banner: dismiss timestamp (Not now = hide 5 days). */
   PWA_INSTALL_BANNER_DISMISSED_AT: 'tally-pwa-install-banner-dismissed-at',
+  /** PWA install banner: number of times "Not now" was clicked; stop showing after 3. */
+  PWA_INSTALL_BANNER_DISMISS_COUNT: 'tally-pwa-install-banner-dismiss-count',
 } as const

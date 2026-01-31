@@ -1,6 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 
@@ -20,6 +22,7 @@ interface SalesByItemPieChartProps {
 
 /** Donut + legend. No labels on the donut; list shows name, amount, and %. Tooltip on tap/hover. */
 export function SalesByItemPieChart({ salesByItem }: SalesByItemPieChartProps) {
+  const { t } = useTranslation()
   const { data, totalSalesAmount } = useMemo(() => {
     const withAmount = salesByItem.filter((r) => r.amount > 0)
     const total = withAmount.reduce((sum, r) => sum + r.amount, 0)
@@ -46,7 +49,11 @@ export function SalesByItemPieChart({ salesByItem }: SalesByItemPieChartProps) {
   if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 bg-white p-6 text-center min-h-[180px]">
-        <p className="text-tally-body text-gray-500">No sales yet for this period.</p>
+        <p className="text-sm font-medium text-gray-700">{t('report.emptyPeriod', { defaultValue: 'No data for this period.' })}</p>
+        <p className="text-tally-caption text-gray-500 mt-1">{t('report.emptyPeriodHelper', { defaultValue: 'Record a sale or expense to see this report.' })}</p>
+        <Link href="/sale" className="inline-block mt-3 text-sm font-medium text-[#29978C] hover:underline">
+          {t('home.recordSale', { defaultValue: 'Add Sale' })}
+        </Link>
       </div>
     )
   }
@@ -83,7 +90,8 @@ export function SalesByItemPieChart({ salesByItem }: SalesByItemPieChartProps) {
             totalSalesAmount > 0
               ? (entry.value / totalSalesAmount) * 100
               : 0
-          const percentStr = percent >= 0.1 ? percent.toFixed(0) : percent.toFixed(1)
+          const displayPct = percent > 0 && percent < 1 ? 1 : Math.round(percent)
+          const percentStr = String(displayPct)
           return (
             <div
               key={entry.name}

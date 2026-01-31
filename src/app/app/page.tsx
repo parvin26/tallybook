@@ -52,7 +52,7 @@ export default function AppHomePage() {
     }
   }, [ready, transactionsLoading, transactions?.length])
 
-  // Sort transactions: transaction_date (desc), then created_at (desc), then slice top 5
+  // Sort transactions: transaction_date (desc), then created_at (desc), then slice top 3 for Home
   const sortedTransactions = [...transactions].sort((a, b) => {
     const dateA = new Date(a.transaction_date).getTime()
     const dateB = new Date(b.transaction_date).getTime()
@@ -63,7 +63,7 @@ export default function AppHomePage() {
     const createdB = new Date(b.created_at).getTime()
     return createdB - createdA // Descending by created_at
   })
-  const recentTransactions = sortedTransactions.slice(0, 5)
+  const recentTransactions = sortedTransactions.slice(0, 3)
 
   if (!ready) {
     return null
@@ -79,8 +79,13 @@ export default function AppHomePage() {
           <PWAInstallBanner showAfterDelay={bannerAllowed} />
 
           <div className="px-6 pb-6 space-y-6">
-            {/* Summary Card — derives today's totals from useTransactions (single source of truth) */}
-            <SummaryCardLovable />
+            {/* Today's Summary — balance dominant (~36sp), cash in/out secondary (~20sp); label 15sp/14sp muted */}
+            <section aria-labelledby="todays-summary-heading">
+              <h2 id="todays-summary-heading" className="text-[15px] font-medium text-muted-foreground mb-2 px-0">
+                {t('home.todaysSummary', { defaultValue: "Today's Summary" })}
+              </h2>
+              <SummaryCardLovable />
+            </section>
 
             {/* Primary Action Buttons */}
             <div className="grid grid-cols-2 gap-4">
@@ -98,17 +103,9 @@ export default function AppHomePage() {
               </Link>
             </div>
 
-            {/* Recent Activity Section */}
+            {/* Recent Activity: at most 3 items; View all activity link below */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-foreground">{t('home.recentActivity')}</h2>
-                <Link 
-                  href="/history"
-                  className="text-sm text-primary font-medium hover:underline"
-                >
-                  {t('home.viewAll')}
-                </Link>
-              </div>
+              <h2 className="text-lg font-semibold text-foreground mb-3">{t('home.recentActivity')}</h2>
               {transactionsError ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p>{t('home.loadingError')}</p>
@@ -116,13 +113,21 @@ export default function AppHomePage() {
               ) : transactionsLoading ? (
                 <div className="tally-card text-center py-8 text-muted-foreground">{t('common.loading')}</div>
               ) : (
-                <TransactionListLovable
-                  transactions={recentTransactions}
-                  onTransactionClick={(tx) => {
-                    setEditTransaction(tx)
-                    setEditModalOpen(true)
-                  }}
-                />
+                <>
+                  <TransactionListLovable
+                    transactions={recentTransactions}
+                    onTransactionClick={(tx) => {
+                      setEditTransaction(tx)
+                      setEditModalOpen(true)
+                    }}
+                  />
+                  <Link
+                    href="/history"
+                    className="mt-3 inline-block text-sm font-medium text-[#29978C] hover:underline"
+                  >
+                    {t('home.viewAllActivity', { defaultValue: 'View all activity' })}
+                  </Link>
+                </>
               )}
             </div>
           </div>

@@ -212,7 +212,7 @@ export interface BalanceSheetPDFData {
   asAtDate?: Date
   balanceSheet: {
     assets: { cash: number; bank: number; receivables: number; inventory: number; total: number }
-    liabilities: { payables: number; loans: number; total: number }
+    liabilities: { payables: number; loans: number; bankOverdraft?: number; total: number }
     equity: { startingCapital: number; retainedEarnings: number; total: number }
     balanceCheck?: number
     isBalanced?: boolean
@@ -257,8 +257,13 @@ export function generateBalanceSheetPDF(data: BalanceSheetPDFData): void {
   currentY = getFinalY(doc) + 12
 
   // Liabilities & Equity table (centered)
+  const bankOverdraftRow: [string, string][] =
+    liabilities.bankOverdraft != null && liabilities.bankOverdraft > 0
+      ? [['Bank Overdraft', formatCurrency(liabilities.bankOverdraft)]]
+      : []
   const liabRows: [string, string][] = [
     ['Payables', formatCurrency(liabilities.payables)],
+    ...bankOverdraftRow,
     ['Loans', formatCurrency(liabilities.loans)],
     ['Total Liabilities', formatCurrency(liabilities.total)],
     ['Starting Capital', formatCurrency(equity.startingCapital)],

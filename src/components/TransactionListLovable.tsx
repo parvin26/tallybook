@@ -5,6 +5,7 @@ import { Transaction } from '@/types'
 import type { TransactionAttachmentRow } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { getAttachmentUrl } from '@/lib/attachments'
+import { getExpenseCategoryLabel } from '@/lib/expense-categories'
 import { AttachmentViewer, type AttachmentItem } from '@/components/AttachmentViewer'
 import { Wallet, Building2, Smartphone, CreditCard, Package, Car, Zap, Home, Users, Utensils, Wrench, MoreHorizontal } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -128,25 +129,26 @@ export function TransactionListLovable({ transactions, limit, onTransactionClick
     }
 
     // Determine label
-    let label = transaction.expense_category || transaction.payment_method || 'Transaction'
+    let label: string
     if (transaction.expense_category) {
-      label = t(`expenseCategories.${transaction.expense_category}`) || label
+      label = getExpenseCategoryLabel(transaction.expense_category, t)
     } else {
-      label = t(`paymentTypes.${paymentDisplayKey}`) || label
+      label = t(`paymentTypes.${paymentDisplayKey}`) || transaction.payment_method || 'Transaction'
     }
 
-    // Secondary label (note or time)
+    // Secondary label: date only or date + created_at time (never fake 12:00 AM from date-only)
     const txDate = parseISO(transaction.transaction_date)
-    const timeStr = format(txDate, 'h:mm a')
-    
+    const dateStr = isToday(txDate) ? t('history.today') : isYesterday(txDate) ? t('history.yesterday') : format(txDate, 'd MMM yyyy')
+    const timeStr = transaction.created_at ? format(parseISO(transaction.created_at), 'h:mm a') : ''
+    const dateTimeStr = timeStr ? `${dateStr}, ${timeStr}` : dateStr
+
     // Strip attachment metadata from notes if present
     let cleanNotes = transaction.notes || ''
     if (cleanNotes) {
-      // Remove pattern: [Attachment: ...] or Attachment: ... at start
       cleanNotes = cleanNotes.replace(/^\[?Attachment:\s*[^\]]*\]?\s*/i, '').trim()
     }
-    
-    const secondaryLabel = cleanNotes || timeStr
+
+    const secondaryLabel = cleanNotes || dateTimeStr
 
     return (
       <div
@@ -160,38 +162,22 @@ export function TransactionListLovable({ transactions, limit, onTransactionClick
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-[var(--tally-text)] truncate">{label}</p>
           <p className="text-xs text-[var(--tally-text-muted)] truncate">{secondaryLabel}</p>
-          <p className="text-xs text-[var(--tally-text-muted)] mt-0.5">
+          <p className="text-[12px] text-[var(--tally-text-muted)] mt-0.5 font-normal opacity-90" aria-label={`Ref ${transaction.id.slice(0, 8).toUpperCase()}`}>
             Ref: #{transaction.id.slice(0, 8).toUpperCase()}
           </p>
           {transaction.transaction_attachments && transaction.transaction_attachments.length > 0 && (
             <div className="mt-1.5 text-xs">
-              <span className="font-medium text-[var(--tally-text-muted)]">{t('transaction.attachments')}:</span>
-              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-                {transaction.transaction_attachments.map((attachment: TransactionAttachmentRow, attIndex: number) => {
-                  const isGuest = !!attachment.data_url
-                  const openUrl = isGuest
-                    ? () => openAttachmentViewer(transaction, attIndex)
-                    : async () => {
-                        const url = await getAttachmentUrl(attachment.storage_path)
-                        if (url) window.open(url, '_blank', 'noopener,noreferrer')
-                      }
-                  return (
-                    <button
-                      key={attachment.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        if (isGuest) openAttachmentViewer(transaction, attIndex)
-                        else openUrl()
-                      }}
-                      className="text-[#29978C] hover:underline truncate max-w-[180px] text-left"
-                    >
-                      {attachment.filename}
-                    </button>
-                  )
-                })}
-              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  openAttachmentViewer(transaction, 0)
+                }}
+                className="text-[#29978C] hover:underline font-medium text-left"
+              >
+                {t('transaction.viewAttachments', { count: transaction.transaction_attachments.length, defaultValue: `View attachments (${transaction.transaction_attachments.length})` })}
+              </button>
             </div>
           )}
         </div>

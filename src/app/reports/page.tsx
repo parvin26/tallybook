@@ -143,8 +143,8 @@ export default function ReportsHubPage() {
           </div>
         </div>
 
-        {/* Big Cards: grid-cols-3 */}
-        <div className="grid grid-cols-3 gap-3 min-w-0">
+        {/* Business Snapshot cards: stack vertically on ≤360px, row on wider */}
+        <div className="grid grid-cols-1 gap-3 min-[361px]:grid-cols-3 min-w-0">
           <StatCard
             title={t('report.profitLoss.totalRevenue') || 'Total Revenue'}
             currencyLabel={currencySymbol}
@@ -167,15 +167,15 @@ export default function ReportsHubPage() {
 
         {/* Snapshot: one tabbed card — Sales | Expenses */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* Tabs: Sales | Expenses */}
+          {/* Tabs: Sales | Expenses — active: font weight + underline (border-b-2) */}
           <div className="flex border-b border-gray-200">
             <button
               type="button"
               onClick={() => setSnapshotTab('sales')}
-              className={`flex-1 py-3 px-4 text-tally-body font-semibold transition-colors ${
+              className={`flex-1 py-3 px-4 text-tally-body transition-colors border-b-2 -mb-px ${
                 snapshotTab === 'sales'
-                  ? 'text-[#166556] border-b-2 border-[#166556] bg-[#166556]/5'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? 'font-semibold text-[#166556] border-[#166556] bg-[#166556]/5'
+                  : 'font-medium text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               {t('report.snapshot.sales') || 'Sales'}
@@ -183,10 +183,10 @@ export default function ReportsHubPage() {
             <button
               type="button"
               onClick={() => setSnapshotTab('expenses')}
-              className={`flex-1 py-3 px-4 text-tally-body font-semibold transition-colors ${
+              className={`flex-1 py-3 px-4 text-tally-body transition-colors border-b-2 -mb-px ${
                 snapshotTab === 'expenses'
-                  ? 'text-[#166556] border-b-2 border-[#166556] bg-[#166556]/5'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  ? 'font-semibold text-[#166556] border-[#166556] bg-[#166556]/5'
+                  : 'font-medium text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
               {t('report.snapshot.expenses') || 'Expenses'}

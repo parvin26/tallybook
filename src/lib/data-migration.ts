@@ -4,7 +4,7 @@
  */
 import { supabase } from './supabase/supabaseClient'
 import { STORAGE_KEYS } from './storage-keys'
-import { getGuestTransactions, type GuestTransaction } from './guest-storage'
+import { getGuestTransactions, clearAllGuestData, type GuestTransaction } from './guest-storage'
 import type { InventoryItem } from '@/types'
 
 const BATCH_SIZE = 50
@@ -127,7 +127,7 @@ export async function migrateGuestData(businessId: string): Promise<void> {
     }
   }
 
-  clearGuestDataKeys()
+  clearAllGuestData()
 }
 
 export { hasGuestData }

@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { AppShell } from '@/components/AppShell'
 import { Activity, Calendar, TrendingUp, TrendingDown, Minus, AlertCircle, CheckCircle2, Package, CreditCard, Wallet } from 'lucide-react'
 import { getBusinessProfile } from '@/lib/businessProfile'
+import { getExpenseCategoryLabel } from '@/lib/expense-categories'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -248,7 +249,7 @@ export default function BusinessHealthPage() {
           type: 'weakProduct',
           title: t('health.insights.weakProduct'),
           message: t('health.insights.weakProductMessage', {
-            category: t(`expenseCategories.${lowestCategory[0]}`) || lowestCategory[0],
+            category: getExpenseCategoryLabel(lowestCategory[0], t),
           }),
           guidance: t('health.insights.weakProductGuidance'),
           icon: AlertCircle,

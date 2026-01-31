@@ -14,6 +14,7 @@ import { Download, File, Image as ImageIcon, Eye } from 'lucide-react'
 import { AttachmentViewer } from '@/components/AttachmentViewer'
 import { useTransactions } from '@/hooks/useTransactions'
 import { isGuestMode } from '@/lib/guest-storage'
+import { getExpenseCategoryLabel } from '@/lib/expense-categories'
 
 export default function TransactionDetailPage() {
   const { t } = useTranslation()
@@ -101,7 +102,7 @@ export default function TransactionDetailPage() {
 
   if (isLoading) {
     return (
-      <AppShell title={t('transaction.details')} showBack showLogo>
+      <AppShell title={t('transaction.details')} showBack showLogo hideBottomNav>
         <div className="flex items-center justify-center min-h-[60vh]">
           <p className="text-text-muted">{t('common.loading')}</p>
         </div>
@@ -111,7 +112,7 @@ export default function TransactionDetailPage() {
 
   if (!transaction) {
     return (
-      <AppShell title={t('transaction.details')} showBack showLogo>
+      <AppShell title={t('transaction.details')} showBack showLogo hideBottomNav>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <p className="text-text-muted mb-4">{t('transaction.notFound')}</p>
@@ -125,7 +126,7 @@ export default function TransactionDetailPage() {
   const isSale = transaction.transaction_type === 'sale' || transaction.transaction_type === 'payment_received'
 
   return (
-    <AppShell title={t('transaction.details')} showBack showLogo>
+    <AppShell title={t('transaction.details')} showBack showLogo hideBottomNav>
       <div className="max-w-md mx-auto px-6 py-6">
 
         {/* Transaction Details */}
@@ -159,7 +160,7 @@ export default function TransactionDetailPage() {
             {transaction.expense_category && (
               <div>
                 <p className="text-xs text-text-muted mb-1">{t('transaction.category')}</p>
-                <p className="text-sm text-text-primary">{t(`expenseCategories.${transaction.expense_category}`) || transaction.expense_category}</p>
+                <p className="text-sm text-text-primary">{getExpenseCategoryLabel(transaction.expense_category ?? undefined, t)}</p>
               </div>
             )}
 

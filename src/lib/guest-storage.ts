@@ -67,7 +67,8 @@ export function enableGuestMode(): void {
 }
 
 /**
- * Disable guest mode
+ * Disable guest mode (clears guest transactions and business only).
+ * Used after migration; for explicit "Clear data on this device" use clearAllGuestData().
  */
 export function disableGuestMode(): void {
   if (typeof window === 'undefined') return
@@ -75,6 +76,21 @@ export function disableGuestMode(): void {
   localStorage.removeItem(GUEST_STORAGE_KEY)
   localStorage.removeItem(GUEST_BUSINESS_KEY)
   // Dispatch custom event to notify AuthContext
+  window.dispatchEvent(new CustomEvent('guest-mode-changed', { detail: { enabled: false } }))
+}
+
+/**
+ * Clear all guest data on this device (transactions, business, inventory items and movements).
+ * Use only for the explicit "Clear data on this device?" flow. Must not be called on
+ * normal logged-in logout. Ensures transactions and inventory are cleared together.
+ */
+export function clearAllGuestData(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(STORAGE_KEYS.GUEST_MODE)
+  localStorage.removeItem(GUEST_STORAGE_KEY)
+  localStorage.removeItem(GUEST_BUSINESS_KEY)
+  localStorage.removeItem(STORAGE_KEYS.INVENTORY_ITEMS)
+  localStorage.removeItem(STORAGE_KEYS.INVENTORY_MOVEMENTS)
   window.dispatchEvent(new CustomEvent('guest-mode-changed', { detail: { enabled: false } }))
 }
 

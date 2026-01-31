@@ -1,9 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
+import Link from 'next/link'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/lib/utils'
+import { getExpenseCategoryLabel } from '@/lib/expense-categories'
 
 /** Nature palette: Muted Teal, Sand, Clay, Burnt Orange, Charcoal */
 const CHART_COLORS = ['#2A9D8F', '#E9C46A', '#F4A261', '#E76F51', '#264653']
@@ -59,7 +61,11 @@ export function ExpensePieChart({
   if (data.length === 0) {
     return (
       <div className={embedded ? 'py-4 text-center' : 'rounded-xl border border-gray-200 bg-white p-6 text-center'}>
-        <p className="text-tally-caption text-gray-500">No expense data for this period.</p>
+        <p className="text-sm font-medium text-gray-700">{t('report.emptyPeriod', { defaultValue: 'No data for this period.' })}</p>
+        <p className="text-tally-caption text-gray-500 mt-1">{t('report.emptyPeriodHelper', { defaultValue: 'Record a sale or expense to see this report.' })}</p>
+        <Link href="/expense" className="inline-block mt-3 text-sm font-medium text-[#29978C] hover:underline">
+          {t('home.recordExpense', { defaultValue: 'Add Expense' })}
+        </Link>
       </div>
     )
   }
@@ -118,8 +124,9 @@ export function ExpensePieChart({
     >
       {data.map((entry) => {
         const percent = total > 0 ? (entry.value / total) * 100 : 0
-        const percentStr = percent >= 0.1 ? percent.toFixed(0) : percent.toFixed(1)
-        const label = t(`expenseCategories.${entry.name}`) || entry.name
+        const displayPct = percent > 0 && percent < 1 ? 1 : Math.round(percent)
+        const percentStr = String(displayPct)
+        const label = getExpenseCategoryLabel(entry.name, t)
         return (
           <div key={entry.name} className="flex justify-between items-center w-full text-sm">
             <div className="flex items-center gap-2 truncate min-w-0">
