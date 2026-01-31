@@ -90,7 +90,7 @@ export default function AccountPage() {
   const [openingCash, setOpeningCash] = useState('')
   const [openingBank, setOpeningBank] = useState('')
 
-  // Open Edit Profile when navigated with ?editProfile=1 (e.g. from Home header circle)
+  // Open Edit Profile when navigated with ?editProfile=1 (e.g. from Home header circle). Works for both guest and logged-in.
   useEffect(() => {
     if (searchParams?.get('editProfile') === '1') {
       setIsProfileEditOpen(true)
