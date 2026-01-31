@@ -3,20 +3,23 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase/supabaseClient'
+import { useBusiness } from '@/contexts/BusinessContext'
+import { isGuestMode } from '@/lib/guest-storage'
+import { updateItem } from '@/lib/inventory-service'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { AmountInput } from '@/components/inputs/AmountInput'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { InventoryItem } from '@/types/stock'
+import type { InventoryItem } from '@/types'
 
 type Unit = 'pcs' | 'pack' | 'kg' | 'g' | 'l' | 'ml'
 
 const units: Unit[] = ['pcs', 'pack', 'kg', 'g', 'l', 'ml']
 
 interface EditItemModalProps {
-  item: InventoryItem
+  item: InventoryItem & { lowStockThreshold?: number | null }
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -24,50 +27,34 @@ interface EditItemModalProps {
 export function EditItemModal({ item, open, onOpenChange }: EditItemModalProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
+  const { currentBusiness } = useBusiness()
+  const businessId = isGuestMode() ? 'guest' : currentBusiness?.id ?? null
 
   const [name, setName] = useState(item.name)
-  const [quantity, setQuantity] = useState(item.quantity.toString())
-  const [unit, setUnit] = useState<Unit>(item.unit)
+  const [costPrice, setCostPrice] = useState((item.cost_price ?? 0).toString())
+  const [sellingPrice, setSellingPrice] = useState((item.selling_price ?? 0).toString())
+  const [unit, setUnit] = useState<Unit>(item.unit as Unit)
   const [lowStockThreshold, setLowStockThreshold] = useState(
-    item.lowStockThreshold?.toString() || ''
+    (item.low_stock_threshold ?? item.lowStockThreshold)?.toString() || ''
   )
 
-  // Update state when item changes
   useEffect(() => {
     setName(item.name)
-    setQuantity(item.quantity.toString())
-    setUnit(item.unit)
-    setLowStockThreshold(item.lowStockThreshold?.toString() || '')
+    setCostPrice((item.cost_price ?? 0).toString())
+    setSellingPrice((item.selling_price ?? 0).toString())
+    setUnit(item.unit as Unit)
+    setLowStockThreshold((item.low_stock_threshold ?? item.lowStockThreshold)?.toString() || '')
   }, [item])
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!name.trim()) {
-        throw new Error(t('stock.nameRequired'))
-      }
-
-      const quantityNum = parseFloat(quantity)
-      if (isNaN(quantityNum) || quantityNum < 0) {
-        throw new Error(t('stock.invalidQuantity'))
-      }
-
-      const { error } = await supabase
-        .from('inventory_items')
-        .update({
-          name: name.trim(),
-          quantity: quantityNum,
-          unit,
-          low_stock_threshold: lowStockThreshold ? parseFloat(lowStockThreshold) : null,
-        })
-        .eq('id', item.id)
-
-      if (error) {
-        // Handle missing table gracefully
-        if (error.code === '42P01' || error.message.includes('does not exist')) {
-          throw new Error(t('stock.tableNotReady'))
-        }
-        throw error
-      }
+      if (!name.trim()) throw new Error(t('stock.nameRequired'))
+      if (!businessId) throw new Error(t('stock.noBusiness'))
+      await updateItem(item.id, businessId, {
+        name: name.trim(),
+        unit,
+        low_stock_threshold: lowStockThreshold ? parseFloat(lowStockThreshold) : null,
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
@@ -75,8 +62,7 @@ export function EditItemModal({ item, open, onOpenChange }: EditItemModalProps) 
       onOpenChange(false)
     },
     onError: (error: Error) => {
-      const errorMessage = error.message || t('stock.saveError') || t('common.couldntSave')
-      toast.error(errorMessage)
+      toast.error(error.message || t('stock.saveError') || t('common.couldntSave'))
     },
   })
 
@@ -87,7 +73,7 @@ export function EditItemModal({ item, open, onOpenChange }: EditItemModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] bg-[var(--tally-bg)]">
+      <DialogContent className="w-full max-w-lg bg-white p-6 shadow-lg rounded-xl border border-[var(--tally-border)]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
             {t('stock.editItem')}
@@ -108,18 +94,30 @@ export function EditItemModal({ item, open, onOpenChange }: EditItemModalProps) 
             />
           </div>
 
-          {/* Quantity */}
+          {/* Cost Price (per unit) */}
+          <div>
+            <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+              {t('stock.costPricePerUnit')}
+            </label>
+            <AmountInput value={costPrice} onChange={setCostPrice} size="sm" />
+          </div>
+
+          {/* Selling Price (per unit) */}
+          <div>
+            <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+              {t('stock.sellingPricePerUnit')}
+            </label>
+            <AmountInput value={sellingPrice} onChange={setSellingPrice} size="sm" />
+          </div>
+
+          {/* Quantity is ledger-driven (Restock / Sale); show read-only */}
           <div>
             <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
               {t('stock.quantity')}
             </label>
-            <Input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              min="0"
-              step="0.01"
-            />
+            <div className="py-3 px-4 bg-muted/50 rounded-lg text-muted-foreground">
+              {item.quantity} {item.unit}
+            </div>
           </div>
 
           {/* Unit Selector */}

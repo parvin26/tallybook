@@ -1,77 +1,80 @@
 'use client'
 
+import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 import { AppShell } from '@/components/AppShell'
 
 export default function PrivacyPage() {
+  const { t, i18n } = useTranslation()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const lang = searchParams.get('lang')
+    if (lang && (lang === 'en' || lang === 'bm' || lang === 'krio')) {
+      i18n.changeLanguage(lang)
+    }
+  }, [searchParams, i18n])
+
+  const dateStr = new Date().toLocaleDateString(
+    i18n.language === 'bm' ? 'ms-MY' : i18n.language === 'krio' ? 'en-GB' : 'en-US',
+    { year: 'numeric', month: 'long', day: 'numeric' }
+  )
 
   return (
-    <AppShell title="Privacy Policy" showBack showLogo>
+    <AppShell title={t('privacy.pageTitle')} showBack showLogo>
       <div className="max-w-2xl mx-auto px-6 py-6">
         <div className="bg-tally-surface rounded-[var(--tally-radius)] p-8 shadow-[var(--tally-shadow)]">
-          <h1 className="text-2xl font-semibold text-tally-text mb-6">Polisi Privasi</h1>
-          
+          <h1 className="text-2xl font-semibold text-tally-text mb-6">{t('privacy.heading')}</h1>
+
           <div className="prose prose-sm max-w-none space-y-4 text-gray-700">
             <section>
-              <h2 className="text-lg font-semibold mb-2">1. Maklumat yang Kami Kumpulkan</h2>
-              <p>
-                TALLY mengumpulkan maklumat yang anda berikan secara langsung, termasuk:
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t('privacy.s1Title')}</h2>
+              <p>{t('privacy.s1Intro')}</p>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Nombor telefon untuk log masuk</li>
-                <li>Maklumat perniagaan (nama, jenis, lokasi)</li>
-                <li>Transaksi kewangan yang anda rekod</li>
+                <li>{t('privacy.s1Li1')}</li>
+                <li>{t('privacy.s1Li2')}</li>
+                <li>{t('privacy.s1Li3')}</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-2">2. Cara Kami Menggunakan Maklumat</h2>
-              <p>
-                Kami menggunakan maklumat anda untuk:
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t('privacy.s2Title')}</h2>
+              <p>{t('privacy.s2Intro')}</p>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Menyediakan perkhidmatan TALLY</li>
-                <li>Menyimpan dan memaparkan rekod transaksi anda</li>
-                <li>Menghasilkan laporan kewangan</li>
+                <li>{t('privacy.s2Li1')}</li>
+                <li>{t('privacy.s2Li2')}</li>
+                <li>{t('privacy.s2Li3')}</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-2">3. Keselamatan Data</h2>
-              <p>
-                Kami menggunakan Supabase untuk menyimpan data anda dengan selamat. 
-                Data anda dienkripsi dan hanya boleh diakses oleh anda melalui log masuk.
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t('privacy.s3Title')}</h2>
+              <p>{t('privacy.s3Body')}</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-2">4. Perkongsian Data</h2>
-              <p>
-                Kami tidak berkongsi data anda dengan pihak ketiga tanpa kebenaran anda.
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t('privacy.s4Title')}</h2>
+              <p>{t('privacy.s4Body')}</p>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-2">5. Hak Anda</h2>
-              <p>
-                Anda boleh:
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t('privacy.s5Title')}</h2>
+              <p>{t('privacy.s5Intro')}</p>
               <ul className="list-disc pl-6 space-y-1">
-                <li>Mengakses data anda pada bila-bila masa</li>
-                <li>Mengemaskini atau memadam data anda</li>
-                <li>Mengeksport data anda dalam format CSV</li>
+                <li>{t('privacy.s5Li1')}</li>
+                <li>{t('privacy.s5Li2')}</li>
+                <li>{t('privacy.s5Li3')}</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-lg font-semibold mb-2">6. Hubungi Kami</h2>
-              <p>
-                Jika anda mempunyai soalan tentang polisi privasi ini, sila hubungi kami melalui WhatsApp 
-                atau email yang disediakan dalam Tetapan.
-              </p>
+              <h2 className="text-lg font-semibold mb-2">{t('privacy.s6Title')}</h2>
+              <p>{t('privacy.s6Body')}</p>
             </section>
 
             <section className="text-sm text-gray-500 pt-4 border-t">
-              <p>Dikemaskini: {new Date().toLocaleDateString('ms-MY', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p>{t('privacy.updated', { date: dateStr })}</p>
             </section>
           </div>
         </div>

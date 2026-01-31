@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Download, X, FileText, File } from 'lucide-react'
 
-interface AttachmentItem {
+/** Auth: signedUrl. Guest: dataUrl (base64). Viewer uses displayUrl = signedUrl || dataUrl. */
+export interface AttachmentItem {
   id: string
   filename: string
   mime_type: string
-  signedUrl: string
+  signedUrl?: string
+  dataUrl?: string
 }
 
 interface AttachmentViewerProps {
@@ -69,8 +71,33 @@ export function AttachmentViewer({
   }, [open])
 
   const currentAttachment = attachments[activeIndex]
+  const rawUrl = currentAttachment?.signedUrl || currentAttachment?.dataUrl || ''
   const isImage = currentAttachment?.mime_type?.startsWith('image/')
   const isPdf = currentAttachment?.mime_type === 'application/pdf'
+
+  // Use a short blob URL for data URLs so the browser address bar / iframe don't show the long base64 string
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!rawUrl || !rawUrl.startsWith('data:')) {
+      setBlobUrl(null)
+      return () => {}
+    }
+    let objectUrl: string | null = null
+    fetch(rawUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob)
+        setBlobUrl(objectUrl)
+      })
+      .catch(() => setBlobUrl(null))
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      setBlobUrl(null)
+    }
+  }, [rawUrl])
+
+  const displayUrl = blobUrl ?? rawUrl
+  const hasUrl = !!displayUrl
 
   // Get only image attachments for swipe navigation
   const imageAttachments = attachments.filter(a => a.mime_type?.startsWith('image/'))
@@ -126,23 +153,22 @@ export function AttachmentViewer({
     pointerStartRef.current = null
   }, [])
 
-  // Download handler
+  // Download handler (works for both signedUrl and dataUrl)
   const downloadCurrent = useCallback(() => {
-    if (!currentAttachment) return
+    if (!currentAttachment || !displayUrl) return
 
     try {
       const a = document.createElement('a')
-      a.href = currentAttachment.signedUrl
+      a.href = displayUrl
       a.download = currentAttachment.filename
       a.rel = 'noopener'
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
     } catch {
-      // Fallback: open in new tab
-      window.open(currentAttachment.signedUrl, '_blank')
+      window.open(displayUrl, '_blank')
     }
-  }, [currentAttachment])
+  }, [currentAttachment, displayUrl])
 
   if (!open || !currentAttachment) return null
 
@@ -209,7 +235,12 @@ export function AttachmentViewer({
 
         {/* Content area */}
         <div className="flex-1 overflow-auto flex items-center justify-center p-4 touch-pan-y">
-          {isImage ? (
+          {!hasUrl ? (
+            <div className="text-center p-6">
+              <File className="w-12 h-12 mx-auto mb-4 text-[var(--tally-text-muted,#6B7280)]" />
+              <p className="text-sm text-[var(--tally-text-muted,#6B7280)]">{t('attachment.loadError')}</p>
+            </div>
+          ) : isImage ? (
             <div className="relative w-full h-full flex items-center justify-center">
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -232,7 +263,7 @@ export function AttachmentViewer({
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={currentAttachment.signedUrl}
+                  src={displayUrl}
                   alt={currentAttachment.filename}
                   className={`max-w-full max-h-full object-contain select-none ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}
                   onLoad={() => setIsLoading(false)}
@@ -246,7 +277,7 @@ export function AttachmentViewer({
             </div>
           ) : isPdf ? (
             <iframe
-              src={currentAttachment.signedUrl}
+              src={displayUrl}
               className="w-full h-full border-none rounded-lg"
               title={currentAttachment.filename}
             />
@@ -262,8 +293,9 @@ export function AttachmentViewer({
               </p>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => window.open(currentAttachment.signedUrl, '_blank')}
-                  className="w-full py-3 px-4 bg-[#29978C] text-white rounded-lg font-medium hover:bg-[#238579] transition-colors"
+                  onClick={() => displayUrl && window.open(displayUrl, '_blank')}
+                  disabled={!displayUrl}
+                  className="w-full py-3 px-4 bg-[#29978C] text-white rounded-lg font-medium hover:bg-[#238579] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {t('common.open')}
                 </button>

@@ -12,6 +12,8 @@ import { EditTransactionModal } from '@/components/EditTransactionModal'
 import { getTransactionAttachments, getAttachmentUrl } from '@/lib/attachments'
 import { Download, File, Image as ImageIcon, Eye } from 'lucide-react'
 import { AttachmentViewer } from '@/components/AttachmentViewer'
+import { useTransactions } from '@/hooks/useTransactions'
+import { isGuestMode } from '@/lib/guest-storage'
 
 export default function TransactionDetailPage() {
   const { t } = useTranslation()
@@ -22,7 +24,10 @@ export default function TransactionDetailPage() {
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewIndex, setPreviewIndex] = useState(0)
 
-  const { data: transaction, isLoading } = useQuery({
+  const { data: transactions = [] } = useTransactions()
+  const guestTransaction = isGuestMode() ? transactions.find((t) => t.id === transactionId) : null
+
+  const { data: authTransaction, isLoading: authLoading } = useQuery({
     queryKey: ['transaction', transactionId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -30,25 +35,35 @@ export default function TransactionDetailPage() {
         .select('*')
         .eq('id', transactionId)
         .single()
-
       if (error) throw error
       return data
     },
-    enabled: !!transactionId
+    enabled: !!transactionId && !isGuestMode(),
   })
+
+  const transaction = isGuestMode() ? guestTransaction ?? null : authTransaction ?? null
+  const isLoading = !isGuestMode() && authLoading
 
   const { data: attachments } = useQuery({
     queryKey: ['transactionAttachments', transactionId],
     queryFn: () => getTransactionAttachments(transactionId),
-    enabled: !!transactionId
+    enabled: !!transactionId && !isGuestMode()
   })
 
-  // Fetch signed URLs for all attachments when viewer opens
+  // Guest: build viewer list from transaction.attachments (dataUrl). Auth: fetch signed URLs.
+  const guestViewerAttachments = isGuestMode() && transaction?.attachments?.length
+    ? (transaction.attachments as { id: string; filename: string; mime_type?: string; data_url?: string }[]).map((a) => ({
+        id: a.id,
+        filename: a.filename,
+        mime_type: a.mime_type ?? 'application/octet-stream',
+        dataUrl: a.data_url ?? ''
+      }))
+    : []
+
   const { data: attachmentsWithUrls } = useQuery({
     queryKey: ['transactionAttachmentsWithUrls', transactionId, attachments?.map(a => a.id).join(',')],
     queryFn: async () => {
       if (!attachments || attachments.length === 0) return []
-      
       const withUrls = await Promise.all(
         attachments.map(async (attachment) => {
           const signedUrl = await getAttachmentUrl(attachment.storage_path)
@@ -62,15 +77,18 @@ export default function TransactionDetailPage() {
       )
       return withUrls
     },
-    enabled: !!attachments && attachments.length > 0
+    enabled: !!attachments && attachments.length > 0 && !isGuestMode()
   })
 
-  const handleDownloadAttachment = async (storagePath: string, filename: string) => {
-    const url = await getAttachmentUrl(storagePath)
+  const displayAttachments = isGuestMode() ? guestViewerAttachments : (attachments ?? [])
+  const viewerAttachments = isGuestMode() ? guestViewerAttachments : (attachmentsWithUrls ?? [])
+
+  const handleDownloadAttachment = async (attachment: { storage_path?: string; data_url?: string; dataUrl?: string; filename: string }) => {
+    const url = attachment.data_url ?? attachment.dataUrl ?? (attachment.storage_path ? await getAttachmentUrl(attachment.storage_path) : null)
     if (url) {
       const link = document.createElement('a')
       link.href = url
-      link.download = filename
+      link.download = attachment.filename
       link.click()
     }
   }
@@ -112,6 +130,10 @@ export default function TransactionDetailPage() {
 
         {/* Transaction Details */}
         <div className="bg-surface rounded-lg p-6 border border-divider mb-6">
+          <div className="mb-4">
+            <p className="text-xs text-text-muted uppercase tracking-wide">{t('transaction.transactionId') || 'Transaction ID'}</p>
+            <p className="text-sm font-mono font-medium text-text-primary break-all">{transaction.id}</p>
+          </div>
           <div className="text-center mb-6">
             <p className="text-sm text-text-secondary mb-2">
               {formatDate(transaction.transaction_date)}
@@ -130,7 +152,7 @@ export default function TransactionDetailPage() {
             <div>
               <p className="text-xs text-text-muted mb-1">{t('transaction.paymentType')}</p>
               <p className="text-sm text-text-primary">
-                {t(`paymentTypes.${transaction.payment_type}`) || transaction.payment_type}
+                {t(`paymentTypes.${transaction.payment_method === 'card' ? 'credit' : transaction.payment_method === 'e_wallet' ? 'mobile_money' : transaction.payment_method}`) || transaction.payment_method}
               </p>
             </div>
 
@@ -148,12 +170,12 @@ export default function TransactionDetailPage() {
               </div>
             )}
 
-            {/* Attachments */}
-            {attachments && attachments.length > 0 && (
+            {/* Attachments — use displayAttachments so guest mode shows attachments too */}
+            {displayAttachments && displayAttachments.length > 0 && (
               <div>
                 <p className="text-xs text-text-muted mb-2">{t('transaction.attachments')}</p>
                 <div className="space-y-2">
-                  {attachments.map((attachment, index) => (
+                  {displayAttachments.map((attachment, index) => (
                     <div
                       key={attachment.id}
                       className="flex items-center justify-between p-2 bg-[var(--tally-surface-2)] rounded-lg border border-[var(--tally-border)]"
@@ -162,7 +184,7 @@ export default function TransactionDetailPage() {
                         onClick={() => handlePreviewAttachment(index)}
                         className="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                       >
-                        {attachment.mime_type.startsWith('image/') ? (
+                        {(attachment as { mime_type?: string }).mime_type?.startsWith('image/') ? (
                           <ImageIcon className="w-4 h-4 text-[var(--tally-text-muted)] flex-shrink-0" />
                         ) : (
                           <File className="w-4 h-4 text-[var(--tally-text-muted)] flex-shrink-0" />
@@ -178,7 +200,7 @@ export default function TransactionDetailPage() {
                           <Eye className="w-4 h-4 text-[#29978C]" />
                         </button>
                         <button
-                          onClick={() => handleDownloadAttachment(attachment.storage_path, attachment.filename)}
+                          onClick={() => handleDownloadAttachment(attachment as { storage_path?: string; data_url?: string; dataUrl?: string; filename: string })}
                           className="p-1.5 hover:bg-[var(--tally-surface)] rounded transition-colors"
                           title={t('attachment.download') || 'Download'}
                         >
@@ -212,13 +234,14 @@ export default function TransactionDetailPage() {
             onDelete={() => {
               router.push('/history')
             }}
+            existingAttachments={isGuestMode() ? undefined : attachments}
           />
         )}
 
         {/* Attachment Viewer */}
-        {attachmentsWithUrls && attachmentsWithUrls.length > 0 && (
+        {viewerAttachments.length > 0 && (
           <AttachmentViewer
-            attachments={attachmentsWithUrls}
+            attachments={viewerAttachments}
             initialIndex={previewIndex}
             open={previewOpen}
             onClose={() => setPreviewOpen(false)}

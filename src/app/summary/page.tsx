@@ -2,15 +2,18 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { useBusiness } from '@/contexts/BusinessContext'
-import { useQuery } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase/supabaseClient'
-import { formatCurrency } from '@/lib/utils'
-import { format, subDays, startOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns'
+import { useReportsData } from '@/hooks/useReportsData'
+import { useCurrency } from '@/hooks/useCurrency'
+import { formatCurrency, formatCurrencyAmount } from '@/lib/utils'
+import { format, subDays, startOfToday, startOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Download, ChevronDown, ChevronUp } from 'lucide-react'
+import { Download } from 'lucide-react'
 import { AppShell } from '@/components/AppShell'
+import { RevenueExpenseBarChart } from '@/components/reports/RevenueExpenseBarChart'
+import { StatCard } from '@/components/reports/StatCard'
 import { generateBusinessReportPDF } from '@/lib/pdf-generator'
 import { getBusinessProfile } from '@/lib/businessProfile'
 import { Input } from '@/components/ui/input'
@@ -20,6 +23,7 @@ type PeriodPreset = 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom'
 export default function ProfitLossPage() {
   const { t } = useTranslation()
   const { currentBusiness } = useBusiness()
+  const { symbol: currencySymbol } = useCurrency()
   
   // Get Business Profile (single source of truth for identity)
   const businessProfile = typeof window !== 'undefined' ? getBusinessProfile() : null
@@ -29,8 +33,6 @@ export default function ProfitLossPage() {
   const [periodPreset, setPeriodPreset] = useState<PeriodPreset>('thisMonth')
   const [customStartDate, setCustomStartDate] = useState<string>('')
   const [customEndDate, setCustomEndDate] = useState<string>('')
-  const [revenueExpanded, setRevenueExpanded] = useState(false)
-  const [expensesExpanded, setExpensesExpanded] = useState(false)
 
   // Calculate date range based on preset
   const getDateRange = () => {
@@ -57,106 +59,63 @@ export default function ProfitLossPage() {
   const queryStartDate = format(dateRange.start, 'yyyy-MM-dd')
   const queryEndDate = format(dateRange.end, 'yyyy-MM-dd')
 
-  const { data: plData, isLoading } = useQuery({
-    queryKey: ['profitLoss', currentBusiness?.id, queryStartDate, queryEndDate],
-    queryFn: async () => {
-      if (!currentBusiness?.id) return null
-      
-      const { data: transactions, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('business_id', currentBusiness.id)
-        .gte('transaction_date', queryStartDate)
-        .lte('transaction_date', queryEndDate)
-        .order('transaction_date', { ascending: true })
-      
-      if (error) throw error
-      
-      // Calculate revenue by payment type
-      const revenueByType: Record<string, number> = {
-        cash: 0,
-        bank_transfer: 0,
-        duitnow: 0,
-        other: 0
-      }
-      
-      transactions?.filter(t => t.transaction_type === 'sale').forEach(t => {
-        if (t.payment_type === 'cash') {
-          revenueByType.cash += t.amount
-        } else if (t.payment_type === 'bank_transfer') {
-          revenueByType.bank_transfer += t.amount
-        } else if (t.payment_type === 'duitnow' || t.payment_type === 'mobile_money') {
-          revenueByType.duitnow += t.amount
-        } else {
-          revenueByType.other += t.amount
-        }
-      })
-      
-      const totalRevenue = Object.values(revenueByType).reduce((sum, val) => sum + val, 0)
-      
-      // Calculate expenses by category
-      const expensesByCategory: Record<string, number> = {}
-      
-      transactions?.filter(t => t.transaction_type === 'expense').forEach(t => {
-        const category = t.expense_category || 'other'
-        expensesByCategory[category] = (expensesByCategory[category] || 0) + t.amount
-      })
-      
-      const totalExpenses = Object.values(expensesByCategory).reduce((sum, val) => sum + val, 0)
-      const netProfit = totalRevenue - totalExpenses
-      const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
-      
-      return {
-        revenueByType,
-        totalRevenue,
-        expensesByCategory,
-        totalExpenses,
-        netProfit,
-        profitMargin
-      }
-    },
-    enabled: !!currentBusiness?.id
-  })
+  const {
+    isLoading,
+    filteredTransactions,
+    totalRevenue,
+    totalExpenses,
+    netProfit,
+    profitMargin,
+    revenueByType,
+    expensesByCategory,
+  } = useReportsData({ startDate: queryStartDate, endDate: queryEndDate })
 
-  const handleExportPDF = async () => {
-    if (!plData || !currentBusiness) return
+  const safeRevenue = Number(totalRevenue) || 0
+  const safeExpenses = Number(totalExpenses) || 0
+  const safeProfit = Number(netProfit) || 0
+  const safeMargin = Number(profitMargin) || 0
 
-    const { data: transactions } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('business_id', currentBusiness.id)
-      .gte('transaction_date', queryStartDate)
-      .lte('transaction_date', queryEndDate)
-      .order('transaction_date', { ascending: false })
-
+  const handleExportPDF = () => {
+    toast.info(t('report.common.generatingReport') || 'Generating Report...')
     const businessName = enterpriseName || 'Business'
-    const businessType = currentBusiness?.business_type || 'N/A'
-    const businessState = businessProfile?.stateOrRegion || currentBusiness?.state || 'N/A'
-    const businessCity = businessProfile?.area || currentBusiness?.city || ''
-    
+    const business = currentBusiness
+    const businessType = business?.business_type || 'N/A'
+    const businessState = businessProfile?.stateOrRegion || business?.state || 'N/A'
+    const businessCity = businessProfile?.area || business?.city || ''
+    const logo = businessProfile?.logoDataUrl
+
     generateBusinessReportPDF({
       business: {
         name: businessName,
         type: businessType,
         state: businessState,
-        city: businessCity
+        city: businessCity,
+        logo,
       },
       period: {
         startDate: dateRange.start,
-        endDate: dateRange.end
+        endDate: dateRange.end,
       },
       profitLoss: {
         revenue: {
-          cash: plData.revenueByType.cash,
-          credit: plData.revenueByType.other,
-          total: plData.totalRevenue
+          cash: revenueByType.cash,
+          credit: revenueByType.other,
+          total: safeRevenue,
         },
-        expenses: plData.expensesByCategory,
-        totalExpenses: plData.totalExpenses,
-        netProfit: plData.netProfit,
-        profitMargin: plData.profitMargin
+        expenses: expensesByCategory,
+        totalExpenses: safeExpenses,
+        netProfit: safeProfit,
+        profitMargin: safeMargin,
       },
-      transactions: transactions || []
+      transactions: filteredTransactions.map((t) => ({
+        id: t.id,
+        transaction_type: t.transaction_type,
+        amount: t.amount,
+        payment_method: t.payment_method,
+        expense_category: t.expense_category ?? undefined,
+        notes: t.notes ?? undefined,
+        transaction_date: t.transaction_date,
+      })),
     })
   }
 
@@ -171,20 +130,43 @@ export default function ProfitLossPage() {
     return (
       <AppShell title={t('report.profitLoss.title')} showBack showLogo>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-[var(--tally-text-muted)]">{t('common.loading')}</p>
+          <div className="animate-pulse space-y-4 w-full max-w-[480px] px-6">
+            <div className="h-8 bg-[var(--tally-surface)] rounded w-3/4" />
+            <div className="h-4 bg-[var(--tally-surface)] rounded w-1/2" />
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-10 bg-[var(--tally-surface)] rounded flex-1" />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-20 bg-[var(--tally-surface)] rounded-lg" />
+              ))}
+            </div>
+            <div className="h-32 bg-[var(--tally-surface)] rounded-lg" />
+          </div>
         </div>
       </AppShell>
     )
   }
 
+  const expenseEntries = Object.entries(expensesByCategory).filter(([, amt]) => amt > 0)
+  const totalExpensesForPct = safeExpenses > 0 ? safeExpenses : 1
+  const highestExpense = expenseEntries.length > 0
+    ? expenseEntries.reduce((a, b) => (a[1] >= b[1] ? a : b), ['other', 0])
+    : null
+  const highestPct = highestExpense ? ((highestExpense[1] / totalExpensesForPct) * 100).toFixed(0) : '0'
+  const revenueByTypeEntries = Object.entries(revenueByType || {}).filter(([, amt]) => amt > 0)
+  const highestCategoryLabel = highestExpense ? (t(`expenseCategories.${highestExpense[0]}`) || highestExpense[0]) : ''
+
   return (
     <AppShell title={t('report.profitLoss.title')} showBack showLogo>
-      <div className="max-w-[480px] mx-auto px-6 py-6 space-y-6">
-        {/* Header Block */}
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-[var(--tally-text)]">{t('report.profitLoss.title')}</h1>
-          <p className="text-base font-medium text-[var(--tally-text)]">{enterpriseName}</p>
-          <p className="text-sm text-[var(--tally-text-muted)]">{formatPeriod()}</p>
+      <div className="max-w-[480px] mx-auto pt-20 pb-24 px-4 space-y-6">
+        {/* Header Block — mt-6 ensures spacing below header / above content */}
+        <div className="space-y-1 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">{t('report.profitLoss.title')}</h1>
+          <p className="text-base font-medium text-gray-700">{enterpriseName}</p>
+          <p className="text-sm text-gray-500">{formatPeriod()}</p>
         </div>
 
         {/* Period Controls */}
@@ -255,167 +237,129 @@ export default function ProfitLossPage() {
           </div>
         )}
 
-        {!plData ? (
-          <div className="text-center py-12 text-[var(--tally-text-muted)]">
-            <p>{t('common.loading')}</p>
+        {/* Cards: Revenue vs Expense side-by-side */}
+        <div className="grid grid-cols-2 gap-3 min-w-0">
+          <StatCard
+            title={t('report.profitLoss.totalRevenue')}
+            currencyLabel={currencySymbol}
+            amount={formatCurrencyAmount(safeRevenue)}
+            type="revenue"
+          />
+          <StatCard
+            title={t('report.profitLoss.totalExpenses')}
+            currencyLabel={currencySymbol}
+            amount={formatCurrencyAmount(safeExpenses)}
+            type="expense"
+          />
+          <StatCard
+            title={t('report.profitLoss.netProfit')}
+            currencyLabel={currencySymbol}
+            amount={formatCurrencyAmount(safeProfit)}
+            type="profit"
+          />
+          <Card className="rounded-xl border border-[#2D5B85]/20 bg-[#F0F5FA] p-4">
+            <CardContent className="p-0">
+              <p className="text-xs font-medium text-[#2D5B85] opacity-90">{t('summary.profitMargin')}</p>
+              <p className="text-lg md:text-2xl font-bold tabular-nums text-[#2D5B85]">{safeMargin.toFixed(1)}%</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bar Chart: Revenue vs Expense */}
+        <RevenueExpenseBarChart totalRevenue={safeRevenue} totalExpenses={safeExpenses} />
+
+        {/* Expenses by Category: rows with progress bar */}
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 text-sm font-semibold text-gray-800">{t('report.profitLoss.expenses')} by category</h3>
+          {expenseEntries.length === 0 ? (
+            <p className="text-sm text-gray-500">No expenses in this period.</p>
+          ) : (
+            <div className="space-y-2">
+              {expenseEntries.map(([category, amount]) => {
+                const pct = (amount / totalExpensesForPct) * 100
+                return (
+                  <div key={category} className="relative overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-rose-100"
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
+                    <div className="relative flex items-center justify-between px-3 py-2">
+                      <span className="text-sm font-medium text-gray-800">
+                        {t(`expenseCategories.${category}`) || category}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums text-gray-800">
+                        {formatCurrency(amount)} ({pct.toFixed(0)}%)
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Sales by payment method */}
+        {revenueByTypeEntries.length > 0 && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <h3 className="mb-3 text-sm font-semibold text-gray-800">{t('report.profitLoss.salesByPayment') || 'Sales by payment method'}</h3>
+            <div className="space-y-2">
+              {revenueByTypeEntries.map(([method, amount]) => {
+                const pct = safeRevenue > 0 ? (amount / safeRevenue) * 100 : 0
+                const label = method === 'duitnow' ? 'e_wallet' : method
+                return (
+                  <div key={method} className="relative overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-emerald-100"
+                      style={{ width: `${Math.min(pct, 100)}%` }}
+                    />
+                    <div className="relative flex items-center justify-between px-3 py-2">
+                      <span className="text-sm font-medium text-gray-800">
+                        {t(`paymentTypes.${label}`) || label}
+                      </span>
+                      <span className="text-sm font-semibold tabular-nums text-gray-800">
+                        {formatCurrency(amount)} ({pct.toFixed(0)}%)
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Coachmark: highest expense category */}
+        {highestExpense && Number(highestPct) > 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-medium text-amber-900">
+              Your biggest cost is <strong>{highestCategoryLabel}</strong>. It makes up {highestPct}% of your spending.
+            </p>
+          </div>
+        )}
+
+        {/* Support Banner */}
+        {safeProfit >= 0 ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-sm font-medium text-emerald-900">
+              {t('report.profitLoss.profitMessage', { amount: formatCurrency(safeProfit) })}
+            </p>
           </div>
         ) : (
-          <>
-            {/* Summary Cards Row */}
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
-                <CardContent className="p-4">
-                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('report.profitLoss.totalRevenue')}</p>
-                  <p className="text-lg font-bold text-[var(--tally-text)]">{formatCurrency(plData.totalRevenue)}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
-                <CardContent className="p-4">
-                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('report.profitLoss.totalExpenses')}</p>
-                  <p className="text-lg font-bold text-[var(--tally-text)]">{formatCurrency(plData.totalExpenses)}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
-                <CardContent className="p-4">
-                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('report.profitLoss.netProfit')}</p>
-                  <p className={`text-lg font-bold ${plData.netProfit >= 0 ? 'text-[#2E7D5B]' : 'text-[#B94A3A]'}`}>
-                    {formatCurrency(plData.netProfit)}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
-                <CardContent className="p-4">
-                  <p className="text-xs text-[var(--tally-text-muted)] mb-1">{t('summary.profitMargin')}</p>
-                  <p className="text-lg font-bold text-[var(--tally-text)]">{plData.profitMargin.toFixed(1)}%</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Main Card */}
-            <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)]">
-              <CardContent className="p-6 space-y-6">
-                {/* Revenue Section */}
-                <div>
-                  <button
-                    onClick={() => setRevenueExpanded(!revenueExpanded)}
-                    className="w-full flex items-center justify-between"
-                  >
-                    <h2 className="text-lg font-semibold text-[#2E7D5B]">{t('report.profitLoss.revenue')}</h2>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-medium text-[var(--tally-text)]">
-                        {formatCurrency(plData.totalRevenue)}
-                      </span>
-                      {revenueExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-[var(--tally-text-muted)]" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-[var(--tally-text-muted)]" />
-                      )}
-                    </div>
-                  </button>
-                  {revenueExpanded && (
-                    <div className="mt-4 space-y-2 pl-4">
-                      {plData.revenueByType.cash > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--tally-text)]">{t('report.profitLoss.cash')}</span>
-                          <span className="text-[var(--tally-text)]">{formatCurrency(plData.revenueByType.cash)}</span>
-                        </div>
-                      )}
-                      {plData.revenueByType.bank_transfer > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--tally-text)]">{t('report.profitLoss.bankTransfer')}</span>
-                          <span className="text-[var(--tally-text)]">{formatCurrency(plData.revenueByType.bank_transfer)}</span>
-                        </div>
-                      )}
-                      {plData.revenueByType.duitnow > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--tally-text)]">{t('report.profitLoss.mobileMoney')}</span>
-                          <span className="text-[var(--tally-text)]">{formatCurrency(plData.revenueByType.duitnow)}</span>
-                        </div>
-                      )}
-                      {plData.revenueByType.other > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--tally-text)]">{t('report.profitLoss.other')}</span>
-                          <span className="text-[var(--tally-text)]">{formatCurrency(plData.revenueByType.other)}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Expenses Section */}
-                <div>
-                  <button
-                    onClick={() => setExpensesExpanded(!expensesExpanded)}
-                    className="w-full flex items-center justify-between"
-                  >
-                    <h2 className="text-lg font-semibold text-[#B94A3A]">{t('report.profitLoss.expenses')}</h2>
-                    <div className="flex items-center gap-2">
-                      <span className="text-base font-medium text-[var(--tally-text)]">
-                        {formatCurrency(plData.totalExpenses)}
-                      </span>
-                      {expensesExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-[var(--tally-text-muted)]" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-[var(--tally-text-muted)]" />
-                      )}
-                    </div>
-                  </button>
-                  {expensesExpanded && (
-                    <div className="mt-4 space-y-2 pl-4">
-                      {Object.entries(plData.expensesByCategory).map(([category, amount]) => (
-                        amount > 0 && (
-                          <div key={category} className="flex justify-between text-sm">
-                            <span className="text-[var(--tally-text)]">
-                              {t(`expenseCategories.${category}`) || category}
-                            </span>
-                            <span className="text-[var(--tally-text)]">{formatCurrency(amount)}</span>
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Net Profit Row */}
-                <div className="pt-4 border-t border-[var(--tally-border)]">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-[var(--tally-text)]">{t('report.profitLoss.netProfit')}</h3>
-                    <span className={`text-lg font-semibold ${
-                      plData.netProfit >= 0 ? 'text-[#2E7D5B]' : 'text-[#B94A3A]'
-                    }`}>
-                      {formatCurrency(Math.abs(plData.netProfit))}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Support Banner */}
-            {plData.netProfit >= 0 ? (
-              <div className="bg-[rgba(46,125,91,0.1)] border border-[#2E7D5B] rounded-lg p-4">
-                <p className="text-sm text-[var(--tally-text)]">
-                  {t('report.profitLoss.profitMessage', { amount: formatCurrency(plData.netProfit) })}
-                </p>
-              </div>
-            ) : (
-              <div className="bg-[rgba(185,74,58,0.1)] border border-[#B94A3A] rounded-lg p-4">
-                <p className="text-sm text-[var(--tally-text)]">
-                  {t('report.profitLoss.lossMessage', { amount: formatCurrency(Math.abs(plData.netProfit)) })}
-                </p>
-              </div>
-            )}
-
-            {/* Export Button */}
-            <Button
-              className="w-full h-14 bg-[#29978C] hover:bg-[#238579] text-white"
-              size="lg"
-              onClick={handleExportPDF}
-            >
-              <Download className="w-5 h-5 mr-2" />
-              {t('report.common.exportPDF')}
-            </Button>
-          </>
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
+            <p className="text-sm font-medium text-rose-900">
+              {t('report.profitLoss.lossMessage', { amount: formatCurrency(Math.abs(safeProfit)) })}
+            </p>
+          </div>
         )}
+
+        {/* Export Button */}
+        <Button
+          className="w-full h-14 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+          size="lg"
+          onClick={handleExportPDF}
+        >
+          <Download className="w-5 h-5 mr-2" />
+          {t('report.common.exportPDF')}
+        </Button>
       </div>
     </AppShell>
   )

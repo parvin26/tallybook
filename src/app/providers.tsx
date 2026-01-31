@@ -1,16 +1,56 @@
 'use client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import '@/i18n/config'
 import { initPWAInstall } from '@/lib/pwa'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { normalizeCountryCode } from '@/lib/currency'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { BusinessProvider } from '@/contexts/BusinessContext'
 import { IntroProvider } from '@/contexts/IntroContext'
+import { IntroGate } from '@/components/IntroGate'
 import { AuthGuard } from '@/components/AuthGuard'
-import { IntroOverlay } from '@/components/IntroOverlay'
 import { TelemetryConsent } from '@/components/TelemetryConsent'
 import { GuestDataImport } from '@/components/GuestDataImport'
 import { Toaster } from 'sonner'
+
+/**
+ * One-time migration of legacy keys to official keys
+ * Runs on first client mount only
+ */
+function migrateLegacyKeys() {
+  if (typeof window === 'undefined') return
+
+  // Migrate country: tally-onboarding-country -> tally-country; normalize legacy slugs to codes (malaysia -> MY, sierra-leone -> SL)
+  let countryValue = localStorage.getItem(STORAGE_KEYS.COUNTRY) ?? localStorage.getItem('tally-onboarding-country')
+  if (countryValue) {
+    const code = normalizeCountryCode(countryValue)
+    if (code) {
+      localStorage.setItem(STORAGE_KEYS.COUNTRY, code)
+    }
+    localStorage.removeItem('tally-onboarding-country')
+  }
+
+  // Migrate language: any old key -> tally-language
+  if (!localStorage.getItem(STORAGE_KEYS.LANGUAGE)) {
+    // Check for any legacy language keys
+    const legacyLanguage = localStorage.getItem('tally-onboarding-language') ||
+                          localStorage.getItem('tally_preferences') // Check if it's in preferences object
+    if (legacyLanguage) {
+      try {
+        // If it's a JSON object, parse it
+        const parsed = JSON.parse(legacyLanguage)
+        if (parsed.language) {
+          localStorage.setItem(STORAGE_KEYS.LANGUAGE, parsed.language)
+        }
+      } catch {
+        // If it's a string, use it directly
+        localStorage.setItem(STORAGE_KEYS.LANGUAGE, legacyLanguage)
+      }
+      localStorage.removeItem('tally-onboarding-language')
+    }
+  }
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -18,57 +58,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
       queries: { staleTime: 60 * 1000 }
     }
   }))
-  const [forceShowIntro, setForceShowIntro] = useState(false)
-  
+  const [showIntro, setShowIntro] = useState(false)
+
   useEffect(() => {
-    // Initialize PWA install prompt listener
     initPWAInstall()
+    migrateLegacyKeys()
   }, [])
 
-  // Check if we should auto-show intro on first visit
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !forceShowIntro) {
-      const introSeen = localStorage.getItem('tally_intro_seen')
-      
-      // Auto-show if intro hasn't been seen (no country/language requirement)
-      if (!introSeen) {
-        setForceShowIntro(true)
-      }
-    }
-  }, [forceShowIntro])
+  const handleIntroClose = () => setShowIntro(false)
 
-  const handleIntroClose = useCallback(() => {
-    setForceShowIntro(false)
-    // After intro closes, redirect to onboarding if country/language missing
-    if (typeof window !== 'undefined') {
-      const country = localStorage.getItem('tally-country')
-      const language = localStorage.getItem('tally-language')
-      if (!country) {
-        window.location.href = '/onboarding/country'
-      } else if (!language) {
-        window.location.href = '/onboarding/language'
-      }
-    }
-  }, [])
-  
-  // Always render the same component tree in the same order
-  // This ensures hooks are always called in the same order
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BusinessProvider>
-          <IntroProvider 
-            forceShowIntro={forceShowIntro}
-            setForceShowIntro={setForceShowIntro}
+          <IntroProvider
+            forceShowIntro={showIntro}
+            setForceShowIntro={setShowIntro}
             onIntroClose={handleIntroClose}
           >
-            <AuthGuard>
-              {children}
-              <TelemetryConsent />
-              <GuestDataImport />
-              <IntroOverlay forceOpen={forceShowIntro} onClose={handleIntroClose} />
-              <Toaster position="top-center" />
-            </AuthGuard>
+            <IntroGate forceShowIntro={showIntro} onIntroClose={handleIntroClose}>
+              <AuthGuard>
+                {children}
+                <TelemetryConsent />
+                <GuestDataImport />
+                <Toaster position="top-center" />
+              </AuthGuard>
+            </IntroGate>
           </IntroProvider>
         </BusinessProvider>
       </AuthProvider>

@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useCallback } from 'react'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
 
 interface IntroContextType {
   openIntro: () => void
@@ -17,7 +18,7 @@ export function IntroProvider({ children, forceShowIntro, setForceShowIntro, onI
   const openIntro = useCallback(() => {
     // Remove intro seen flag to allow replay
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('tally_intro_seen')
+      localStorage.removeItem(STORAGE_KEYS.INTRO_SEEN)
     }
     setForceShowIntro(true)
   }, [setForceShowIntro])

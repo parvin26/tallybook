@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useMemo } from 'react'
 import { useBusiness } from '@/contexts/BusinessContext'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '@/lib/supabase/supabaseClient'
+import { toast } from 'sonner'
+import { useTransactions } from '@/hooks/useTransactions'
+import { useInventory } from '@/hooks/useInventory'
 import { formatCurrency } from '@/lib/utils'
-import { format, subDays, startOfToday, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns'
+import { format, startOfToday } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,9 +15,15 @@ import { Download, CheckCircle2, AlertCircle, Edit2 } from 'lucide-react'
 import { AppShell } from '@/components/AppShell'
 import { generateBalanceSheetPDF } from '@/lib/pdf-generator'
 import { getBusinessProfile } from '@/lib/businessProfile'
-import { getInventoryItems } from '@/lib/inventory'
+import { getGuestBusiness, isGuestMode } from '@/lib/guest-storage'
 
 type PeriodPreset = 'thisWeek' | 'thisMonth' | 'last6Months' | 'thisYear' | 'custom'
+
+/** Resolve translation; if key is returned unchanged (missing), use fallback so raw keys never show. */
+function tr(key: string, fallback: string, t: (k: string) => string): string {
+  const v = t(key)
+  return v === key ? fallback : v
+}
 
 export default function BalanceSheetPage() {
   const { t } = useTranslation()
@@ -48,288 +55,154 @@ export default function BalanceSheetPage() {
   const asAtDate = getAsAtDate()
   const asAtDateStr = format(asAtDate, 'yyyy-MM-dd')
 
-  const { data: balanceData, isLoading } = useQuery({
-    queryKey: ['balanceSheet', currentBusiness?.id, asAtDateStr],
-    queryFn: async () => {
-      if (!currentBusiness?.id) return null
+  const { data: transactions = [], isLoading } = useTransactions()
+  const { items: inventoryItems = [] } = useInventory()
 
-      // Get all transactions up to and including as at date
-      const { data: transactions } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('business_id', currentBusiness.id)
-        .lte('transaction_date', asAtDateStr)
-        .order('transaction_date', { ascending: true })
-
-      if (!transactions) return null
-
-      // Calculate inventory value using Last Purchase Cost per Item method
-      let inventoryValue = 0
-      let isInventoryEstimated = false
-      let hasManualOverride = false
-      let manualOverrideValue = 0
-      
-      // Check for manual override
-      if (typeof window !== 'undefined') {
-        const override = localStorage.getItem('tally-inventory-manual-override')
-        if (override) {
-          try {
-            const parsed = JSON.parse(override)
-            if (parsed.value !== undefined && parsed.value !== null) {
-              manualOverrideValue = parseFloat(parsed.value) || 0
-              hasManualOverride = true
+  const balanceData = useMemo(() => {
+    const manualOverride =
+      typeof window !== 'undefined'
+        ? (() => {
+            try {
+              const raw = localStorage.getItem('tally-inventory-manual-override')
+              if (!raw) return null
+              const parsed = JSON.parse(raw) as { value?: number }
+              return typeof parsed?.value === 'number' ? parsed.value : null
+            } catch {
+              return null
             }
-          } catch (e) {
-            // Invalid override, ignore
-          }
-        }
-      }
-      
-      if (hasManualOverride) {
-        inventoryValue = manualOverrideValue
-      } else {
-        try {
-          const inventoryItems = await getInventoryItems(currentBusiness.id)
-          
-          // Get all inventory movements up to as at date
-          // Handle both occurred_at (new schema) and created_at (old schema) for compatibility
-          const { data: movements } = await supabase
-            .from('inventory_movements')
-            .select('*')
-            .eq('business_id', currentBusiness.id)
-            .order('created_at', { ascending: true })
-          
-          // Filter movements by date (use occurred_at if available, otherwise created_at)
-          const filteredMovements = (movements || []).filter(m => {
-            const movementDate = m.occurred_at || m.created_at
-            if (!movementDate) return false
-            const movementDateStr = new Date(movementDate).toISOString().split('T')[0]
-            return movementDateStr <= asAtDateStr
-          })
-          
-          // Get all stock purchase transactions (expenses with stock_purchase category)
-          const stockPurchaseTransactions = transactions.filter(
-            t => t.transaction_type === 'expense' && t.expense_category === 'stock_purchase'
-          )
-          
-          // Create a map of transaction ID to transaction for quick lookup
-          const transactionMap = new Map(stockPurchaseTransactions.map(t => [t.id, t]))
-          
-          // Calculate inventory value per item
-          for (const item of inventoryItems) {
-            // Step 1: Calculate unitsOnHand from movements
-            const itemMovements = filteredMovements.filter(m => m.inventory_item_id === item.id)
-            let unitsOnHand = 0
-            
-            for (const movement of itemMovements) {
-              // Handle both quantity_delta (new schema) and quantity (old schema)
-              const delta = movement.quantity_delta !== undefined ? movement.quantity_delta : movement.quantity
-              unitsOnHand += delta || 0
-            }
-            
-            // If unitsOnHand <= 0, inventory value is 0
-            if (unitsOnHand <= 0) {
-              continue
-            }
-            
-            // Step 2: Find stock purchase transactions linked to this item via movements
-            const purchaseMovements = itemMovements.filter(m => {
-              const movementType = m.movement_type || ''
-              return (movementType === 'expense_addition' || movementType === 'restock_add') && 
-                     m.related_transaction_id
-            })
-            
-            // Step 3: Sort purchase movements by transaction date (most recent first)
-            const purchaseMovementsWithTransactions = purchaseMovements
-              .map(m => {
-                const transaction = transactionMap.get(m.related_transaction_id)
-                if (!transaction) return null
-                return {
-                  movement: m,
-                  transaction,
-                  transactionDate: new Date(transaction.transaction_date)
-                }
-              })
-              .filter(Boolean)
-              .sort((a, b) => b!.transactionDate.getTime() - a!.transactionDate.getTime())
-            
-            // Step 4: Take the most recent purchase
-            if (purchaseMovementsWithTransactions.length > 0) {
-              const mostRecent = purchaseMovementsWithTransactions[0]!
-              const movement = mostRecent.movement
-              const purchaseTransaction = mostRecent.transaction
-              
-              // Step 5: Calculate unitCost
-              const purchaseQuantity = Math.abs(movement.quantity_delta !== undefined ? movement.quantity_delta : movement.quantity)
-              
-              if (purchaseQuantity > 0) {
-                const unitCost = purchaseTransaction.amount / purchaseQuantity
-                
-                // Step 6: Calculate itemInventoryValue
-                const itemInventoryValue = unitsOnHand * unitCost
-                inventoryValue += itemInventoryValue
-              } else {
-                // Invalid purchase quantity, mark as estimated
-                isInventoryEstimated = true
-              }
-            } else {
-              // No purchase record found for this item, mark as estimated
-              isInventoryEstimated = true
-            }
-          }
-        } catch (error) {
-          console.error('[BalanceSheet] Error calculating inventory:', error)
-          // On error, set to 0 and mark as estimated
-          inventoryValue = 0
-          isInventoryEstimated = true
-        }
-      }
+          })()
+        : null
 
-      // Calculate Assets
-      const startingCash = currentBusiness.starting_cash || 0
-      const startingBank = currentBusiness.starting_bank || 0
+    const filtered = (transactions || []).filter(
+      (t) => t.transaction_date && t.transaction_date <= asAtDateStr
+    )
 
-      // Helper function to check if expense was paid with cash
-      const isCashPayment = (t: any) => {
-        // Check new payment_method field first, fallback to payment_type for backward compatibility
-        if (t.payment_method === 'cash') return true
-        if (t.payment_method) return false // If payment_method exists but not cash, it's not cash
-        return t.payment_type === 'cash' // Backward compatibility
-      }
+    const startingCash =
+      currentBusiness != null
+        ? (currentBusiness.starting_cash ?? 0)
+        : (typeof window !== 'undefined' && isGuestMode()
+            ? (getGuestBusiness()?.starting_cash ?? 0)
+            : 0)
+    const startingBank =
+      currentBusiness != null
+        ? (currentBusiness.starting_bank ?? 0)
+        : (typeof window !== 'undefined' && isGuestMode()
+            ? (getGuestBusiness()?.starting_bank ?? 0)
+            : 0)
 
-      // Helper function to check if expense was paid with bank transfer
-      const isBankPayment = (t: any) => {
-        if (t.payment_method === 'bank_transfer') return true
-        if (t.payment_method === 'e_wallet') return true // E-wallet treated as bank for now
-        if (t.payment_method) return false
-        return t.payment_type === 'bank_transfer' || t.payment_type === 'duitnow' // Backward compatibility
-      }
+    const isCashPayment = (t: { payment_method: string }) => t.payment_method === 'cash'
+    const isBankPayment = (t: { payment_method: string }) =>
+      t.payment_method === 'bank_transfer' || t.payment_method === 'e_wallet'
+    const isCardPayment = (t: { payment_method: string }) => t.payment_method === 'card'
 
-      // Helper function to check if expense was paid with card (credit)
-      const isCardPayment = (t: any) => {
-        if (t.payment_method === 'card') return true
-        if (t.payment_method) return false
-        return t.payment_type === 'credit' // Backward compatibility
-      }
+    const cashSales = filtered
+      .filter((t) => t.transaction_type === 'sale' && t.payment_method === 'cash')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const cashExpenses = filtered
+      .filter((t) => t.transaction_type === 'expense' && isCashPayment(t))
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const currentCash = startingCash + cashSales - cashExpenses
 
-      // Calculate Cash
-      const cashSales = transactions
-        .filter(t => t.transaction_type === 'sale' && t.payment_type === 'cash')
-        .reduce((sum, t) => sum + t.amount, 0)
+    const bankSales = filtered
+      .filter(
+        (t) =>
+          t.transaction_type === 'sale' &&
+          (t.payment_method === 'bank_transfer' || t.payment_method === 'e_wallet')
+      )
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const bankExpenses = filtered
+      .filter((t) => t.transaction_type === 'expense' && isBankPayment(t))
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const currentBank = startingBank + bankSales - bankExpenses
 
-      const cashExpenses = transactions
-        .filter(t => t.transaction_type === 'expense' && isCashPayment(t))
-        .reduce((sum, t) => sum + t.amount, 0)
+    const receivables = filtered
+      .filter((t) => t.transaction_type === 'sale' && t.payment_method === 'card')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
 
-      const currentCash = startingCash + cashSales - cashExpenses
+    const calculatedInventoryValue = inventoryItems.reduce((sum, item) => {
+      return sum + item.quantity * (item.cost_price ?? 0)
+    }, 0)
+    const inventoryValue = manualOverride ?? calculatedInventoryValue
 
-      // Calculate Bank (includes bank transfers and e-wallets)
-      const bankSales = transactions
-        .filter(t => t.transaction_type === 'sale' && (t.payment_type === 'bank_transfer' || t.payment_type === 'duitnow'))
-        .reduce((sum, t) => sum + t.amount, 0)
+    const creditExpenses = filtered
+      .filter((t) => t.transaction_type === 'expense' && isCardPayment(t))
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const payables = creditExpenses
+    const loans = 0
 
-      const bankExpenses = transactions
-        .filter(t => t.transaction_type === 'expense' && isBankPayment(t))
-        .reduce((sum, t) => sum + t.amount, 0)
+    const startingCapital = startingCash + startingBank
+    const totalRevenue = filtered
+      .filter((t) => t.transaction_type === 'sale')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const totalExpenses = filtered
+      .filter((t) => t.transaction_type === 'expense')
+      .reduce((sum, t) => sum + Number(t.amount), 0)
+    const retainedEarnings = totalRevenue - totalExpenses
+    const totalEquity = startingCapital + retainedEarnings
 
-      const currentBank = startingBank + bankSales - bankExpenses
+    const totalAssets = currentCash + currentBank + receivables + inventoryValue
+    const totalLiabilities = payables + loans
+    const balanceCheck = Math.abs(totalAssets - (totalLiabilities + totalEquity))
+    const isBalanced = balanceCheck < 0.01
 
-      const receivables = transactions
-        .filter(t => t.transaction_type === 'sale' && t.payment_type === 'credit')
-        .reduce((sum, t) => sum + t.amount, 0)
-
-      // Other Assets (placeholder - can be expanded)
-      const otherAssets = 0
-
-      // Calculate Liabilities
-      // Card expenses increase credit balance (liability)
-      const creditExpenses = transactions
-        .filter(t => t.transaction_type === 'expense' && isCardPayment(t))
-        .reduce((sum, t) => sum + t.amount, 0)
-
-      // Other payables (for backward compatibility with old credit expenses)
-      const otherPayables = transactions
-        .filter(t => t.transaction_type === 'expense' && t.payment_type === 'credit' && !isCardPayment(t))
-        .reduce((sum, t) => sum + t.amount, 0)
-
-      const payables = creditExpenses + otherPayables
-
-      const loans = 0
-
-      // Calculate Equity
-      const startingCapital = startingCash + startingBank
-
-      const totalRevenue = transactions
-        .filter(t => t.transaction_type === 'sale')
-        .reduce((sum, t) => sum + t.amount, 0)
-
-      const totalExpenses = transactions
-        .filter(t => t.transaction_type === 'expense')
-        .reduce((sum, t) => sum + t.amount, 0)
-
-      const retainedEarnings = totalRevenue - totalExpenses
-      const ownersEquity = startingCapital + retainedEarnings
-
-      // Calculate totals
-      const totalAssets = currentCash + currentBank + receivables + inventoryValue + otherAssets
-      const totalLiabilities = payables + loans
-      const totalEquity = ownersEquity
-
-      // Balance check
-      const balanceCheck = Math.abs(totalAssets - (totalLiabilities + totalEquity))
-      const isBalanced = balanceCheck < 0.01
-
-      return {
-        assets: {
-          cash: currentCash,
-          bank: currentBank,
-          receivables,
-          inventory: inventoryValue,
-          total: totalAssets,
-        },
-        liabilities: {
-          payables,
-          loans,
-          total: totalLiabilities,
-        },
-        equity: {
-          startingCapital,
-          retainedEarnings,
-          total: totalEquity,
-        },
-        balanceCheck,
-        isBalanced,
-        inventory: {
-          value: inventoryValue,
-          isEstimated: isInventoryEstimated && !hasManualOverride,
-          isManual: hasManualOverride,
-        },
-      }
-    },
-    enabled: !!currentBusiness?.id,
-  })
-
-  const handleExportPDF = async () => {
-    if (!balanceData || !currentBusiness) return
-
-    const businessName = enterpriseName || 'Business'
-    const businessType = currentBusiness?.business_type || 'N/A'
-    const businessState = businessProfile?.stateOrRegion || currentBusiness?.state || 'N/A'
-    const businessCity = businessProfile?.area || currentBusiness?.city || ''
-
-    generateBalanceSheetPDF({
-      business: {
-        name: businessName,
-        type: businessType,
-        state: businessState,
-        city: businessCity
+    return {
+      assets: {
+        cash: currentCash,
+        bank: currentBank,
+        receivables,
+        inventory: inventoryValue,
+        total: totalAssets,
       },
-      asAtDate: asAtDate,
-      balanceSheet: balanceData,
-    })
+      liabilities: { payables, loans, total: totalLiabilities },
+      equity: { startingCapital, retainedEarnings, total: totalEquity },
+      balanceCheck,
+      isBalanced,
+      inventory: {
+        value: inventoryValue,
+        isEstimated: false,
+        isManual: manualOverride != null,
+      },
+    }
+  }, [transactions, asAtDateStr, currentBusiness?.starting_cash, currentBusiness?.starting_bank, inventoryItems])
+
+  const handleExportPDF = () => {
+    if (!balanceData) return
+    toast.info(t('report.common.generatingReport') || 'Generating Report...')
+    const businessName =
+      enterpriseName ||
+      (typeof window !== 'undefined' && isGuestMode() ? getGuestBusiness()?.name : null) ||
+      'Business'
+    const businessType = currentBusiness?.business_type ?? businessProfile?.businessCategory ?? 'N/A'
+    const businessState = businessProfile?.stateOrRegion ?? currentBusiness?.state ?? 'N/A'
+    const businessCity = businessProfile?.area ?? currentBusiness?.city ?? ''
+    const logo = businessProfile?.logoDataUrl
+
+    try {
+      generateBalanceSheetPDF({
+        business: {
+          name: businessName,
+          type: businessType,
+          state: businessState,
+          city: businessCity,
+          logo,
+        },
+        asAtDate: asAtDate,
+        balanceSheet: {
+          assets: balanceData.assets,
+          liabilities: balanceData.liabilities,
+          equity: balanceData.equity,
+          balanceCheck: balanceData.balanceCheck,
+          isBalanced: balanceData.isBalanced,
+        },
+      })
+      toast.success(t('report.common.exportSuccess') || 'PDF downloaded')
+    } catch (err) {
+      console.error('[Balance] PDF export error:', err)
+      toast.error(t('common.couldntSave') || "Couldn't download PDF")
+    }
   }
 
-  if (isLoading || !balanceData) {
+  if (isLoading) {
     return (
       <AppShell title={t('report.balanceSheet.title')} showBack showLogo>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -436,10 +309,10 @@ export default function BalanceSheetPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[var(--tally-text)]">
                       {balanceData.inventory?.isManual
-                        ? t('balance.inventory.manualLabel')
+                        ? tr('report.balance.inventory.manualLabel', 'Inventory (Manual)', t)
                         : balanceData.inventory?.isEstimated
-                        ? t('balance.inventory.estimatedLabel')
-                        : t('balance.inventory.label')}
+                        ? tr('report.balance.inventory.estimatedLabel', 'Inventory (Estimated)', t)
+                        : tr('report.balance.inventory.label', 'Inventory', t)}
                     </span>
                     {balanceData.inventory?.isManual && (
                       <button
@@ -450,7 +323,7 @@ export default function BalanceSheetPage() {
                           }
                         }}
                         className="p-1 hover:bg-[var(--tally-surface-2)] rounded"
-                        title={t('balance.inventory.manualInfo')}
+                        title={tr('report.balance.inventory.manualInfo', 'Manual values override calculated inventory for this report only.', t)}
                       >
                         <Edit2 className="w-3 h-3 text-[var(--tally-text-muted)]" />
                       </button>
@@ -479,8 +352,8 @@ export default function BalanceSheetPage() {
                 {(balanceData.inventory?.isEstimated || balanceData.inventory?.isManual) && (
                   <p className="text-xs text-[var(--tally-text-muted)] pl-0">
                     {balanceData.inventory.isManual
-                      ? t('balance.inventory.manualHelper')
-                      : t('balance.inventory.estimatedHelper')}
+                      ? tr('report.balance.inventory.manualHelper', 'This value was manually adjusted.', t)
+                      : tr('report.balance.inventory.estimatedHelper', 'Inventory value is estimated until stock purchase costs are recorded.', t)}
                   </p>
                 )}
               </div>

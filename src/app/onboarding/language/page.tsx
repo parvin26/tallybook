@@ -1,10 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { COUNTRIES, type Country } from '@/lib/countries'
+import { normalizeCountryCode } from '@/lib/currency'
 
 const ALL_LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -12,59 +16,79 @@ const ALL_LANGUAGES = [
   { code: 'krio', name: 'Krio' },
 ]
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  bm: 'Bahasa Malaysia',
+  krio: 'Krio',
+  zh: 'Chinese',
+  ms: 'Bahasa Melayu',
+  ta: 'Tamil',
+  id: 'Indonesian',
+  vi: 'Vietnamese',
+  tl: 'Tagalog',
+  tetum: 'Tetum',
+  sw: 'Swahili',
+  fr: 'French',
+  rw: 'Kinyarwanda',
+  hi: 'Hindi',
+}
+
+function getLanguageName(code: string): string {
+  return LANGUAGE_NAMES[code] ?? code
+}
+
 export default function LanguageSelectionPage() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
   const [selectedLanguage, setSelectedLanguage] = useState<string>('')
   const [availableLanguages, setAvailableLanguages] = useState(ALL_LANGUAGES)
+  const [currentCountry, setCurrentCountry] = useState<Country | null>(null)
 
   useEffect(() => {
-    // Get selected country
     if (typeof window !== 'undefined') {
-      const country = localStorage.getItem('tally-country')
-      
-      // If no country, redirect back to country selection
-      if (!country || (country !== 'malaysia' && country !== 'sierra-leone')) {
+      const stored = localStorage.getItem(STORAGE_KEYS.COUNTRY)
+      const code = stored ? normalizeCountryCode(stored) : null
+      const country = code ? COUNTRIES.find(c => c.code === code) ?? null : null
+
+      if (!country) {
         router.push('/onboarding/country')
         return
       }
 
-      // Filter languages based on country
-      let filtered: typeof ALL_LANGUAGES = []
-      if (country === 'malaysia') {
-        filtered = ALL_LANGUAGES.filter(l => l.code === 'en' || l.code === 'bm')
-      } else if (country === 'sierra-leone') {
-        filtered = ALL_LANGUAGES.filter(l => l.code === 'en' || l.code === 'krio')
-      }
-      setAvailableLanguages(filtered)
+      setCurrentCountry(country)
+      const filtered = ALL_LANGUAGES.filter(l => country.languages.includes(l.code))
+      setAvailableLanguages(filtered.length ? filtered : ALL_LANGUAGES)
 
-      // Get current language or default to first available
-      const stored = localStorage.getItem('tally-language')
-      if (stored && filtered.some(l => l.code === stored)) {
-        setSelectedLanguage(stored)
+      const langList = filtered.length ? filtered : ALL_LANGUAGES
+      const current = localStorage.getItem(STORAGE_KEYS.LANGUAGE)
+      if (current && langList.some(l => l.code === current)) {
+        setSelectedLanguage(current)
       } else {
-        // Default to first available language
-        setSelectedLanguage(filtered[0]?.code || 'en')
+        setSelectedLanguage(langList[0]?.code || 'en')
       }
     }
   }, [router])
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedLanguage) {
-      localStorage.setItem('tally-language', selectedLanguage)
-      i18n.changeLanguage(selectedLanguage)
-      // Onboarding complete - redirect to home
-      router.push('/')
+      // 1. Write tally-language first
+      localStorage.setItem(STORAGE_KEYS.LANGUAGE, selectedLanguage)
+      
+      // 2. Change i18n language and await if async
+      await i18n.changeLanguage(selectedLanguage)
+      
+      // 3. Route to /app - IntroOverlay will auto-open if intro not seen
+      router.push('/app')
     }
   }
 
   return (
-    <div className="min-h-screen bg-[var(--tally-surface,#FAF9F7)] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-8">
         {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-[var(--tally-text-muted)] hover:text-[var(--tally-text)]"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
         >
           <span>‹</span>
           <span>{t('common.back')}</span>
@@ -72,46 +96,61 @@ export default function LanguageSelectionPage() {
 
         {/* Branding */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-[#29978C]">TALLY</h1>
-          <p className="text-sm text-[var(--tally-text-muted)]">{t('onboarding.tagline')}</p>
+          <div className="flex justify-center mb-6">
+            <Image src="/icon-192.png" width={80} height={80} alt="Tally Logo" className="rounded-xl shadow-md" />
+          </div>
+          <p className="text-sm text-muted-foreground">{t('onboarding.tagline')}</p>
         </div>
 
         {/* Question */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-[var(--tally-text)] text-center">
+          <h2 className="text-xl font-semibold text-foreground text-center">
             {t('onboarding.language.question')}
           </h2>
           
-          {/* Language Options */}
+          {/* Language Options - Selection Cards Pattern */}
           <div className="space-y-3">
             {availableLanguages.map((language) => (
               <button
                 key={language.code}
                 onClick={() => setSelectedLanguage(language.code)}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                   selectedLanguage === language.code
-                    ? 'bg-[rgba(41,151,140,0.12)] border-[#29978C] text-[#29978C]'
-                    : 'bg-white border-[var(--tally-border)] text-[var(--tally-text)] hover:border-[var(--tally-text-muted)]'
+                    ? 'bg-accent border-primary text-foreground'
+                    : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{language.name}</span>
                   {selectedLanguage === language.code && (
-                    <div className="w-5 h-5 rounded-full bg-[#29978C] flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
+                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                      <Check className="w-3 h-3 text-primary-foreground" />
                     </div>
                   )}
                 </div>
               </button>
             ))}
           </div>
+
+          {(currentCountry?.comingSoon?.length ?? 0) > 0 && (
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('onboarding.language.comingSoon') || 'Coming Soon'}</p>
+              <div className="space-y-2 opacity-50">
+                {currentCountry?.comingSoon?.map((langCode) => (
+                  <div key={langCode} className="p-4 border rounded-xl bg-muted/50 border-border text-muted-foreground">
+                    {getLanguageName(langCode)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Continue Button */}
         <Button
           onClick={handleContinue}
           disabled={!selectedLanguage}
-          className="w-full h-12 bg-[#29978C] hover:bg-[#238579] text-white disabled:bg-[#E5E7EB] disabled:text-[#9CA3AF]"
+          className="tally-button-primary w-full h-12"
         >
           {t('common.next')}
         </Button>

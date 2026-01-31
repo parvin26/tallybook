@@ -89,7 +89,11 @@
     "testModeMessage": "Mod ujian: Langkau OTP. Gunakan kod ujian: {{code}}",
     "verifyError": "Tak dapat sahkan. Cuba lagi.",
     "verifyOTP": "Sahkan Kod OTP",
-    "verifying": "Mengesahkan..."
+    "verifying": "Mengesahkan...",
+    "continueChoice": {
+      "title": "Simpan kemajuan anda?",
+      "subtitle": "Log masuk untuk menyimpan data dengan selamat dan disegerakkan merentas peranti."
+    }
   },
   "balanceSheet": {
     "assets": "ASET",
@@ -137,7 +141,8 @@
     "optional": "pilihan",
     "save": "Simpan",
     "saved": "Disimpan",
-    "saving": "Menyimpan..."
+    "saving": "Menyimpan...",
+    "apply": "Guna"
   },
   "confirm": {
     "cancel": "Batal",
@@ -431,6 +436,7 @@
     "itemLabel": "Item",
     "itemRequired": "pilih item",
     "quantityRequired": "masukkan kuantiti dijual",
+    "addAnotherItem": "Tambah item lain",
     "quantitySoldLabel": "Kuantiti dijual",
     "selectItem": "Pilih item",
     "unitLabel": "Unit"
@@ -466,6 +472,14 @@
     "languageChanged": "Bahasa ditukar ke Bahasa Malaysia",
     "languageChangedEn": "Language changed to English",
     "languageError": "Tidak dapat menukar bahasa",
+    "quickAmounts": "Jumlah Pantas",
+    "saleButtons": "Jualan",
+    "expenseButtons": "Belanja",
+    "inventoryButtons": "Stok",
+    "addPreset": "Tambah",
+    "invalidPreset": "Masukkan nombor yang sah",
+    "openingBalance": "Baki pembukaan",
+    "openingBalanceHint": "Digunakan untuk Kunci Kira-kira. Tetapkan tunai dan baki bank permulaan anda.",
     "legal": "Undang-undang",
     "location": "Lokasi",
     "logout": "Log Keluar",
@@ -515,6 +529,8 @@
     "itemAdded": "Item ditambah",
     "itemName": "Nama Item",
     "itemNamePlaceholder": "Contoh: Beras (beg)",
+    "costPricePerUnit": "Harga Kos (seunit)",
+    "sellingPricePerUnit": "Harga Jual (seunit)",
     "itemUpdated": "Item dikemaskini",
     "items": "item",
     "lowStock": "Stok rendah",
@@ -522,6 +538,9 @@
     "lowStockThresholdPlaceholder": "Amaran apabila kuantiti mencapai ini",
     "nameRequired": "Nama item diperlukan",
     "noBusiness": "Tiada bisnes dipilih",
+    "setupTitle": "Sediakan perniagaan anda",
+    "setupBody": "Tambah perniagaan sebelum anda mula menjejaki stok.",
+    "setupCta": "Sediakan sekarang",
     "noItems": "Belum ada item",
     "quantity": "Kuantiti",
     "saveError": "Tidak dapat menyimpan item. cuba lagi.",
@@ -622,25 +641,30 @@
     "stockNotUpdated": "Jualan disimpan. Stok tidak dikemaskini."
   },
   "intro": {
-    "slides": {
-      "1": {
-        "title": "Rekod wang semasa ia bergerak",
-        "body": "Tambah jualan dan belanja semasa ia berlaku. Setiap entri memastikan buku nota anda sentiasa terkini."
-      },
-      "2": {
-        "title": "Lihat kedudukan anda hari ini",
-        "body": "Semak wang masuk, wang keluar dan baki pada satu pandangan. Tiada pengiraan diperlukan."
-      },
-      "3": {
-        "title": "Kekalkan rekod apa yang terhutang",
-        "body": "Lihat siapa yang berhutang dengan anda dan apa yang perlu anda bayar. Tiada yang terlepas."
-      }
+    "slide1": {
+      "title": "Tempat mudah untuk rekod hari ini",
+      "body": "Tulis apa yang anda jual\nDan apa yang anda belanja\nSemasa hari anda berjalan"
+    },
+    "slide2": {
+      "title": "Tiada persediaan diperlukan",
+      "body": "Tiada borang\nTiada kategori untuk dipelajari\nHanya buka dan rekod"
+    },
+    "slide3": {
+      "title": "Lihat hari anda dengan jelas",
+      "body": "Pada akhir hari\nAnda tahu apa yang berlaku\nTanpa meneka"
+    },
+    "slide4": {
+      "title": "Perkara mula masuk akal",
+      "body": "Selepas beberapa hari\nCorak muncul\nDi mana wang masuk\nDi mana ia pergi"
+    },
+    "slide5": {
+      "title": "Mula di mana anda berada",
+      "body": "Gunakan setiap hari\nAtau hanya bila anda boleh\nTally bekerja dengan anda"
     },
     "actions": {
       "next": "Seterusnya",
-      "getStarted": "Mula Guna",
       "skip": "Langkau",
-      "closeAria": "Tutup pengenalan"
+      "getStarted": "Mula guna"
     }
   },
   "welcome": {
@@ -698,5 +722,51 @@
     "language": {
       "question": "Pilih bahasa anda"
     }
+  },
+  "privacy": {
+    "pageTitle": "Polisi Privasi",
+    "heading": "Polisi Privasi",
+    "s1Title": "1. Maklumat yang Kami Kumpulkan",
+    "s1Intro": "TALLY mengumpulkan maklumat yang anda berikan secara langsung, termasuk:",
+    "s1Li1": "Nombor telefon untuk log masuk",
+    "s1Li2": "Maklumat perniagaan (nama, jenis, lokasi)",
+    "s1Li3": "Transaksi kewangan yang anda rekod",
+    "s2Title": "2. Cara Kami Menggunakan Maklumat",
+    "s2Intro": "Kami menggunakan maklumat anda untuk:",
+    "s2Li1": "Menyediakan perkhidmatan TALLY",
+    "s2Li2": "Menyimpan dan memaparkan rekod transaksi anda",
+    "s2Li3": "Menghasilkan laporan kewangan",
+    "s3Title": "3. Keselamatan Data",
+    "s3Body": "Kami menggunakan Supabase untuk menyimpan data anda dengan selamat. Data anda dienkripsi dan hanya boleh diakses oleh anda melalui log masuk.",
+    "s4Title": "4. Perkongsian Data",
+    "s4Body": "Kami tidak berkongsi data anda dengan pihak ketiga tanpa kebenaran anda.",
+    "s5Title": "5. Hak Anda",
+    "s5Intro": "Anda boleh:",
+    "s5Li1": "Mengakses data anda pada bila-bila masa",
+    "s5Li2": "Mengemaskini atau memadam data anda",
+    "s5Li3": "Mengeksport data anda dalam format CSV",
+    "s6Title": "6. Hubungi Kami",
+    "s6Body": "Jika anda mempunyai soalan tentang polisi privasi ini, sila hubungi kami melalui WhatsApp atau email yang disediakan dalam Tetapan.",
+    "updated": "Dikemaskini: {{date}}"
+  },
+  "terms": {
+    "pageTitle": "Terma",
+    "heading": "Terma & Syarat",
+    "s1Title": "1. Penerimaan Terma",
+    "s1Body": "Dengan menggunakan TALLY, anda bersetuju untuk mematuhi terma dan syarat ini.",
+    "s2Title": "2. Penggunaan Perkhidmatan",
+    "s2Intro": "TALLY adalah alat rekod kewangan untuk perniagaan kecil. Anda bertanggungjawab untuk:",
+    "s2Li1": "Menyediakan maklumat yang tepat dan terkini",
+    "s2Li2": "Menyimpan kata laluan dan akses anda dengan selamat",
+    "s2Li3": "Menggunakan perkhidmatan mengikut undang-undang yang berkuat kuasa",
+    "s3Title": "3. Data dan Privasi",
+    "s3Body": "Data anda adalah milik anda. Kami tidak akan mengakses atau menggunakan data anda tanpa kebenaran anda, kecuali seperti yang dinyatakan dalam Polisi Privasi.",
+    "s4Title": "4. Batasan Tanggungjawab",
+    "s4Body": "TALLY disediakan \"sebagaimana adanya\". Kami tidak menjamin ketepatan mutlak data atau ketersediaan perkhidmatan tanpa gangguan. Anda bertanggungjawab untuk menyimpan salinan data anda sendiri.",
+    "s5Title": "5. Perubahan Terma",
+    "s5Body": "Kami berhak untuk mengubah terma ini pada bila-bila masa. Perubahan akan dimaklumkan melalui aplikasi.",
+    "s6Title": "6. Penamatan",
+    "s6Body": "Anda boleh berhenti menggunakan TALLY pada bila-bila masa. Anda boleh memadam akaun dan data anda melalui Tetapan.",
+    "updated": "Dikemaskini: {{date}}"
   }
 }

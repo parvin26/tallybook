@@ -13,7 +13,8 @@
     "optional": "optional",
     "saving": "Saving...",
     "open": "Open",
-    "close": "Close"
+    "close": "Close",
+    "apply": "Apply"
   },
   "auth": {
     "login": "Login",
@@ -51,7 +52,12 @@
     "devModeOnly": "Test mode only available in development",
     "continueWithoutLogin": "Continue without login",
     "guestModeEnabled": "Guest mode enabled. Your data will be stored locally",
-    "guestModeDescription": "Use Tally without an account. Data stored on this device only."
+    "guestModeDescription": "Use Tally without an account. Data stored on this device only.",
+    "pleaseLogin": "Please sign in to continue.",
+    "continueChoice": {
+      "title": "Save your progress?",
+      "subtitle": "Sign in to keep your data safe and sync across devices."
+    }
   },
   "telemetry": {
     "title": "Help Improve Tally",
@@ -75,17 +81,29 @@
     "discardButton": "Discard",
     "importSuccess": "{{count}} transactions imported successfully",
     "importError": "Failed to import transactions",
-    "noDataToImport": "No guest data to import"
+    "noDataToImport": "No guest data to import",
+    "syncingData": "Syncing your data...",
+    "syncSuccess": "Data synced successfully!",
+    "syncFailed": "Sync failed, please try again"
   },
   "setup": {
     "title": "Set Up Your Business",
     "subtitle": "Step {{step}} of {{total}}",
+    "subtitleSingle": "Add your business details to get started",
     "businessName": "Business Name",
     "businessNamePlaceholder": "e.g., Ali's Coffee Shop",
+    "businessNameRequired": "Business name is required",
     "businessType": "Business Type",
+    "businessCategory": "Business Category",
+    "selectCategory": "Select category",
+    "categoryRequired": "Business category is required",
+    "categoryOtherRequired": "Please specify business category",
+    "categoryOtherPlaceholder": "Specify business type",
+    "country": "Country",
     "typeOther": "Specify business type (brief)",
     "typeOtherPlaceholder": "e.g., Cake Shop, Clothing Store, etc.",
     "state": "State",
+    "statePlaceholder": "State",
     "selectState": "Select state",
     "city": "City/District",
     "cityPlaceholder": "e.g., Petaling Jaya",
@@ -97,6 +115,7 @@
     "privacy": "Privacy Policy",
     "agreeTermsError": "Please agree to Terms & Privacy Policy",
     "completeAllFields": "Please complete all required fields",
+    "completeSetup": "Complete setup",
     "success": "Business created successfully!",
     "finish": "Complete",
     "pleaseLogin": "Please login first"
@@ -164,6 +183,7 @@
     "otherPaymentPlaceholder": "e.g., Credit",
     "attachment": "Attachment",
     "attachments": "Attachments",
+    "existingFiles": "Existing Files:",
     "addPhotoOrFile": "Add photo or file",
     "attachmentAdded": "Attachment added",
     "attachmentsReadOnly": "Attachments cannot be edited"
@@ -179,13 +199,27 @@
     "title": "Transaction History",
     "transactions": "Transactions",
     "transactionsCount": "{{count}} transactions",
+    "filteredCount": "{{count}} of {{total}} transactions",
     "today": "Today",
     "yesterday": "Yesterday",
     "7days": "7 Days",
     "30days": "30 Days",
     "noTransactions": "No transactions yet",
     "loadingError": "Error loading transactions",
-    "filteredEmpty": "{{count}} transactions found, but none for selected period"
+    "filteredEmpty": "No transactions match the selected filters",
+    "filter": "Filter",
+    "filterAll": "All",
+    "filterType": "Transaction type",
+    "filterPayment": "Payment method",
+    "filterDate": "Date range",
+    "thisMonth": "This month",
+    "last30Days": "Last 30 days",
+    "custom": "Custom",
+    "sortBy": "Sort by",
+    "sort_newest": "Newest",
+    "sort_oldest": "Oldest",
+    "sort_amount_high": "Highest amount",
+    "sort_amount_low": "Lowest amount"
   },
   "summary": {
     "title": "Financial Report",
@@ -268,7 +302,16 @@
     "languageChanged": "Bahasa ditukar ke Bahasa Malaysia",
     "languageChangedEn": "Language changed to English",
     "languageChangedKrio": "Language changed to Krio",
-    "languageError": "Cannot change language"
+    "languageError": "Cannot change language",
+    "quickAmounts": "Quick Amounts",
+    "saleButtons": "Sale",
+    "expenseButtons": "Expense",
+    "inventoryButtons": "Inventory",
+    "addPreset": "Add",
+    "invalidPreset": "Enter a valid number",
+    "openingBalance": "Opening balance",
+    "openingBalanceHint": "Used for Balance Sheet. Set your starting cash and bank balance.",
+    "countryChanged": "Country updated"
   },
   "health": {
     "title": "Business Check-in",
@@ -328,25 +371,31 @@
     }
   },
   "intro": {
-    "slides": {
-      "1": {
-        "title": "Record money as it moves",
-        "body": "Add sales and expenses as they happen. Each entry keeps your notebook up to date."
-      },
-      "2": {
-        "title": "See where you stand today",
-        "body": "Check cash in cash out and balance at a glance. No calculations needed."
-      },
-      "3": {
-        "title": "Keep track of what is owed",
-        "body": "See who owes you and what you need to pay. Nothing gets missed."
-      }
+    "slide1": {
+      "title": "A simple place to record today",
+      "body": "Write down what you sell and what you spend\nAs your day goes on"
+    },
+    "slide2": {
+      "title": "No setup required",
+      "body": "No forms\nNo categories to learn\nJust open and record"
+    },
+    "slide3": {
+      "title": "See your day clearly",
+      "body": "At the end of the day, you know what happened\nWithout guessing"
+    },
+    "slide4": {
+      "title": "Things start to make sense",
+      "body": "After a few days, patterns appear\nWhere money comes in\nWhere it goes"
+    },
+    "slide5": {
+      "title": "Start where you are",
+      "body": "Use it daily\nOr only when you can\nTALLY works with you"
     },
     "actions": {
       "next": "Next",
-      "getStarted": "Get Started",
       "skip": "Skip",
-      "closeAria": "Close intro"
+      "getStarted": "Get started",
+      "startRecordingToday": "Start recording today"
     }
   },
   "welcome": {
@@ -467,7 +516,8 @@
     "quantitySoldLabel": "Quantity sold",
     "unitLabel": "Unit",
     "itemRequired": "Please select an item",
-    "quantityRequired": "Please enter quantity sold"
+    "quantityRequired": "Please enter quantity sold",
+    "addAnotherItem": "Add another item"
   },
   "expense": {
     "paymentMethod": {
@@ -511,6 +561,8 @@
     "editItem": "Edit Item",
     "itemName": "Item Name",
     "itemNamePlaceholder": "e.g., Rice (bag)",
+    "costPricePerUnit": "Cost Price (per unit)",
+    "sellingPricePerUnit": "Selling Price (per unit)",
     "quantity": "Quantity",
     "unit": "Unit",
     "lowStockThreshold": "Low Stock Threshold",
@@ -523,6 +575,9 @@
     "nameRequired": "Item name is required",
     "invalidQuantity": "Please enter a valid quantity",
     "noBusiness": "No business selected",
+    "setupTitle": "Set up your business",
+    "setupBody": "Add a business before you start tracking stock.",
+    "setupCta": "Set up now",
     "tableNotReady": "Inventory table not set up yet. Please run the SQL setup.",
     "saveError": "Unable to save item. Please try again.",
     "deleteError": "Unable to delete item. Please try again.",
@@ -591,6 +646,12 @@
     "countryRequired": "Country is required"
   },
   "pwa": {
+    "installBanner": {
+      "title": "Install Tally on your phone",
+      "body": "Faster access works offline and feels like an app",
+      "iosHint": "Install Tally: Tap Share then Add to Home Screen",
+      "notNow": "Not now"
+    },
     "installableChip": {
       "title": "Installable PWA",
       "subtitle": "You can install this on your phone or desktop"
@@ -622,6 +683,7 @@
   "report": {
     "common": {
       "exportPDF": "Export PDF",
+      "generatingReport": "Generating Report...",
       "custom": "Custom",
       "thisWeek": "This Week",
       "thisMonth": "This Month",
@@ -645,6 +707,27 @@
       "other": "Other",
       "profitMessage": "You made {{amount}} profit in this period.",
       "lossMessage": "You had {{amount}} loss in this period."
+    },
+    "periodSelector": {
+      "title": "Reporting period",
+      "month": "Month",
+      "year": "Year",
+      "custom": "Custom",
+      "monthLabel": "Month",
+      "yearLabel": "Year",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "snapshot": {
+      "sales": "Sales",
+      "expenses": "Expenses"
+    },
+    "salesByItem": {
+      "title": "Sales by item",
+      "item": "Item",
+      "qty": "Qty",
+      "amount": "Amount",
+      "empty": "No sales by item for this period."
     },
     "balanceSheet": {
       "title": "Balance Sheet",
@@ -707,7 +790,8 @@
       "notAvailableYet": "Not available yet. We will notify you when your country is supported."
     },
     "language": {
-      "question": "Choose your language"
+      "question": "Choose your language",
+      "comingSoon": "Coming Soon"
     },
     "about": {
       "title": "What TALLY Is",
@@ -717,5 +801,51 @@
       "message": "Ready to start?",
       "button": "Start"
     }
+  },
+  "privacy": {
+    "pageTitle": "Privacy Policy",
+    "heading": "Privacy Policy",
+    "s1Title": "1. Information We Collect",
+    "s1Intro": "TALLY collects information you provide directly, including:",
+    "s1Li1": "Phone number for login",
+    "s1Li2": "Business information (name, type, location)",
+    "s1Li3": "Financial transactions you record",
+    "s2Title": "2. How We Use Information",
+    "s2Intro": "We use your information to:",
+    "s2Li1": "Provide TALLY services",
+    "s2Li2": "Store and display your transaction records",
+    "s2Li3": "Generate financial reports",
+    "s3Title": "3. Data Security",
+    "s3Body": "We use Supabase to store your data securely. Your data is encrypted and can only be accessed by you through login.",
+    "s4Title": "4. Data Sharing",
+    "s4Body": "We do not share your data with third parties without your consent.",
+    "s5Title": "5. Your Rights",
+    "s5Intro": "You can:",
+    "s5Li1": "Access your data at any time",
+    "s5Li2": "Update or delete your data",
+    "s5Li3": "Export your data in CSV format",
+    "s6Title": "6. Contact Us",
+    "s6Body": "If you have questions about this privacy policy, please contact us via WhatsApp or the email provided in Settings.",
+    "updated": "Last updated: {{date}}"
+  },
+  "terms": {
+    "pageTitle": "Terms",
+    "heading": "Terms & Conditions",
+    "s1Title": "1. Acceptance of Terms",
+    "s1Body": "By using TALLY, you agree to comply with these terms and conditions.",
+    "s2Title": "2. Use of Service",
+    "s2Intro": "TALLY is a financial recording tool for small businesses. You are responsible for:",
+    "s2Li1": "Providing accurate and up-to-date information",
+    "s2Li2": "Keeping your password and access secure",
+    "s2Li3": "Using the service in accordance with applicable laws",
+    "s3Title": "3. Data and Privacy",
+    "s3Body": "Your data belongs to you. We will not access or use your data without your consent, except as stated in the Privacy Policy.",
+    "s4Title": "4. Limitation of Liability",
+    "s4Body": "TALLY is provided \"as is\". We do not guarantee absolute accuracy of data or uninterrupted availability of the service. You are responsible for keeping your own copies of your data.",
+    "s5Title": "5. Changes to Terms",
+    "s5Body": "We may change these terms at any time. Changes will be communicated through the app.",
+    "s6Title": "6. Termination",
+    "s6Body": "You may stop using TALLY at any time. You can delete your account and data through Settings.",
+    "updated": "Last updated: {{date}}"
   }
 }

@@ -38,10 +38,9 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
   const queryClient = useQueryClient()
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [editAmount, setEditAmount] = useState('')
-  const [editPaymentType, setEditPaymentType] = useState<string>('cash')
+  const [editPaymentMethod, setEditPaymentMethod] = useState<Transaction['payment_method']>('cash')
   const [editNotes, setEditNotes] = useState('')
   const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null)
-  const [deletedTransaction, setDeletedTransaction] = useState<Transaction | null>(null)
 
   // Hooks must be called before any early returns
   const updateMutation = useMutation({
@@ -57,7 +56,7 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
         .from('transactions')
         .update({
           amount: amountNum,
-          payment_type: editPaymentType,
+          payment_method: editPaymentMethod,
           notes: editNotes || null,
         })
         .eq('id', editingTransaction.id)
@@ -78,13 +77,9 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!deletingTransaction) return
-      
-      setDeletedTransaction(deletingTransaction)
-
-      // Soft delete: add deleted_at timestamp
       const { error } = await supabase
         .from('transactions')
-        .update({ deleted_at: new Date().toISOString() })
+        .delete()
         .eq('id', deletingTransaction.id)
 
       if (error) throw error
@@ -92,13 +87,7 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['todayProfit'] })
-      toast.success(t('transaction.deleted'), {
-        action: {
-          label: t('transaction.undo'),
-          onClick: handleUndo,
-        },
-        duration: 30000,
-      })
+      toast.success(t('transaction.deleted'))
       setDeletingTransaction(null)
     },
     onError: () => {
@@ -106,31 +95,11 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
     },
   })
 
-  const handleUndo = async () => {
-    if (!deletedTransaction) return
-
-    try {
-      const { error } = await supabase
-        .from('transactions')
-        .update({ deleted_at: null })
-        .eq('id', deletedTransaction.id)
-
-      if (error) throw error
-
-      queryClient.invalidateQueries({ queryKey: ['transactions'] })
-      queryClient.invalidateQueries({ queryKey: ['todayProfit'] })
-      toast.success(t('transaction.updated'))
-      setDeletedTransaction(null)
-    } catch (err) {
-      toast.error(t('common.couldntSave'))
-    }
-  }
-
   const handleEditClick = (transaction: Transaction, e: React.MouseEvent) => {
     e.stopPropagation()
     setEditingTransaction(transaction)
     setEditAmount(transaction.amount.toString())
-    setEditPaymentType(transaction.payment_type)
+    setEditPaymentMethod(transaction.payment_method)
     setEditNotes(transaction.notes || '')
   }
 
@@ -160,9 +129,7 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
     )
   }
 
-  // Filter out soft-deleted transactions (if deleted_at column exists)
-  const activeTransactions = transactions.filter(t => !t.deleted_at || t.deleted_at === null)
-  const displayTransactions = limit ? activeTransactions.slice(0, limit) : activeTransactions
+  const displayTransactions = limit ? transactions.slice(0, limit) : transactions
 
   if (displayTransactions.length === 0) {
     return (
@@ -172,13 +139,16 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
     )
   }
 
+  const paymentDisplayKey = (m: Transaction['payment_method']) =>
+    m === 'card' ? 'credit' : m === 'e_wallet' ? 'mobile_money' : m
+
   return (
     <>
       <div className="space-y-3">
         {displayTransactions.map((transaction) => {
-          const isSale = transaction.transaction_type === 'sale' || transaction.transaction_type === 'payment_received'
-          const Icon = paymentIcons[transaction.payment_type] || Wallet
-          const paymentLabel = t(`paymentTypes.${transaction.payment_type}`) || transaction.payment_type
+          const isSale = transaction.transaction_type === 'sale'
+          const Icon = paymentIcons[paymentDisplayKey(transaction.payment_method)] || Wallet
+          const paymentLabel = t(`paymentTypes.${paymentDisplayKey(transaction.payment_method)}`) || transaction.payment_method
 
           return (
             <div
@@ -254,8 +224,10 @@ export function TransactionList({ transactions, limit }: TransactionListProps) {
             <div>
               <label className="block text-sm font-medium mb-2">{t('transaction.paymentType')}</label>
               <PaymentTypeSelector
-                value={editPaymentType}
-                onChange={(value) => setEditPaymentType(value)}
+                value={editPaymentMethod === 'e_wallet' ? 'duitnow' : editPaymentMethod === 'card' ? 'credit' : editPaymentMethod}
+                onChange={(value) => setEditPaymentMethod(
+                  value === 'credit' ? 'card' : ['duitnow', 'tng', 'boost', 'grabpay', 'shopeepay'].includes(value) ? 'e_wallet' : value as Transaction['payment_method']
+                )}
               />
             </div>
 

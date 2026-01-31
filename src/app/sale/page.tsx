@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { AmountInput } from '@/components/AmountInput'
+import { AmountInput } from '@/components/inputs/AmountInput'
 import { QuickAmountSelectorLovable } from '@/components/QuickAmountSelectorLovable'
 import { PaymentTypeSelectorLovable } from '@/components/PaymentTypeSelectorLovable'
 import { AttachmentInputLovable } from '@/components/AttachmentInputLovable'
@@ -15,13 +16,18 @@ import { useBusiness } from '@/contexts/BusinessContext'
 import { supabase } from '@/lib/supabase/supabaseClient'
 import { format } from 'date-fns'
 import { Input } from '@/components/ui/input'
-import { getInventoryItems, deductInventoryForSale } from '@/lib/inventory'
-import { InventoryItem } from '@/types/stock'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { useInventory } from '@/hooks/useInventory'
+import { useQuickAmounts } from '@/hooks/useQuickAmounts'
+import { addMovement } from '@/lib/inventory-service'
 import { uploadAttachment, saveAttachmentMetadata } from '@/lib/attachments'
-import { isGuestMode, saveGuestTransaction } from '@/lib/guest-storage'
+import { isGuestMode, saveGuestTransaction, fileToGuestAttachment } from '@/lib/guest-storage'
 import { trackEvent } from '@/lib/telemetry'
+import { ChevronDown, PlusCircle, Trash2 } from 'lucide-react'
+
+type StockDeduction = {
+  itemId: string
+  quantity: number
+}
 
 export default function RecordSalePage() {
   const { t } = useTranslation()
@@ -85,26 +91,15 @@ export default function RecordSalePage() {
   
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
   
-  // Stock deduction state
+  // Stock deduction state: multiple items per sale
   const [deductStock, setDeductStock] = useState(false)
-  const [selectedInventoryItem, setSelectedInventoryItem] = useState<string>('')
-  const [quantitySold, setQuantitySold] = useState('')
-  const [showNegativeStockConfirm, setShowNegativeStockConfirm] = useState(false)
-  const [pendingDeduction, setPendingDeduction] = useState<{
-    itemId: string
-    quantity: number
-    unit: string
-    transactionId: string
-  } | null>(null)
+  const [stockDeductions, setStockDeductions] = useState<StockDeduction[]>([
+    { itemId: '', quantity: 1 },
+  ])
 
-  // Fetch inventory items
-  const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
-    queryKey: ['inventory', currentBusiness?.id],
-    queryFn: () => currentBusiness?.id ? getInventoryItems(currentBusiness.id) : Promise.resolve([]),
-    enabled: !!currentBusiness?.id && deductStock,
-  })
-
-  const selectedItem = inventoryItems.find(item => item.id === selectedInventoryItem)
+  const { items: inventoryItems } = useInventory()
+  const { salePresets } = useQuickAmounts()
+  const businessId = isGuestMode() ? 'guest' : currentBusiness?.id ?? null
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [otherPaymentType, setOtherPaymentType] = useState('')
 
@@ -121,6 +116,20 @@ export default function RecordSalePage() {
     }
   }, [amount, paymentType, notes, draftKey])
 
+  // Pre-fill sale amount from selling_price * quantity when deducting stock
+  useEffect(() => {
+    if (!deductStock) return
+    const total = stockDeductions.reduce((sum, row) => {
+      if (!row.itemId || row.quantity <= 0) return sum
+      const item = inventoryItems.find((i) => i.id === row.itemId)
+      return sum + (item?.selling_price ?? 0) * row.quantity
+    }, 0)
+    if (total > 0) {
+      setAmount(total.toString())
+      setSelectedQuickAmount(undefined)
+    }
+  }, [deductStock, stockDeductions, inventoryItems])
+
   const mutation = useMutation({
     mutationFn: async () => {
       const amountNum = parseFloat(amount)
@@ -128,34 +137,67 @@ export default function RecordSalePage() {
         throw new Error(t('transaction.invalidAmount'))
       }
 
-      // Validate stock deduction if enabled (not supported in guest mode)
-      if (deductStock && !isGuestMode()) {
-        if (!selectedInventoryItem) {
+      // Validate stock deduction if enabled: at least one row with item + qty > 0
+      if (deductStock && businessId) {
+        const validRows = stockDeductions.filter((r) => r.itemId && r.quantity > 0)
+        if (validRows.length === 0) {
           throw new Error(t('sale.itemRequired'))
-        }
-        const qty = parseFloat(quantitySold)
-        if (isNaN(qty) || qty <= 0) {
-          throw new Error(t('sale.quantityRequired'))
         }
       }
 
-      // Map Lovable payment types to database types
-      const dbPaymentType = paymentType === 'mobile_money' ? 'duitnow' : 
-                           paymentType === 'other' ? 'credit' : paymentType
+      // Map UI payment type to DB payment_method enum
+      const dbPaymentMethod: 'cash' | 'bank_transfer' | 'card' | 'e_wallet' | 'other' =
+        paymentType === 'cash' ? 'cash'
+        : paymentType === 'bank_transfer' ? 'bank_transfer'
+        : paymentType === 'mobile_money' ? 'e_wallet'
+        : paymentType === 'other' ? 'other'
+        : 'cash'
 
       // Notes without attachment metadata (attachments stored separately)
       const finalNotes = notes || ''
 
-      // Guest mode: save to local storage
+      // Guest mode: save to local storage (with attachments as base64), then atomic stock movement if deducting
       if (isGuestMode()) {
+        const attachments =
+          attachmentFiles.length > 0
+            ? await Promise.all(attachmentFiles.map((f) => fileToGuestAttachment(f)))
+            : undefined
         const transactionId = saveGuestTransaction({
           transaction_type: 'sale',
           amount: amountNum,
-          payment_type: dbPaymentType,
+          payment_type: paymentType,
+          payment_method: dbPaymentMethod,
+          payment_reference: undefined,
           notes: finalNotes || undefined,
           transaction_date: format(selectedDate, 'yyyy-MM-dd'),
+          attachments,
         })
-        
+
+        // Atomic step 2: multiple stock movements (guest has no DB trigger — manual quantity sync in inventory-service)
+        if (deductStock && businessId) {
+          const promises = stockDeductions
+            .filter((r) => r.itemId && r.quantity > 0)
+            .map((r) =>
+              addMovement({
+                businessId,
+                itemId: r.itemId,
+                type: 'sale',
+                quantityChange: -Number(r.quantity),
+                transactionId,
+              })
+            )
+          await Promise.all(promises)
+          queryClient.invalidateQueries({ queryKey: ['inventory'] })
+          for (const r of stockDeductions.filter((x) => x.itemId && x.quantity > 0)) {
+            const item = inventoryItems.find((i) => i.id === r.itemId)
+            const newQty = (item?.quantity ?? 0) - r.quantity
+            const th = item?.low_stock_threshold ?? item?.lowStockThreshold
+            if (th != null && newQty <= th && item) {
+              toast.warning(t('warnings.lowStock', { item: item.name }))
+            }
+          }
+        }
+
         trackEvent('record_sale')
         return { id: transactionId }
       }
@@ -172,7 +214,8 @@ export default function RecordSalePage() {
           business_id: currentBusiness.id,
           transaction_type: 'sale',
           amount: amountNum,
-          payment_type: dbPaymentType,
+          payment_method: dbPaymentMethod,
+          payment_reference: null,
           notes: finalNotes || null,
           transaction_date: format(selectedDate, 'yyyy-MM-dd'),
         })
@@ -206,46 +249,32 @@ export default function RecordSalePage() {
         }
       }
 
-      // Handle stock deduction if enabled (after transaction is saved)
-      if (deductStock && selectedInventoryItem && transaction) {
-        const qty = parseFloat(quantitySold)
+      // Atomic step 2: multiple stock movements (one per deduction row)
+      if (deductStock && transaction && currentBusiness?.id) {
+        const validRows = stockDeductions.filter((r) => r.itemId && r.quantity > 0)
         try {
-          const result = await deductInventoryForSale(
-            selectedInventoryItem,
-            qty,
-            selectedItem?.unit || '',
-            transaction.id,
-            currentBusiness.id
-          )
-
-          if (!result.success) {
-            if (result.error === 'Unit mismatch. Selected item uses different unit.') {
-              toast.error(t('errors.unitMismatch'))
-            } else if (result.error?.includes('below zero')) {
-              // Show confirmation dialog
-              setPendingDeduction({
-                itemId: selectedInventoryItem,
-                quantity: qty,
-                unit: selectedItem?.unit || '',
+          await Promise.all(
+            validRows.map((r) =>
+              addMovement({
+                businessId: currentBusiness.id,
+                itemId: r.itemId,
+                type: 'sale',
+                quantityChange: -Number(r.quantity),
                 transactionId: transaction.id,
               })
-              setShowNegativeStockConfirm(true)
-              // Don't throw - sale is already saved
-            } else {
-              toast.warning(t('warnings.stockNotUpdated'))
-            }
-          } else {
-            // Success - invalidate inventory queries
-            queryClient.invalidateQueries({ queryKey: ['inventory'] })
-            
-            // Check for low stock warning
-            if (result.error === 'low_stock' && selectedItem) {
-              toast.warning(t('warnings.lowStock', { item: selectedItem.name }))
+            )
+          )
+          queryClient.invalidateQueries({ queryKey: ['inventory'] })
+          for (const r of validRows) {
+            const item = inventoryItems.find((i) => i.id === r.itemId)
+            const newQty = (item?.quantity ?? 0) - r.quantity
+            const th = item?.low_stock_threshold ?? item?.lowStockThreshold
+            if (th != null && newQty <= th && item) {
+              toast.warning(t('warnings.lowStock', { item: item.name }))
             }
           }
-        } catch (error: any) {
-          // Stock deduction failed but sale is saved
-          console.error('[Sale] Stock deduction error:', error)
+        } catch (err) {
+          console.error('[Sale] Stock movement failed:', err)
           toast.warning(t('warnings.stockNotUpdated'))
         }
       }
@@ -260,6 +289,7 @@ export default function RecordSalePage() {
       
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['todayProfit'] })
+      queryClient.invalidateQueries({ queryKey: ['sale-movements'] })
       queryClient.refetchQueries({ queryKey: ['transactions'] })
       queryClient.refetchQueries({ queryKey: ['todayProfit'] })
       toast.success(t('common.saved'))
@@ -273,71 +303,21 @@ export default function RecordSalePage() {
     },
   })
 
-  const handleNegativeStockConfirm = async (confirmed: boolean) => {
-    setShowNegativeStockConfirm(false)
-    if (confirmed && pendingDeduction) {
-      // Fetch item to check current quantity
-      const { data: item } = await supabase
-        .from('inventory_items')
-        .select('*')
-        .eq('id', pendingDeduction.itemId)
-        .single()
-
-      if (item) {
-        const newQuantity = item.quantity - pendingDeduction.quantity
-        
-        // Update inventory
-        const { error: updateError } = await supabase
-          .from('inventory_items')
-          .update({ quantity: newQuantity })
-          .eq('id', pendingDeduction.itemId)
-
-        if (!updateError) {
-          // Create movement record
-          await supabase
-            .from('inventory_movements')
-            .insert({
-              inventory_item_id: pendingDeduction.itemId,
-              business_id: currentBusiness?.id,
-              movement_type: 'sale_deduction',
-              quantity_delta: -pendingDeduction.quantity, // Negative for deduction
-              unit: pendingDeduction.unit,
-              related_transaction_id: pendingDeduction.transactionId,
-              notes: null,
-              occurred_at: new Date().toISOString(),
-            })
-
-          queryClient.invalidateQueries({ queryKey: ['inventory'] })
-          
-          // Check for low stock
-          if (item.low_stock_threshold && newQuantity <= item.low_stock_threshold) {
-            toast.warning(t('warnings.lowStock', { item: item.name }))
-          }
-        } else {
-          toast.warning(t('warnings.stockNotUpdated'))
-        }
-      }
-    }
-    setPendingDeduction(null)
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     mutation.mutate()
   }
 
   const handleQuickSelect = (selectedAmount: number) => {
-    const currentAmount = parseFloat(amount) || 0
-    const newAmount = currentAmount + selectedAmount
-    setAmount(newAmount.toFixed(2))
+    setAmount(selectedAmount.toString())
     setSelectedQuickAmount(selectedAmount)
   }
 
     return (
     <AppShell title={t('transaction.recordSale')} showBack showLogo>
-      <div className="max-w-[480px] mx-auto px-6 py-6 space-y-6">
-        {/* 1. Amount */}
-        <div className="bg-[var(--tally-surface)] rounded-lg border border-[var(--tally-border)] p-8">
+      <div className="max-w-[480px] mx-auto px-6 py-6 pb-48 space-y-6">
+        {/* 1. Amount — text-5xl, font-bold, text-center, no borders, transparent; currency from stored country */}
+        <div className="p-6">
           <AmountInput
             value={amount}
             onChange={(value) => {
@@ -351,7 +331,7 @@ export default function RecordSalePage() {
         {/* 2. Quick Amounts */}
         <div>
           <QuickAmountSelectorLovable 
-            amounts={[10, 20, 50, 100, 200]}
+            amounts={salePresets}
             onSelect={handleQuickSelect}
             variant="sale"
           />
@@ -395,8 +375,7 @@ export default function RecordSalePage() {
               onChange={(e) => {
                 setDeductStock(e.target.checked)
                 if (!e.target.checked) {
-                  setSelectedInventoryItem('')
-                  setQuantitySold('')
+                  setStockDeductions([{ itemId: '', quantity: 1 }])
                 }
               }}
               className="w-5 h-5 rounded border-[var(--tally-border)] text-[#29978C] focus:ring-[#29978C]"
@@ -408,55 +387,85 @@ export default function RecordSalePage() {
 
           {deductStock && (
             <div className="space-y-3 pl-0">
-              {/* Item Select */}
-              <div>
-                <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-[var(--tally-text-muted)] font-medium">
                   {t('sale.itemLabel')}
-                </label>
-                <select
-                  value={selectedInventoryItem}
-                  onChange={(e) => {
-                    setSelectedInventoryItem(e.target.value)
-                    setQuantitySold('')
-                  }}
-                  className="w-full p-3 border border-[var(--tally-border)] rounded-lg bg-[var(--tally-surface)] text-[var(--tally-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(41,151,140,0.25)] focus:border-[#29978C]"
+                </span>
+                <Link
+                  href="/stock"
+                  className="text-emerald-600 text-sm flex items-center gap-1 cursor-pointer hover:underline"
                 >
-                  <option value="">{t('sale.selectItem')}</option>
-                  {inventoryItems.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} ({item.quantity} {item.unit})
-                    </option>
-                  ))}
-                </select>
+                  <PlusCircle className="w-4 h-4" />
+                  Add New
+                </Link>
               </div>
 
-              {/* Quantity Sold */}
-              {selectedInventoryItem && (
-                <>
-                  <div>
-                    <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
-                      {t('sale.quantitySoldLabel')}
-                    </label>
-                    <Input
-                      type="number"
-                      value={quantitySold}
-                      onChange={(e) => setQuantitySold(e.target.value)}
-                      min="0"
-                      step="0.01"
-                      placeholder="0"
-                    />
+              {/* Multiple rows: dropdown + quantity + remove */}
+              {stockDeductions.map((row, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <select
+                      value={row.itemId}
+                      onChange={(e) => {
+                        setStockDeductions((prev) =>
+                          prev.map((r, i) =>
+                            i === index ? { ...r, itemId: e.target.value } : r
+                          )
+                        )
+                      }}
+                      className="w-full h-10 rounded-[var(--tally-radius)] border border-[var(--tally-border)] bg-[var(--tally-surface)] pl-3 pr-9 py-2 text-sm text-[var(--tally-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(41,151,140,0.25)] focus-visible:border-[#29978C] focus-visible:ring-offset-2 appearance-none cursor-pointer"
+                    >
+                      <option value="">{t('sale.selectItem')}</option>
+                      {inventoryItems.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name} — {item.quantity} {item.unit}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--tally-text-muted)] pointer-events-none" aria-hidden />
                   </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    value={row.quantity <= 0 ? '' : row.quantity}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      const num = v === '' ? 0 : parseFloat(v)
+                      setStockDeductions((prev) =>
+                        prev.map((r, i) =>
+                          i === index ? { ...r, quantity: Number.isFinite(num) && num >= 0 ? num : 0 } : r
+                        )
+                      )
+                    }}
+                    placeholder="Qty"
+                    className="w-20 h-10 rounded-[var(--tally-radius)] border border-[var(--tally-border)] bg-[var(--tally-surface)] text-sm text-center"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStockDeductions((prev) => {
+                        const next = prev.filter((_, i) => i !== index)
+                        return next.length === 0 ? [{ itemId: '', quantity: 1 }] : next
+                      })
+                    }}
+                    className="flex-shrink-0 p-2 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+                    aria-label="Remove row"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
 
-                  {/* Unit Display */}
-                  {selectedItem && (
-                    <div>
-                      <p className="text-sm text-[var(--tally-text-muted)]">
-                        {t('sale.unitLabel')}: <span className="text-[var(--tally-text)] font-medium">{selectedItem.unit}</span>
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
+              <button
+                type="button"
+                onClick={() => setStockDeductions((prev) => [...prev, { itemId: '', quantity: 1 }])}
+                className="text-emerald-600 text-sm font-medium flex items-center gap-1 hover:underline"
+              >
+                <PlusCircle className="w-4 h-4" />
+                {t('sale.addAnotherItem')}
+              </button>
             </div>
           )}
         </div>
@@ -480,8 +489,8 @@ export default function RecordSalePage() {
           />
         </div>
 
-        {/* 8. Save Button - Fixed at bottom */}
-        <div className="pb-6">
+        {/* 8. Save Button - in document flow, clear of Bottom Nav */}
+        <div className="mt-8">
           <button
             type="button"
             onClick={(e) => {
@@ -496,36 +505,9 @@ export default function RecordSalePage() {
           </button>
         </div>
 
-        {/* Negative Stock Confirmation Dialog */}
-        <Dialog open={showNegativeStockConfirm} onOpenChange={setShowNegativeStockConfirm}>
-          <DialogContent className="max-w-[480px] bg-[var(--tally-bg)]">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
-                {t('confirm.negativeStockTitle')}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="text-sm text-[var(--tally-text-muted)]">
-                {t('confirm.negativeStockBody')}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => handleNegativeStockConfirm(false)}
-                className="flex-1"
-              >
-                {t('confirm.cancel')}
-              </Button>
-              <Button
-                onClick={() => handleNegativeStockConfirm(true)}
-                className="flex-1 bg-[#29978C] hover:bg-[#238579] text-white"
-              >
-                {t('confirm.continue')}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Reserve space so Save button stays above fixed Bottom Nav (88px + safe area) */}
+        <div className="h-24 w-full shrink-0" aria-hidden="true" />
+
       </div>
     </AppShell>
   )

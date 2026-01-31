@@ -18,18 +18,39 @@ interface DialogContextValue {
 const DialogContext = React.createContext<DialogContextValue | undefined>(undefined)
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
+  // Lock body scroll when modal is open
+  React.useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   return (
     <DialogContext.Provider value={{ open: open ?? false, onOpenChange: onOpenChange ?? (() => {}) }}>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="fixed inset-0 bg-black/50"
+        <>
+          {/* Backdrop: fixed full screen, blocks interaction with page content */}
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm pointer-events-auto"
             onClick={() => onOpenChange?.(false)}
+            onPointerDown={(e) => e.preventDefault()}
+            aria-hidden
           />
-          <div className="relative z-50 w-full max-w-md mx-4">
-            {children}
+          {/* Content: centered card floating on top; z-[51] so content sits above backdrop (z-50) */}
+          <div className="fixed inset-0 z-[51] flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="pointer-events-auto w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {children}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </DialogContext.Provider>
   )
@@ -66,12 +87,12 @@ export function DialogContent({
   
   return (
     <div className={cn(
-      "bg-[var(--tally-surface)] rounded-lg shadow-lg p-6 max-h-[90vh] overflow-y-auto border border-[var(--tally-border)]",
+      "bg-card rounded-2xl shadow-[var(--shadow-card)] p-6 max-h-[90vh] overflow-y-auto relative",
       className
     )}>
       <button
         onClick={() => context.onOpenChange(false)}
-        className="absolute top-4 right-4 rounded-sm opacity-70 hover:opacity-100 text-[var(--tally-text-muted)]"
+        className="absolute top-4 right-4 rounded-full w-8 h-8 flex items-center justify-center opacity-70 hover:opacity-100 hover:bg-accent text-muted-foreground transition-colors"
         aria-label="Close"
       >
         <X className="h-4 w-4" />

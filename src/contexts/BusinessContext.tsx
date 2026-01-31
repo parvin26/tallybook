@@ -3,19 +3,29 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/supabaseClient';
 import { Business } from '@/types';
+import { setActiveBusinessId } from '@/lib/businessId';
 
 interface BusinessContextType {
   currentBusiness: Business | null;
   setCurrentBusiness: (business: Business | null) => void;
   isLoading: boolean;
+  needsBusiness: boolean;
   refreshBusiness: () => Promise<void>;
 }
 
 const BusinessContext = createContext<BusinessContextType | undefined>(undefined);
 
 export function BusinessProvider({ children }: { children: React.ReactNode }) {
-  const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
+  const [currentBusiness, setCurrentBusinessState] = useState<Business | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsBusiness, setNeedsBusiness] = useState(false);
+
+  // Wrapper to persist businessId to localStorage when business changes
+  const setCurrentBusiness = (business: Business | null) => {
+    setCurrentBusinessState(business);
+    setActiveBusinessId(business?.id || null);
+    setNeedsBusiness(business === null);
+  };
 
   const loadBusiness = async () => {
     try {
@@ -47,6 +57,9 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
           }
         } else if (data) {
           setCurrentBusiness(data);
+        } else {
+          setCurrentBusiness(null);
+          setNeedsBusiness(true);
         }
         setIsLoading(false);
         return;
@@ -61,31 +74,53 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
           console.log('[BusinessContext] No user found, resetting business state')
         }
         setCurrentBusiness(null);
+        setNeedsBusiness(false);
         setIsLoading(false);
         return;
       }
       
-      const { data, error } = await supabase
+      // Fetch all active businesses for the user
+      const { data: businesses, error } = await supabase
         .from('businesses')
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .limit(1)
-        .single();
+        .order('created_at', { ascending: false });
       
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No business found - this is okay for new users
-          setCurrentBusiness(null);
-        } else {
-          console.error('Error loading business:', {
-            code: error.code,
-            message: error.message,
-          });
-          setCurrentBusiness(null);
-        }
-      } else if (data) {
-        setCurrentBusiness(data);
+        console.error('Error loading businesses:', {
+          code: error.code,
+          message: error.message,
+        });
+        setCurrentBusiness(null);
+        setNeedsBusiness(false);
+        setActiveBusinessId(null);
+        return;
+      }
+      
+      // Deterministic business selection
+      if (!businesses || businesses.length === 0) {
+        // No businesses: user needs to create one
+        setCurrentBusiness(null);
+        setNeedsBusiness(true);
+        setActiveBusinessId(null);
+      } else if (businesses.length === 1) {
+        // One business: use it
+        setCurrentBusiness(businesses[0]);
+        setNeedsBusiness(false);
+      } else {
+        // Multiple businesses: use persisted id if valid, else use most recent
+        const persistedId = typeof window !== 'undefined' 
+          ? localStorage.getItem('tally-business-id')
+          : null;
+        
+        const persistedBusiness = persistedId 
+          ? businesses.find(b => b.id === persistedId)
+          : null;
+        
+        const selectedBusiness = persistedBusiness || businesses[0];
+        setCurrentBusiness(selectedBusiness);
+        setNeedsBusiness(false);
       }
     } catch (err) {
       console.error('Error in loadBusiness:', err);
@@ -124,7 +159,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <BusinessContext.Provider value={{ currentBusiness, setCurrentBusiness, isLoading, refreshBusiness }}>
+    <BusinessContext.Provider value={{ currentBusiness, setCurrentBusiness, isLoading, needsBusiness, refreshBusiness }}>
       {children}
     </BusinessContext.Provider>
   );

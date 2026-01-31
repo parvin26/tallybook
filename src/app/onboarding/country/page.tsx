@@ -1,165 +1,103 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { COUNTRIES } from '@/lib/countries'
+import { normalizeCountryCode } from '@/lib/currency'
 
-const AVAILABLE_COUNTRIES = [
-  { id: 'malaysia', name: 'Malaysia' },
-  { id: 'sierra-leone', name: 'Sierra Leone' },
-]
-
-const COMING_SOON_COUNTRIES = [
-  'Indonesia',
-  'Thailand',
-  'Vietnam',
-  'Philippines',
-  'Cambodia',
-  'Laos',
-  'Myanmar',
-  'Timor-Leste',
-  'India',
-  'Pakistan',
-  'Bangladesh',
-  'Sri Lanka',
-  'Nepal',
-  'Nigeria',
-  'Ghana',
-  'Kenya',
-  'Tanzania',
-  'Uganda',
-  'Rwanda',
-  'Ethiopia',
-  'South Africa',
-  'Zambia',
-  'Zimbabwe',
-  'Cameroon',
-  'Senegal',
-  "Cote d'Ivoire",
-  'Brazil',
-  'Mexico',
-  'Colombia',
-]
+function getInitialCountry(): string {
+  if (typeof window === 'undefined') return ''
+  const stored = localStorage.getItem(STORAGE_KEYS.COUNTRY)
+  const code = stored ? normalizeCountryCode(stored) : null
+  return (code && COUNTRIES.some((c) => c.code === code)) ? code : ''
+}
 
 export default function CountrySelectionPage() {
   const { t } = useTranslation()
   const router = useRouter()
-  const [selectedCountry, setSelectedCountry] = useState<string>('')
-  const [showComingSoonMessage, setShowComingSoonMessage] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState<string>(getInitialCountry)
 
   useEffect(() => {
-    // Load stored country on mount
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('tally-country')
-      if (stored && (stored === 'malaysia' || stored === 'sierra-leone')) {
-        setSelectedCountry(stored)
+      const stored = localStorage.getItem(STORAGE_KEYS.COUNTRY)
+      const code = stored ? normalizeCountryCode(stored) : null
+      if (code && COUNTRIES.some((c) => c.code === code)) {
+        setSelectedCountry(code)
       }
     }
   }, [])
 
   const handleSelectCountry = (value: string) => {
-    console.log('[Country] handleSelectCountry called with:', value)
-    
-    // Check if it's a coming soon country
-    if (COMING_SOON_COUNTRIES.includes(value)) {
-      setShowComingSoonMessage(true)
-      setSelectedCountry('')
-      return
-    }
-    
-    setShowComingSoonMessage(false)
     setSelectedCountry(value)
-    // Persist immediately
-    localStorage.setItem('tally-country', value)
-    console.log('[Country] selectedCountry set to:', value)
+    localStorage.setItem(STORAGE_KEYS.COUNTRY, value)
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('tally-country-change'))
+    }
   }
 
   const handleContinue = () => {
-    console.log('[Country] handleContinue called, selectedCountry:', selectedCountry)
-    if (selectedCountry === 'malaysia' || selectedCountry === 'sierra-leone') {
-      console.log('[Country] Navigating to /onboarding/language')
+    if (selectedCountry && COUNTRIES.some((c) => c.code === selectedCountry)) {
       router.push('/onboarding/language')
-    } else {
-      console.log('[Country] Cannot continue - invalid country:', selectedCountry)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[var(--tally-surface,#FAF9F7)] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-8">
         {/* Branding */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-[#29978C]">TALLY</h1>
-          <p className="text-sm text-[var(--tally-text-muted)]">{t('onboarding.tagline')}</p>
+          <div className="flex justify-center mb-6">
+            <Image src="/icon-192.png" width={80} height={80} alt="Tally Logo" className="rounded-xl shadow-md" />
+          </div>
+          <p className="text-sm text-muted-foreground">{t('onboarding.tagline')}</p>
         </div>
 
         {/* Question */}
         <div className="space-y-4">
-          <h2 className="text-lg font-medium text-center text-[var(--tally-text)]">
+          <h2 className="text-lg font-medium text-center text-foreground">
             {t('onboarding.country.question')}
           </h2>
           
           {/* Country Selector */}
           <Select value={selectedCountry} onValueChange={handleSelectCountry}>
-            <SelectTrigger className="w-full h-14 text-base rounded-xl border-2 border-[var(--tally-border)] bg-[var(--tally-surface)]">
+            <SelectTrigger className="tally-input h-14 text-base">
               <SelectValue 
                 placeholder={t('onboarding.country.selectPlaceholder')}
-                displayValue={selectedCountry ? AVAILABLE_COUNTRIES.find(c => c.id === selectedCountry)?.name : undefined}
+                displayValue={selectedCountry ? COUNTRIES.find(c => c.code === selectedCountry)?.name : undefined}
               />
             </SelectTrigger>
-            <SelectContent className="max-h-[300px] bg-[var(--tally-surface)] border border-[var(--tally-border)]">
+            <SelectContent className="max-h-[300px] bg-card border border-border">
               <SelectGroup>
-                <SelectLabel className="text-xs font-semibold text-[var(--tally-text-muted)] uppercase tracking-wide px-2 py-2">
+                <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 py-2">
                   {t('onboarding.country.availableNow')}
                 </SelectLabel>
-                {AVAILABLE_COUNTRIES.map((country) => (
-                  <SelectItem key={country.id} value={country.id} className="text-base py-3 cursor-pointer">
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-              <SelectGroup>
-                <SelectLabel className="text-xs font-semibold text-[var(--tally-text-muted)] uppercase tracking-wide px-2 py-2 mt-2">
-                  {t('onboarding.country.comingSoon')}
-                </SelectLabel>
-                {COMING_SOON_COUNTRIES.map((country) => (
+                {COUNTRIES.map((c) => (
                   <SelectItem 
-                    key={country} 
-                    value={country} 
-                    disabled 
-                    className="text-base py-3 opacity-50 cursor-not-allowed"
+                    key={c.code} 
+                    value={c.code} 
+                    className={`text-base py-3 cursor-pointer whitespace-nowrap ${selectedCountry === c.code ? 'bg-accent' : ''}`}
                   >
-                    {country}
+                    <span className="whitespace-nowrap">{c.name}</span>
                   </SelectItem>
                 ))}
               </SelectGroup>
             </SelectContent>
           </Select>
-
-          {showComingSoonMessage && (
-            <p className="text-sm text-[var(--tally-text-muted)] text-center animate-fade-in">
-              {t('onboarding.country.notAvailableYet')}
-            </p>
-          )}
         </div>
 
         {/* Continue Button */}
         <Button
           onClick={handleContinue}
-          disabled={selectedCountry !== 'malaysia' && selectedCountry !== 'sierra-leone'}
-          className="w-full h-12 bg-[#29978C] hover:bg-[#238579] text-white disabled:bg-[#E5E7EB] disabled:text-[#9CA3AF]"
+          disabled={!selectedCountry}
+          className="tally-button-primary w-full h-12"
         >
           {t('common.next')}
         </Button>
-        
-        {/* Debug info - remove in production */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="text-xs text-gray-400">
-            Debug: selectedCountry = "{selectedCountry}"
-          </div>
-        )}
       </div>
     </div>
   )

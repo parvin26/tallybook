@@ -1,9 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { TallyLogo } from './TallyLogo'
-import { useTranslation } from 'react-i18next'
 
 interface AppHeaderProps {
   title: string
@@ -25,7 +24,7 @@ export function AppHeader({ title, showBack = true, showLogo = true }: AppHeader
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-surface border-b border-tally-border">
+    <header className="sticky top-0 z-40 bg-[#F9F9F7] border-b border-tally-border">
       <div className="max-w-md mx-auto px-4 h-16 flex items-center">
         {/* Left: Back button or Logo */}
         <div className="flex items-center justify-start w-12 flex-shrink-0">
@@ -38,7 +37,14 @@ export function AppHeader({ title, showBack = true, showLogo = true }: AppHeader
               <ArrowLeft className="w-5 h-5 text-tally-text" />
             </button>
           ) : showLogo ? (
-            <TallyLogo size={28} />
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="flex items-center justify-center"
+              aria-label="Go to home"
+            >
+              <img src="/icon-192.png" width={60} height={60} alt="Tally" className="mr-2 rounded-md" />
+            </button>
           ) : (
             <div className="w-10" />
           )}
@@ -54,7 +60,14 @@ export function AppHeader({ title, showBack = true, showLogo = true }: AppHeader
         {/* Right: Logo or spacer */}
         <div className="flex items-center justify-end w-12 flex-shrink-0">
           {showLogo && !isHome ? (
-            <TallyLogo size={28} />
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="flex items-center justify-center"
+              aria-label="Go to home"
+            >
+              <img src="/icon-192.png" width={60} height={60} alt="Tally" className="mr-2 rounded-md" />
+            </button>
           ) : (
             <div className="w-10" />
           )}

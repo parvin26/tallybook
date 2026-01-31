@@ -13,7 +13,8 @@
     "optional": "",
     "saving": "",
     "open": "",
-    "close": ""
+    "close": "",
+    "apply": "Apply"
   },
   "auth": {
     "login": "",
@@ -50,7 +51,11 @@
     "skipLoginButton": "",
     "devBypassMessage": "",
     "devBypassError": "",
-    "devModeOnly": ""
+    "devModeOnly": "",
+    "continueChoice": {
+      "title": "Save your progress?",
+      "subtitle": "Sign in to keep your data safe and sync across devices."
+    }
   },
   "setup": {
     "title": "",
@@ -260,25 +265,30 @@
     "keepGoing": ""
   },
   "intro": {
-    "slides": {
-      "1": {
-        "title": "Rekod moni wen i de muv",
-        "body": "Ad sel an ekspens wen dɛm de apen. Evri entri mek yu notbuk de ap tu det."
-      },
-      "2": {
-        "title": "Si we yu de tude",
-        "body": "Chek cash in, cash out an balans wan luk. No kalkuleshon nid."
-      },
-      "3": {
-        "title": "Kip rekod fɔ wetin de o",
-        "body": "Si u de o yu an wetin yu nid fɔ pe. Notin go mis."
-      }
+    "slide1": {
+      "title": "Wan simpl ples fɔ rekod tide",
+      "body": "Rayt wetin yu sel\nAn wetin yu spen\nAz yu de go"
+    },
+    "slide2": {
+      "title": "No setap nid",
+      "body": "No fom\nNo kategori fɔ lan\nJus op an rekod"
+    },
+    "slide3": {
+      "title": "Si yu de klia",
+      "body": "Na di en fo di de\nYu no wetin apen\nWitout gessin"
+    },
+    "slide4": {
+      "title": "Tin dem stat fɔ mek sens",
+      "body": "Afta som de\nPatan de sho\nWe moni de kam in\nWe i de go"
+    },
+    "slide5": {
+      "title": "Stat we yu de",
+      "body": "Yu am evri de\nO na onli wen yu fit\nTally de wok wit yu"
     },
     "actions": {
-      "next": "",
-      "getStarted": "",
-      "skip": "",
-      "closeAria": ""
+      "next": "Neks",
+      "skip": "Skip",
+      "getStarted": "Stat"
     }
   },
   "welcome": {
@@ -399,7 +409,8 @@
     "quantitySoldLabel": "",
     "unitLabel": "",
     "itemRequired": "",
-    "quantityRequired": ""
+    "quantityRequired": "",
+    "addAnotherItem": "Add another item"
   },
   "expense": {
     "paymentMethod": {
@@ -443,6 +454,8 @@
     "editItem": "",
     "itemName": "",
     "itemNamePlaceholder": "",
+    "costPricePerUnit": "Cost Price (per unit)",
+    "sellingPricePerUnit": "Selling Price (per unit)",
     "quantity": "",
     "unit": "",
     "lowStockThreshold": "",
@@ -455,6 +468,9 @@
     "nameRequired": "",
     "invalidQuantity": "",
     "noBusiness": "",
+    "setupTitle": "Set up yu biznes",
+    "setupBody": "Ad biznes bifo yu stat fɔ trak stok.",
+    "setupCta": "Set up now",
     "tableNotReady": "",
     "saveError": "",
     "deleteError": "",
@@ -661,5 +677,51 @@
     "language": {
       "question": ""
     }
+  },
+  "privacy": {
+    "pageTitle": "Privacy Policy",
+    "heading": "Privacy Policy",
+    "s1Title": "1. Information We Collect",
+    "s1Intro": "TALLY collects information you provide directly, including:",
+    "s1Li1": "Phone number for login",
+    "s1Li2": "Business information (name, type, location)",
+    "s1Li3": "Financial transactions you record",
+    "s2Title": "2. How We Use Information",
+    "s2Intro": "We use your information to:",
+    "s2Li1": "Provide TALLY services",
+    "s2Li2": "Store and display your transaction records",
+    "s2Li3": "Generate financial reports",
+    "s3Title": "3. Data Security",
+    "s3Body": "We use Supabase to store your data securely. Your data is encrypted and can only be accessed by you through login.",
+    "s4Title": "4. Data Sharing",
+    "s4Body": "We do not share your data with third parties without your consent.",
+    "s5Title": "5. Your Rights",
+    "s5Intro": "You can:",
+    "s5Li1": "Access your data at any time",
+    "s5Li2": "Update or delete your data",
+    "s5Li3": "Export your data in CSV format",
+    "s6Title": "6. Contact Us",
+    "s6Body": "If you have questions about this privacy policy, please contact us via WhatsApp or the email provided in Settings.",
+    "updated": "Last updated: {{date}}"
+  },
+  "terms": {
+    "pageTitle": "Terms",
+    "heading": "Terms & Conditions",
+    "s1Title": "1. Acceptance of Terms",
+    "s1Body": "By using TALLY, you agree to comply with these terms and conditions.",
+    "s2Title": "2. Use of Service",
+    "s2Intro": "TALLY is a financial recording tool for small businesses. You are responsible for:",
+    "s2Li1": "Providing accurate and up-to-date information",
+    "s2Li2": "Keeping your password and access secure",
+    "s2Li3": "Using the service in accordance with applicable laws",
+    "s3Title": "3. Data and Privacy",
+    "s3Body": "Your data belongs to you. We will not access or use your data without your consent, except as stated in the Privacy Policy.",
+    "s4Title": "4. Limitation of Liability",
+    "s4Body": "TALLY is provided \"as is\". We do not guarantee absolute accuracy of data or uninterrupted availability of the service. You are responsible for keeping your own copies of your data.",
+    "s5Title": "5. Changes to Terms",
+    "s5Body": "We may change these terms at any time. Changes will be communicated through the app.",
+    "s6Title": "6. Termination",
+    "s6Body": "You may stop using TALLY at any time. You can delete your account and data through Settings.",
+    "updated": "Last updated: {{date}}"
   }
 }

@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import tallyLogo from '@/assets/tally-logo.png'
 
 interface TallyLogoProps {
   size?: number
@@ -20,10 +19,11 @@ export function TallyLogo({ size = 28, className = '' }: TallyLogoProps) {
       aria-label="Go to home"
     >
       <Image
-        src={tallyLogo}
-        alt="Tally"
+        src="/icon-512.png"
         width={size}
         height={size}
+        alt="Tally Logo"
+        className="rounded-xl"
         priority
       />
     </button>

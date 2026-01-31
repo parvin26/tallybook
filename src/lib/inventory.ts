@@ -43,6 +43,8 @@ export async function getInventoryItems(businessId: string): Promise<InventoryIt
     quantity: item.quantity,
     unit: item.unit,
     lowStockThreshold: item.low_stock_threshold,
+    cost_price: Number(item.cost_price ?? 0),
+    selling_price: Number(item.selling_price ?? 0),
     created_at: item.created_at,
     updated_at: item.updated_at,
   }))
@@ -78,6 +80,8 @@ export async function deductInventoryForSale(
       quantity: item.quantity,
       unit: item.unit,
       lowStockThreshold: item.low_stock_threshold,
+      cost_price: Number(item.cost_price ?? 0),
+      selling_price: Number(item.selling_price ?? 0),
       created_at: item.created_at,
       updated_at: item.updated_at,
     }
