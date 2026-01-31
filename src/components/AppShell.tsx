@@ -8,6 +8,8 @@ import { OfflineIndicator } from './OfflineIndicator'
 const NAV_HEIGHT = 88
 /** Extra gap so the last content (e.g. Save button) is clearly above the fixed nav when scrolled to bottom. */
 const BOTTOM_GAP = 48
+/** When bottom nav is visible, main content gets this padding so it never overlaps the nav. */
+const MAIN_PADDING_BOTTOM_WITH_NAV = `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + ${BOTTOM_GAP}px)`
 
 export function AppShell({
   children,
@@ -32,9 +34,7 @@ export function AppShell({
       <main
         className="min-h-[60vh]"
         style={{
-          paddingBottom: hideBottomNav
-            ? `${BOTTOM_GAP}px`
-            : `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + ${BOTTOM_GAP}px)`,
+          paddingBottom: hideBottomNav ? `${BOTTOM_GAP}px` : MAIN_PADDING_BOTTOM_WITH_NAV,
         }}
       >
         {children}

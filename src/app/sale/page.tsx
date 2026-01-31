@@ -330,9 +330,10 @@ export default function RecordSalePage() {
 
         {/* 2. Quick Amounts */}
         <div>
-          <QuickAmountSelectorLovable 
+          <QuickAmountSelectorLovable
             amounts={salePresets}
             onSelect={handleQuickSelect}
+            selectedAmount={selectedQuickAmount}
             variant="sale"
           />
         </div>

@@ -135,7 +135,7 @@ export function QuickAmountsManager({ open, onOpenChange }: QuickAmountsManagerP
                     key={`${val}-${idx}`}
                     type="button"
                     onClick={() => openEdit(val, idx)}
-                    className="inline-flex items-center justify-center min-w-[56px] px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-sm font-medium text-gray-900"
+                    className="inline-flex items-center justify-center min-w-[56px] px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium text-gray-900"
                   >
                     {val}
                   </button>
@@ -144,7 +144,7 @@ export function QuickAmountsManager({ open, onOpenChange }: QuickAmountsManagerP
                   <button
                     type="button"
                     onClick={openAdd}
-                    className="inline-flex items-center justify-center min-w-[56px] px-3 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 text-sm font-medium"
+                    className="inline-flex items-center justify-center min-w-[56px] px-3 py-2 rounded-lg border border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 text-sm font-medium bg-white"
                     aria-label={t('settings.addPreset', { defaultValue: 'Add' })}
                   >
                     <Plus className="w-4 h-4" />

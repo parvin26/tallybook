@@ -28,15 +28,11 @@ export function QuickAmountSelector({
             key={amount}
             type="button"
             onClick={() => onSelect(amount)}
-            className={`
-              px-4 py-2 rounded-full text-sm font-medium transition-all
-              ${isSelected
-                ? variant === 'sale'
-                  ? 'bg-primary/15 text-primary border border-primary/40'
-                  : 'bg-secondary/15 text-secondary border border-secondary/40'
-                : 'bg-muted/60 text-muted-foreground border border-transparent hover:bg-muted hover:text-foreground'
-              }
-            `}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              isSelected
+                ? 'bg-[#E5F7EE] text-[#1DB36B] border border-[#1DB36B]'
+                : 'bg-white border border-gray-300 text-[var(--tally-text)] hover:bg-gray-50'
+            }`}
           >
             {amount}
           </button>

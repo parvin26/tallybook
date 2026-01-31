@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useBusiness } from '@/contexts/BusinessContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase/supabaseClient'
@@ -29,6 +29,7 @@ import { QuickAmountsManager } from '@/components/QuickAmountsManager'
 
 export default function AccountPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { currentBusiness, refreshBusiness } = useBusiness()
   const { signOut, user } = useAuth()
   const { data: transactions } = useTransactions()
@@ -88,6 +89,15 @@ export default function AccountPage() {
   const [quickAmountsManagerOpen, setQuickAmountsManagerOpen] = useState(false)
   const [openingCash, setOpeningCash] = useState('')
   const [openingBank, setOpeningBank] = useState('')
+
+  // Open Edit Profile when navigated with ?editProfile=1 (e.g. from Home header circle)
+  useEffect(() => {
+    if (searchParams?.get('editProfile') === '1') {
+      setIsProfileEditOpen(true)
+      const loadedProfile = getBusinessProfile()
+      if (loadedProfile) setProfileEditData(loadedProfile)
+    }
+  }, [searchParams])
 
   // Check PWA state on mount and when component updates
   useEffect(() => {
@@ -519,7 +529,7 @@ export default function AccountPage() {
         {/* Section: Quick amounts — title, subtitle, Manage row only */}
         <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1 mt-4">{t('account.sectionQuickAmounts', { defaultValue: 'Quick amounts' })}</h2>
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <p className="text-sm text-gray-500 mb-3">{t('settings.quickAmountsSubtitle', { defaultValue: 'Set up to 5 shortcuts for each type.' })}</p>
+          <p className="text-xs text-muted-foreground mb-3 px-0.5">{t('settings.quickAmountsSubtitle', { defaultValue: 'Set up to 5 shortcuts for each type.' })}</p>
           <button
             type="button"
             onClick={() => setQuickAmountsManagerOpen(true)}
