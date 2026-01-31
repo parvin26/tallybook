@@ -1,24 +1,38 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
+import { IntroOrApp } from '@/components/IntroOrApp';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'TALLY',
+  title: 'Tally - Simple Business Tracker',
   description: 'Buku akaun digital untuk perniagaan kecil',
   manifest: '/manifest.json',
-  themeColor: '#10b981',
+  icons: {
+    icon: '/favicon.ico.png?v=2',
+    shortcut: '/favicon.ico.png?v=2',
+    apple: '/icon-192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'TALLY',
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
+    title: 'Tally - Simple Business Tracker',
   },
 };
+
+export const viewport: Viewport = {
+  themeColor: '#10B981',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevent zooming on inputs for mobile feel
+}
 
 export default function RootLayout({
   children,
@@ -27,9 +41,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className={`${inter.variable} ${inter.className} antialiased`}>
         <Providers>
-          {children}
+          <IntroOrApp>
+            {children}
+          </IntroOrApp>
         </Providers>
       </body>
     </html>

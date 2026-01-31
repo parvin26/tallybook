@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Check } from 'lucide-react'
-// Use official keys: tally-country, tally-language
+import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { COUNTRIES, type Country } from '@/lib/countries'
+import { normalizeCountryCode } from '@/lib/currency'
 
 const ALL_LANGUAGES = [
   { code: 'en', name: 'English' },
@@ -13,39 +16,55 @@ const ALL_LANGUAGES = [
   { code: 'krio', name: 'Krio' },
 ]
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: 'English',
+  bm: 'Bahasa Malaysia',
+  krio: 'Krio',
+  zh: 'Chinese',
+  ms: 'Bahasa Melayu',
+  ta: 'Tamil',
+  id: 'Indonesian',
+  vi: 'Vietnamese',
+  tl: 'Tagalog',
+  tetum: 'Tetum',
+  sw: 'Swahili',
+  fr: 'French',
+  rw: 'Kinyarwanda',
+  hi: 'Hindi',
+}
+
+function getLanguageName(code: string): string {
+  return LANGUAGE_NAMES[code] ?? code
+}
+
 export default function LanguageSelectionPage() {
   const { t, i18n } = useTranslation()
   const router = useRouter()
   const [selectedLanguage, setSelectedLanguage] = useState<string>('')
   const [availableLanguages, setAvailableLanguages] = useState(ALL_LANGUAGES)
+  const [currentCountry, setCurrentCountry] = useState<Country | null>(null)
 
   useEffect(() => {
-    // Get selected country from official key
     if (typeof window !== 'undefined') {
-      const country = localStorage.getItem('tally-country')
-      
-      // If no country, redirect back to country selection
-      if (!country || (country !== 'malaysia' && country !== 'sierra-leone')) {
+      const stored = localStorage.getItem(STORAGE_KEYS.COUNTRY)
+      const code = stored ? normalizeCountryCode(stored) : null
+      const country = code ? COUNTRIES.find(c => c.code === code) ?? null : null
+
+      if (!country) {
         router.push('/onboarding/country')
         return
       }
 
-      // Filter languages based on country
-      let filtered: typeof ALL_LANGUAGES = []
-      if (country === 'malaysia') {
-        filtered = ALL_LANGUAGES.filter(l => l.code === 'en' || l.code === 'bm')
-      } else if (country === 'sierra-leone') {
-        filtered = ALL_LANGUAGES.filter(l => l.code === 'en' || l.code === 'krio')
-      }
-      setAvailableLanguages(filtered)
+      setCurrentCountry(country)
+      const filtered = ALL_LANGUAGES.filter(l => country.languages.includes(l.code))
+      setAvailableLanguages(filtered.length ? filtered : ALL_LANGUAGES)
 
-      // Get current language from official key or default to first available
-      const stored = localStorage.getItem('tally-language')
-      if (stored && filtered.some(l => l.code === stored)) {
-        setSelectedLanguage(stored)
+      const langList = filtered.length ? filtered : ALL_LANGUAGES
+      const current = localStorage.getItem(STORAGE_KEYS.LANGUAGE)
+      if (current && langList.some(l => l.code === current)) {
+        setSelectedLanguage(current)
       } else {
-        // Default to first available language
-        setSelectedLanguage(filtered[0]?.code || 'en')
+        setSelectedLanguage(langList[0]?.code || 'en')
       }
     }
   }, [router])
@@ -53,7 +72,7 @@ export default function LanguageSelectionPage() {
   const handleContinue = async () => {
     if (selectedLanguage) {
       // 1. Write tally-language first
-      localStorage.setItem('tally-language', selectedLanguage)
+      localStorage.setItem(STORAGE_KEYS.LANGUAGE, selectedLanguage)
       
       // 2. Change i18n language and await if async
       await i18n.changeLanguage(selectedLanguage)
@@ -77,7 +96,9 @@ export default function LanguageSelectionPage() {
 
         {/* Branding */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-primary">TALLY</h1>
+          <div className="flex justify-center mb-6">
+            <Image src="/icon-192.png" width={80} height={80} alt="Tally Logo" className="rounded-xl shadow-md" />
+          </div>
           <p className="text-sm text-muted-foreground">{t('onboarding.tagline')}</p>
         </div>
 
@@ -110,6 +131,19 @@ export default function LanguageSelectionPage() {
               </button>
             ))}
           </div>
+
+          {(currentCountry?.comingSoon?.length ?? 0) > 0 && (
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground mb-2 font-medium">{t('onboarding.language.comingSoon') || 'Coming Soon'}</p>
+              <div className="space-y-2 opacity-50">
+                {currentCountry?.comingSoon?.map((langCode) => (
+                  <div key={langCode} className="p-4 border rounded-xl bg-muted/50 border-border text-muted-foreground">
+                    {getLanguageName(langCode)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Continue Button */}

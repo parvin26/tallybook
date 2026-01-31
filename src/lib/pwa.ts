@@ -67,6 +67,20 @@ export function isIOS(): boolean {
 }
 
 /**
+ * Check if running in iOS Safari (browser, not standalone).
+ * Used for PWA install banner to show "Share → Add to Home Screen" instructions.
+ * Relies on: iOS UA, not standalone, and platform touch (iOS has maxTouchPoints).
+ */
+export function isIOSSafari(): boolean {
+  if (typeof window === 'undefined') return false
+  if (isStandalone()) return false
+  const ua = navigator.userAgent
+  const isIOSDevice = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream
+  const isSafari = ua.includes('Safari') && !ua.includes('Chrome')
+  return isIOSDevice && (isSafari || !ua.includes('CriOS'))
+}
+
+/**
  * Check if app can be installed (has prompt available and not already installed)
  */
 export function canInstall(): boolean {

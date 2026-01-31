@@ -34,26 +34,19 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     <DialogContext.Provider value={{ open: open ?? false, onOpenChange: onOpenChange ?? (() => {}) }}>
       {open && (
         <>
-          {/* Full screen overlay - z-index 1000, blocks pointer events */}
-          <div 
-            className="fixed z-[1000]"
-            style={{ 
-              top: 0, 
-              right: 0, 
-              bottom: 0, 
-              left: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.35)',
-              pointerEvents: 'auto'
-            }}
+          {/* Backdrop: fixed full screen, blocks interaction with page content */}
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm pointer-events-auto"
             onClick={() => onOpenChange?.(false)}
             onPointerDown={(e) => e.preventDefault()}
+            aria-hidden
           />
-          {/* Modal container - z-index 1050, centered */}
-          <div 
-            className="fixed inset-0 z-[1050] flex items-center justify-center p-4 pointer-events-none"
-            style={{ top: 0, right: 0, bottom: 0, left: 0 }}
-          >
-            <div className="pointer-events-auto w-full max-w-md">
+          {/* Content: centered card floating on top; z-[51] so content sits above backdrop (z-50) */}
+          <div className="fixed inset-0 z-[51] flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="pointer-events-auto w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
               {children}
             </div>
           </div>

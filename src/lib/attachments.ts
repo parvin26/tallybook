@@ -98,13 +98,15 @@ export async function getTransactionAttachments(
       .order('created_at', { ascending: true })
 
     if (error) {
-      console.error('[Attachments] Fetch error:', error)
+      const msg = error?.message ?? (error as { code?: string })?.code ?? (error as { details?: string })?.details
+      console.error('[Attachments] Fetch error:', msg || JSON.stringify(error) || String(error))
       return []
     }
 
     return (data || []) as TransactionAttachment[]
   } catch (error) {
-    console.error('[Attachments] Fetch exception:', error)
+    const err = error as Error
+    console.error('[Attachments] Fetch exception:', err?.message ?? String(error))
     return []
   }
 }

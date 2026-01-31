@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase/supabaseClient'
 import { useBusiness } from '@/contexts/BusinessContext'
+import { isGuestMode } from '@/lib/guest-storage'
+import { createItem } from '@/lib/inventory-service'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { AmountInput } from '@/components/inputs/AmountInput'
 import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -24,58 +26,50 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
   const { t } = useTranslation()
   const { currentBusiness } = useBusiness()
   const queryClient = useQueryClient()
+  const businessId = isGuestMode() ? 'guest' : currentBusiness?.id ?? null
 
   const [name, setName] = useState('')
+  const [costPrice, setCostPrice] = useState('')
+  const [sellingPrice, setSellingPrice] = useState('')
   const [quantity, setQuantity] = useState('0')
   const [unit, setUnit] = useState<Unit>('pcs')
   const [lowStockThreshold, setLowStockThreshold] = useState('')
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!currentBusiness?.id) {
+      if (!businessId) {
         throw new Error(t('stock.noBusiness'))
       }
-
       if (!name.trim()) {
         throw new Error(t('stock.nameRequired'))
       }
-
       const quantityNum = parseFloat(quantity)
       if (isNaN(quantityNum) || quantityNum < 0) {
         throw new Error(t('stock.invalidQuantity'))
       }
-
-      const { error } = await supabase
-        .from('inventory_items')
-        .insert({
-          business_id: currentBusiness.id,
-          name: name.trim(),
-          quantity: quantityNum,
-          unit,
-          low_stock_threshold: lowStockThreshold ? parseFloat(lowStockThreshold) : null,
-        })
-
-      if (error) {
-        // Handle missing table gracefully
-        if (error.code === '42P01' || error.message.includes('does not exist')) {
-          throw new Error(t('stock.tableNotReady'))
-        }
-        throw error
-      }
+      await createItem({
+        businessId,
+        name: name.trim(),
+        quantity: quantityNum,
+        unit,
+        low_stock_threshold: lowStockThreshold ? parseFloat(lowStockThreshold) : null,
+        cost_price: costPrice ? parseFloat(costPrice) : 0,
+        selling_price: sellingPrice ? parseFloat(sellingPrice) : 0,
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] })
       toast.success(t('stock.itemAdded'))
       onOpenChange(false)
-      // Reset form
       setName('')
+      setCostPrice('')
+      setSellingPrice('')
       setQuantity('0')
       setUnit('pcs')
       setLowStockThreshold('')
     },
     onError: (error: Error) => {
-      const errorMessage = error.message || t('stock.saveError') || t('common.couldntSave')
-      toast.error(errorMessage)
+      toast.error(error.message || t('stock.saveError') || t('common.couldntSave'))
     },
   })
 
@@ -105,6 +99,22 @@ export function AddItemModal({ open, onOpenChange }: AddItemModalProps) {
               placeholder={t('stock.itemNamePlaceholder')}
               autoFocus
             />
+          </div>
+
+          {/* Cost Price (per unit) */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-2 font-medium">
+              {t('stock.costPricePerUnit')}
+            </label>
+            <AmountInput value={costPrice} onChange={setCostPrice} size="sm" />
+          </div>
+
+          {/* Selling Price (per unit) */}
+          <div>
+            <label className="block text-sm text-muted-foreground mb-2 font-medium">
+              {t('stock.sellingPricePerUnit')}
+            </label>
+            <AmountInput value={sellingPrice} onChange={setSellingPrice} size="sm" />
           </div>
 
           {/* Quantity */}

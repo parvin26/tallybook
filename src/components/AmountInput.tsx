@@ -7,52 +7,43 @@ interface AmountInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, '
   onChange: (value: string) => void
 }
 
-export function AmountInput({ value, onChange, autoFocus, ...props }: AmountInputProps) {
+export function AmountInput({ value, onChange, autoFocus, disabled, readOnly, onFocus, ...props }: AmountInputProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value
-    // 1. Sanitize to digits and periods only
     const sanitized = input.replace(/[^0-9.]/g, '')
-    
-    // 2. Split by periods to handle multiple decimal points
     const parts = sanitized.split('.')
-    
-    // 3. If there is no period, keep digits only
-    // 4. If there is one period, keep as is
-    // 5. If there are multiple periods, keep integer part + first decimal part only
     let formatted: string
     if (parts.length === 1) {
-      // No period: keep digits only
       formatted = sanitized
     } else if (parts.length === 2) {
-      // One period: keep as is
       formatted = sanitized
     } else {
-      // Multiple periods: keep integer part + first decimal part only
-      const integerPart = parts[0]
-      const decimalPart = parts[1] || ''
-      formatted = `${integerPart}.${decimalPart}`
+      formatted = `${parts[0]}.${parts[1] || ''}`
     }
-    
     onChange(formatted)
   }
 
-  const displayValue = value || '0.00'
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select()
+    onFocus?.(e)
+  }
 
   return (
-    <div className="relative w-full text-center">
-      <div className="text-5xl font-bold tabular-nums text-[var(--tally-text)]">
-        RM {displayValue}
-      </div>
+    <div className="flex items-center justify-center gap-1 w-full">
+      <span className="text-4xl font-bold text-gray-500 tabular-nums shrink-0">RM</span>
       <input
         type="text"
         inputMode="decimal"
-        value={value}
+        value={value || ''}
         onChange={handleChange}
+        onFocus={handleFocus}
         autoFocus={autoFocus}
-        className="absolute inset-0 w-full text-5xl font-bold tabular-nums bg-transparent border-none outline-none text-transparent caret-[var(--tally-text)]"
-        style={{ 
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}
+        disabled={false}
+        readOnly={false}
+        placeholder="0.00"
+        className="text-6xl font-bold tabular-nums text-gray-900 bg-transparent border-none outline-none focus:ring-0 w-auto min-w-[2ch] text-center p-0 [font-family:inherit]"
+        style={{ caretColor: '#10B981' }}
+        aria-label="Amount"
         {...props}
       />
     </div>

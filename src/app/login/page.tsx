@@ -7,10 +7,11 @@ import { supabase } from '@/lib/supabase/supabaseClient'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Phone, Mail } from 'lucide-react'
+import { Phone, Mail, ArrowLeft } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
-import { TallyLogo } from '@/components/TallyLogo'
 import { enableGuestMode } from '@/lib/guest-storage'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
 import { useAuth } from '@/contexts/AuthContext'
 
 type AuthMethod = 'phone' | 'email'
@@ -20,34 +21,35 @@ export default function LoginPage() {
   const router = useRouter()
   const { authMode } = useAuth()
   const searchParams = useSearchParams()
-  const [authMethod, setAuthMethod] = useState<AuthMethod>('phone')
+  const methodParam = searchParams?.get('method') ?? ''
+  const hasValidMethod = methodParam === 'phone' || methodParam === 'email'
+  const authMethod: AuthMethod = methodParam === 'email' ? 'email' : 'phone'
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
-  // Set auth method from URL query param
+  // Use newer ContinueChoice modal on /app; /login only for method-specific forms (from modal)
   useEffect(() => {
-    const method = searchParams?.get('method')
-    if (method === 'phone' || method === 'email') {
-      setAuthMethod(method)
+    if (typeof window === 'undefined') return
+    if (!hasValidMethod) {
+      router.replace('/app')
     }
-  }, [searchParams])
+  }, [router, hasValidMethod])
 
-  // Guard: if tally-guest-mode is true and user visits /login, redirect to /
+  // Guard: if guest mode, redirect to app home
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isGuest = localStorage.getItem('tally-guest-mode') === 'true'
+      const isGuest = localStorage.getItem(STORAGE_KEYS.GUEST_MODE) === 'true'
       if (isGuest) {
-        router.replace('/')
+        router.replace('/app')
       }
     }
   }, [router])
 
-  // Redirect immediately if in guest mode
   useEffect(() => {
     if (authMode === 'guest') {
-      router.replace('/')
+      router.replace('/app')
     }
   }, [authMode, router])
 
@@ -114,21 +116,25 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
+      const res = await fetch('/api/auth/send-magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
       })
+      const data = await res.json().catch(() => ({}))
 
-      if (error) {
-        toast.error(t('auth.sendError'))
+      if (!res.ok) {
+        if (res.status === 429) {
+          toast.error(t('auth.sendError') || 'Too many requests. Try again later.')
+        } else {
+          toast.error(t('auth.sendError'))
+        }
         setIsLoading(false)
         return
       }
 
       setEmailSent(true)
-      toast.success(t('auth.emailLinkSent'))
+      toast.success(t('auth.signInLinkSent') || t('auth.emailLinkSent'))
     } catch (err) {
       toast.error(t('auth.sendError'))
       setIsLoading(false)
@@ -136,57 +142,33 @@ export default function LoginPage() {
   }
 
   const handleGuestMode = () => {
-    // Set guest flag immediately
     if (typeof window !== 'undefined') {
-      localStorage.setItem('tally-guest-mode', 'true')
+      localStorage.setItem(STORAGE_KEYS.GUEST_MODE, 'true')
     }
     enableGuestMode()
-    // Navigate to home
-    router.replace('/')
+    router.replace('/app')
   }
 
-  // Don't render login UI if in guest mode
-  if (authMode === 'guest') {
-    return null
-  }
+  if (authMode === 'guest') return null
+  if (!hasValidMethod) return null
 
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="tally-card p-8">
-          <div className="flex justify-center mb-4">
-            <TallyLogo size={72} />
+          <Link
+            href="/app"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t('common.back')}
+          </Link>
+          <div className="flex justify-center mb-6">
+            <Image src="/icon-192.png" width={80} height={80} alt="Tally Logo" className="rounded-xl shadow-md" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">TALLY</h1>
-          <p className="text-sm text-muted-foreground mb-8">
-            {t('welcome.subtitle')}
+          <p className="text-sm text-muted-foreground mb-6">
+            {authMethod === 'phone' ? t('auth.phoneOTP') : t('auth.emailSignInLink')}
           </p>
-
-          {/* Auth Method Tabs */}
-          <div className="mb-6 flex gap-2 bg-muted rounded-lg p-1">
-            <button
-              type="button"
-              onClick={() => setAuthMethod('phone')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                authMethod === 'phone'
-                  ? 'bg-accent text-foreground border border-border shadow-soft'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t('auth.phoneOTP')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAuthMethod('email')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                authMethod === 'email'
-                  ? 'bg-accent text-foreground border border-border shadow-soft'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t('auth.emailSignInLink') || 'Email Link'}
-            </button>
-          </div>
 
           {/* Phone OTP Form */}
           {authMethod === 'phone' && !emailSent && (
@@ -297,7 +279,7 @@ export default function LoginPage() {
         </div>
         <div className="text-center text-sm text-muted-foreground mt-4">
           <Link href="/about" className="text-primary font-semibold hover:underline">
-            {t('onboarding.about.title')}
+            {t('onboarding.about.title') || 'How it works'}
           </Link>
         </div>
       </div>

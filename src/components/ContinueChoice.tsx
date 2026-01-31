@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Phone, Mail, X } from 'lucide-react'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
 
 const SESSION_STORAGE_KEY = 'tally-continue-choice-dismissed'
 
@@ -19,9 +20,9 @@ export function ContinueChoice() {
     if (typeof window === 'undefined') return
 
     // Show overlay if:
-    // tally-language exists AND not authenticated AND tally-guest-mode not true
-    const language = localStorage.getItem('tally-language')
-    const isGuest = localStorage.getItem('tally-guest-mode') === 'true'
+    // language exists AND not authenticated AND guest mode not true
+    const language = localStorage.getItem(STORAGE_KEYS.LANGUAGE)
+    const isGuest = localStorage.getItem(STORAGE_KEYS.GUEST_MODE) === 'true'
     const dismissed = sessionStorage.getItem(SESSION_STORAGE_KEY) === 'true'
     
     if (language && !user && !isGuest && !dismissed && authMode !== 'guest') {
@@ -43,7 +44,7 @@ export function ContinueChoice() {
 
   const handleContinueWithoutLogin = () => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('tally-guest-mode', 'true')
+      localStorage.setItem(STORAGE_KEYS.GUEST_MODE, 'true')
       sessionStorage.setItem(SESSION_STORAGE_KEY, 'true')
     }
     setIsOpen(false)
@@ -52,20 +53,22 @@ export function ContinueChoice() {
   }
 
   const handleDismiss = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem(SESSION_STORAGE_KEY, 'true')
-    }
     setIsOpen(false)
+    router.replace('/')
   }
 
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Dimmed background */}
-      <div 
+      {/* Dimmed background — click redirects to landing so dashboard is not revealed */}
+      <div
         className="absolute inset-0 bg-black/50"
         onClick={handleDismiss}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && handleDismiss()}
+        aria-label="Close and go to home"
       />
       
       {/* Modal */}

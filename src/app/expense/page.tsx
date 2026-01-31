@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { AmountInput } from '@/components/AmountInput'
-import { QuickAmountSelectorLovable } from '@/components/QuickAmountSelectorLovable'
+import { QuickAmountSelector } from '@/components/inputs/QuickAmountSelector'
 import { CategorySelectorLovable } from '@/components/CategorySelectorLovable'
 import { PaymentMethodSelector, PaymentMethod } from '@/components/PaymentMethodSelector'
 import { AttachmentInputLovable } from '@/components/AttachmentInputLovable'
@@ -14,10 +14,11 @@ import { DatePickerLovable } from '@/components/DatePickerLovable'
 import { AppShell } from '@/components/AppShell'
 import { Input } from '@/components/ui/input'
 import { useBusiness } from '@/contexts/BusinessContext'
+import { useQuickAmounts } from '@/hooks/useQuickAmounts'
 import { supabase } from '@/lib/supabase/supabaseClient'
 import { format } from 'date-fns'
 import { uploadAttachment, saveAttachmentMetadata } from '@/lib/attachments'
-import { isGuestMode, saveGuestTransaction } from '@/lib/guest-storage'
+import { isGuestMode, saveGuestTransaction, fileToGuestAttachment } from '@/lib/guest-storage'
 import { trackEvent } from '@/lib/telemetry'
 
 // Map Lovable categories to database categories
@@ -70,6 +71,7 @@ export default function RecordExpensePage() {
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [category, setCategory] = useState<'supplies' | 'transport' | 'utilities' | 'rent' | 'wages' | 'food' | 'maintenance' | 'other'>(draft?.category || 'other')
+  const { expensePresets } = useQuickAmounts()
 
   // Auto-save draft
   useEffect(() => {
@@ -104,33 +106,22 @@ export default function RecordExpensePage() {
       // Notes without attachment metadata (attachments stored separately)
       const finalNotes = combinedNotes || null
 
-      // Map payment method to database payment_type
-      // For backward compatibility, map to existing payment_type values
-      let dbPaymentType: string
-      if (paymentMethod === 'cash') {
-        dbPaymentType = 'cash'
-      } else if (paymentMethod === 'bank_transfer') {
-        dbPaymentType = 'bank_transfer'
-      } else if (paymentMethod === 'card') {
-        dbPaymentType = 'credit' // Card expenses are credit/liability
-      } else if (paymentMethod === 'e_wallet') {
-        dbPaymentType = 'duitnow' // E-wallet maps to mobile money for now
-      } else {
-        dbPaymentType = 'cash' // Default fallback
-      }
-
-      // Guest mode: save to local storage
+      // Guest mode: save to local storage (with attachments as base64)
       if (isGuestMode()) {
+        const attachments =
+          attachmentFiles.length > 0
+            ? await Promise.all(attachmentFiles.map((f) => fileToGuestAttachment(f)))
+            : undefined
         const transactionId = saveGuestTransaction({
           transaction_type: 'expense',
           amount: amountNum,
-          payment_type: dbPaymentType,
+          payment_type: paymentMethod,
           payment_method: paymentMethod,
-          payment_provider: paymentProvider.trim() || undefined,
           payment_reference: paymentReference.trim() || undefined,
           expense_category: dbCategory,
           notes: finalNotes || undefined,
           transaction_date: format(selectedDate, 'yyyy-MM-dd'),
+          attachments,
         })
         
         trackEvent('record_expense')
@@ -149,10 +140,8 @@ export default function RecordExpensePage() {
           business_id: currentBusiness.id,
           transaction_type: 'expense',
           amount: amountNum,
-          payment_type: dbPaymentType,
-          payment_method: paymentMethod, // New field
-          payment_provider: paymentProvider.trim() || null, // New field
-          payment_reference: paymentReference.trim() || null, // New field
+          payment_method: paymentMethod,
+          payment_reference: paymentReference.trim() || null,
           expense_category: dbCategory,
           notes: finalNotes,
           transaction_date: format(selectedDate, 'yyyy-MM-dd'),
@@ -214,17 +203,15 @@ export default function RecordExpensePage() {
   }
 
   const handleQuickSelect = (selectedAmount: number) => {
-    const currentAmount = parseFloat(amount) || 0
-    const newAmount = currentAmount + selectedAmount
-    setAmount(newAmount.toFixed(2))
+    setAmount(selectedAmount.toString())
     setSelectedQuickAmount(selectedAmount)
   }
 
   return (
     <AppShell title={t('transaction.recordExpense')} showBack showLogo>
-      <div className="max-w-[480px] mx-auto px-6 py-6 space-y-6">
-        {/* 1. Amount */}
-        <div className="bg-[var(--tally-surface)] rounded-lg border border-[var(--tally-border)] p-8">
+      <div className="max-w-[480px] mx-auto px-6 py-6 pb-48 space-y-6">
+        {/* 1. Amount — text-5xl, font-bold, text-center, no borders, transparent; currency from stored country */}
+        <div className="p-6">
           <AmountInput
             value={amount}
             onChange={(value) => {
@@ -235,11 +222,12 @@ export default function RecordExpensePage() {
           />
         </div>
 
-        {/* 2. Quick Amounts */}
+        {/* 2. Quick Amounts — small pills below input */}
         <div>
-          <QuickAmountSelectorLovable 
-            amounts={[5, 10, 20, 50, 100]}
+          <QuickAmountSelector
+            presets={expensePresets}
             onSelect={handleQuickSelect}
+            selectedAmount={selectedQuickAmount}
             variant="expense"
           />
         </div>
@@ -332,8 +320,8 @@ export default function RecordExpensePage() {
           />
         </div>
 
-        {/* 7. Save Button - Fixed at bottom */}
-        <div className="pb-6">
+        {/* 7. Save Button - in document flow, clear of Bottom Nav */}
+        <div className="mt-8">
           <button
             type="button"
             onClick={(e) => {
@@ -347,6 +335,10 @@ export default function RecordExpensePage() {
             {mutation.isPending ? t('transaction.saving') : t('transaction.saveExpense')}
           </button>
         </div>
+
+        {/* Reserve space so Save button stays above fixed Bottom Nav (88px + safe area) */}
+        <div className="h-24 w-full shrink-0" aria-hidden="true" />
+
       </div>
     </AppShell>
   )

@@ -2,6 +2,7 @@
  * Single source of truth for user preferences
  * Stores: country, language, currency
  */
+import { STORAGE_KEYS } from './storage-keys'
 
 export interface Preferences {
   country: string | null
@@ -111,9 +112,9 @@ export function migrateLegacyPreferences(): void {
   // Only migrate if preferences are empty
   if (current.country === null && current.language === null) {
     // Try legacy keys
-    const legacyCountry = localStorage.getItem('tally-country') || 
+    const legacyCountry = localStorage.getItem(STORAGE_KEYS.COUNTRY) || 
                           localStorage.getItem('tally-onboarding-country')
-    const legacyLanguage = localStorage.getItem('tally-language')
+    const legacyLanguage = localStorage.getItem(STORAGE_KEYS.LANGUAGE)
     
     if (legacyCountry || legacyLanguage) {
       savePreferences({
@@ -122,9 +123,9 @@ export function migrateLegacyPreferences(): void {
       })
       
       // Clean up legacy keys
-      localStorage.removeItem('tally-country')
+      localStorage.removeItem(STORAGE_KEYS.COUNTRY)
       localStorage.removeItem('tally-onboarding-country')
-      localStorage.removeItem('tally-language')
+      localStorage.removeItem(STORAGE_KEYS.LANGUAGE)
     }
   }
   

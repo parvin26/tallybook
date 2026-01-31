@@ -5,9 +5,10 @@ import { initReactI18next } from 'react-i18next'
 import en from './locales/en.json'
 import bm from './locales/bm.json'
 import krio from './locales/krio.json'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
 
 const savedLanguage = typeof window !== 'undefined' 
-  ? localStorage.getItem('tally-language') || 'en'
+  ? localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en'
   : 'en'
 
 i18n

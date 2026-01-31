@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBusiness } from '@/contexts/BusinessContext'
 import { isGuestMode } from '@/lib/guest-storage'
-import { TallyLogo } from '@/components/TallyLogo'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   // ALL HOOKS MUST BE CALLED UNCONDITIONALLY AT THE TOP LEVEL
@@ -60,19 +61,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // If intro is not yet seen, do not redirect. Let the IntroOverlay control first.
-    const introSeen = typeof window !== 'undefined' ? localStorage.getItem('tally_intro_seen') : null
-    if (!introSeen) {
-      return // Don't redirect, let IntroOverlay handle first
-    }
+    // Intro visibility is handled by IntroOrApp/IntroGate at the root; no redirect logic here.
 
     // ALWAYS allow onboarding routes - skip all auth checks
     if (onboardingRoutes) {
       return
     }
 
-    // Check guest mode - if true, do not redirect to /login for protected routes
-    const isGuest = typeof window !== 'undefined' ? localStorage.getItem('tally-guest-mode') === 'true' : false
+    // Check guest mode - if true, treat as valid session and never kick to /login
+    const isGuest = typeof window !== 'undefined' ? isGuestMode() : false
     if (isGuest) {
       // Guest mode: allow access to app routes, block login/verify
       if (pathname === '/login' || pathname === '/verify') {
@@ -124,12 +121,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // Unknown state after loading - do NOT redirect to login if on Home or /app
+    // Unknown state after loading - do NOT redirect to login if on Home or /app or in guest mode
     // AuthGuard must not block access to / (marketing) or /app (product)
     // Only redirect to login if not on Home/app and not authenticated and not guest
     const isAppRoute = pathname === '/' || pathname?.startsWith('/app')
-    if (authMode === 'unknown' && !authLoading && !isPublicRoute && !devModeBypass && !isAppRoute) {
-      router.replace('/login')
+    if (authMode === 'unknown' && !authLoading && !isPublicRoute && !devModeBypass && !isAppRoute && !isGuestMode()) {
+      router.replace('/app')
       return
     }
 
@@ -171,7 +168,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <TallyLogo size={72} />
+          <div className="flex justify-center">
+            <Image src="/icon-192.png" width={80} height={80} alt="Tally Logo" className="rounded-xl shadow-md" />
+          </div>
           <p className="text-sm text-muted-foreground">Preparing Tally…</p>
         </div>
       </div>

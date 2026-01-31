@@ -1,27 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserSupabaseClient } from './browser'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:', {
-    url: !!supabaseUrl,
-    key: !!supabaseAnonKey,
-  });
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-  db: {
-    schema: 'public',
-  },
-  global: {
-    headers: {
-      'apikey': supabaseAnonKey,
-    },
-  },
-});
+/**
+ * Browser Supabase client (cookie-based session for App Router).
+ * Use in client components. For server-side use createServerSupabaseClient().
+ */
+export const supabase = createBrowserSupabaseClient()

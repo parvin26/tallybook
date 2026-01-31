@@ -1,9 +1,10 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/supabaseClient'
+import { createBrowserSupabaseClient } from '@/lib/supabase/browser'
 import { User, Session } from '@supabase/supabase-js'
 import { disableGuestMode, isGuestMode } from '@/lib/guest-storage'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
 
 export type AuthMode = 'authenticated' | 'guest' | 'unknown'
 
@@ -40,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
+    const supabase = createBrowserSupabaseClient()
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       // Check guest mode again before setting authenticated state
@@ -69,7 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for storage changes (guest mode toggles from other tabs)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'tally-guest-mode') {
+      if (e.key === STORAGE_KEYS.GUEST_MODE) {
         if (checkGuestMode()) {
           return
         }
@@ -77,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         supabase.auth.getSession().then(({ data: { session } }) => {
           setSession(session)
           setUser(session?.user ?? null)
-          setAuthMode(session?.user ? 'authenticated' : null)
+          setAuthMode(session?.user ? 'authenticated' : 'unknown')
         })
       }
     }
@@ -91,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         supabase.auth.getSession().then(({ data: { session } }) => {
           setSession(session)
           setUser(session?.user ?? null)
-          setAuthMode(session?.user ? 'authenticated' : null)
+          setAuthMode(session?.user ? 'authenticated' : 'unknown')
         })
       }
     }
@@ -110,8 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (process.env.NODE_ENV === 'development') {
       console.log('[AuthContext] Logout started')
     }
-    
-    // Sign out from Supabase
+
+    const supabase = createBrowserSupabaseClient()
     await supabase.auth.signOut()
     
     // Clear all auth-related storage

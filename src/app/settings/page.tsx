@@ -10,17 +10,21 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { AppShell } from '@/components/AppShell'
-import { Globe, Download, MessageCircle, FileText, LogOut, Upload, Camera, X, Building2, User as UserIcon, MapPin, Tag, HelpCircle, Shield, Mail, Play, Smartphone, Check } from 'lucide-react'
+import { LogOut, Upload, Camera, X, Building2, Check, Plus, Trash2, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { getBusinessProfile, saveBusinessProfile, BusinessProfile } from '@/lib/businessProfile'
 import { canInstall, isIOS, isStandalone, promptInstall } from '@/lib/pwa'
-import { isGuestMode } from '@/lib/guest-storage'
+import { isGuestMode, getGuestBusiness, saveGuestBusiness } from '@/lib/guest-storage'
 import { useIntroContext } from '@/contexts/IntroContext'
-// Use official keys: tally-country, tally-language
+import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { useQuickAmounts } from '@/hooks/useQuickAmounts'
+import { useCurrency } from '@/hooks/useCurrency'
+import { COUNTRIES } from '@/lib/countries'
+import { getCurrencyFromCountry, normalizeCountryCode } from '@/lib/currency'
+import { getWhatsAppSupportUrl } from '@/lib/constants'
 
 export default function AccountPage() {
   const router = useRouter()
@@ -78,6 +82,23 @@ export default function AccountPage() {
     isStandalone: false,
   })
 
+  const {
+    salePresets,
+    expensePresets,
+    inventoryPresets,
+    saveSalePresets,
+    saveExpensePresets,
+    saveInventoryPresets,
+  } = useQuickAmounts()
+  const [saleNewValue, setSaleNewValue] = useState('')
+  const [expenseNewValue, setExpenseNewValue] = useState('')
+  const [inventoryNewValue, setInventoryNewValue] = useState('')
+  const [showAddSale, setShowAddSale] = useState(false)
+  const [showAddExpense, setShowAddExpense] = useState(false)
+  const [showAddInventory, setShowAddInventory] = useState(false)
+  const [openingCash, setOpeningCash] = useState('')
+  const [openingBank, setOpeningBank] = useState('')
+
   // Check PWA state on mount and when component updates
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -124,11 +145,26 @@ export default function AccountPage() {
     }
   }, [currentBusiness])
 
+  // Load opening balance (auth: from currentBusiness; guest: from guest-storage)
+  useEffect(() => {
+    if (guestMode) {
+      const g = getGuestBusiness()
+      setOpeningCash((g?.starting_cash ?? 0) === 0 ? '' : String(g!.starting_cash))
+      setOpeningBank((g?.starting_bank ?? 0) === 0 ? '' : String(g!.starting_bank))
+    } else if (currentBusiness) {
+      setOpeningCash((currentBusiness.starting_cash ?? 0) === 0 ? '' : String(currentBusiness.starting_cash))
+      setOpeningBank((currentBusiness.starting_bank ?? 0) === 0 ? '' : String(currentBusiness.starting_bank))
+    } else {
+      setOpeningCash('')
+      setOpeningBank('')
+    }
+  }, [guestMode, currentBusiness?.id, currentBusiness?.starting_cash, currentBusiness?.starting_bank])
+
   const handleLanguageChange = (lang: 'bm' | 'en' | 'krio') => {
     setIsLanguageModalOpen(false) // Close modal first
     try {
       i18n.changeLanguage(lang).then(() => {
-        localStorage.setItem('tally-language', lang) // Use official key
+        localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang)
         let message = t('settings.languageChangedEn')
         if (lang === 'bm') {
           message = t('settings.languageChanged')
@@ -151,10 +187,38 @@ export default function AccountPage() {
 
   const handleCountryChange = (country: string) => {
     setIsCountryModalOpen(false)
-    localStorage.setItem('tally-country', country) // Use official key
+    localStorage.setItem(STORAGE_KEYS.COUNTRY, country)
+    window.dispatchEvent(new Event('tally-country-change'))
     toast.success(t('settings.countryChanged', { defaultValue: 'Country updated' }))
-    // Refresh to update UI
-    window.location.reload()
+  }
+
+  const saveOpeningBalance = async () => {
+    const cash = parseFloat(openingCash)
+    const bank = parseFloat(openingBank)
+    const cashNum = Number.isFinite(cash) ? cash : 0
+    const bankNum = Number.isFinite(bank) ? bank : 0
+    try {
+      if (guestMode) {
+        const existing = getGuestBusiness()
+        saveGuestBusiness({
+          ...existing,
+          name: existing?.name ?? '',
+          starting_cash: cashNum,
+          starting_bank: bankNum,
+        })
+        toast.success(t('common.saved') || 'Saved')
+      } else if (currentBusiness?.id) {
+        const { error } = await supabase
+          .from('businesses')
+          .update({ starting_cash: cashNum, starting_bank: bankNum })
+          .eq('id', currentBusiness.id)
+        if (error) throw error
+        await refreshBusiness()
+        toast.success(t('common.saved') || 'Saved')
+      }
+    } catch {
+      toast.error(t('common.couldntSave') || "Couldn't save")
+    }
   }
 
   const getCurrentLanguageName = (): string => {
@@ -170,7 +234,7 @@ export default function AccountPage() {
       return
     }
 
-    const activeTransactions = transactions?.filter(t => !t.deleted_at) || transactions || []
+    const activeTransactions = transactions ?? []
     
     if (!activeTransactions || activeTransactions.length === 0) {
       toast.error(t('csv.noTransactions'))
@@ -189,7 +253,7 @@ export default function AccountPage() {
       transaction.transaction_date,
       transaction.transaction_type === 'sale' ? t('csv.sale') : t('csv.expense'),
       transaction.amount,
-      t(`paymentTypes.${transaction.payment_type}`) || transaction.payment_type,
+      t(`paymentTypes.${transaction.payment_method === 'card' ? 'credit' : transaction.payment_method === 'e_wallet' ? 'mobile_money' : transaction.payment_method}`) || transaction.payment_method,
       transaction.expense_category ? (t(`expenseCategories.${transaction.expense_category}`) || transaction.expense_category) : '',
       transaction.notes || '',
     ])
@@ -318,371 +382,479 @@ export default function AccountPage() {
     })
   }
 
-  const getCurrencyFromCountry = (country: string) => {
-    if (country.toLowerCase().includes('malaysia')) return 'MYR (RM)'
-    return 'MYR (RM)' // Default
-  }
+  const currentCountryCode =
+    typeof window !== 'undefined'
+      ? normalizeCountryCode(localStorage.getItem(STORAGE_KEYS.COUNTRY))
+      : null
+  const currentCountryName = currentCountryCode
+    ? COUNTRIES.find((c) => c.code === currentCountryCode)?.name ?? null
+    : null
+  const { symbol: currencySymbol, code: currencyCode } = useCurrency()
 
   return (
     <>
     <AppShell title={t('account.title')} showBack showLogo>
-      <div className="max-w-[480px] mx-auto px-6 py-6 space-y-6">
+      <div className="min-h-screen bg-gray-50 pb-32 pt-4 px-4 space-y-3 sm:space-y-4 max-w-[480px] mx-auto">
 
-        {/* Business Profile Card - Top Section */}
-        <Card className="bg-card border border-border shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-foreground">{t('account.businessProfile')}</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const loadedProfile = getBusinessProfile()
-                  if (loadedProfile) {
-                    setProfileEditData(loadedProfile)
-                    // Initialize category dropdown state
-                    const savedCategory = loadedProfile.businessCategory || ''
-                    if (savedCategory && businessCategories.includes(savedCategory)) {
-                      setSelectedCategory(savedCategory)
-                      setCustomCategory('')
-                    } else if (savedCategory) {
-                      // Saved category doesn't match predefined options, use "Other"
-                      setSelectedCategory('Other')
-                      setCustomCategory(savedCategory)
-                    } else {
-                      setSelectedCategory('')
-                      setCustomCategory('')
-                    }
-                  } else if (currentBusiness) {
-                    setProfileEditData({
-                      ownerName: '',
-                      businessName: currentBusiness.name || '',
-                      businessCategory: '',
-                      country: 'Malaysia',
-                      stateOrRegion: currentBusiness.state || '',
-                      area: currentBusiness.city || '',
-                      logoDataUrl: '',
-                    })
+        {/* Card 1: Profile — Avatar left, Name/Business middle, Edit right */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              {profile?.logoDataUrl ? (
+                <img
+                  src={profile.logoDataUrl}
+                  alt=""
+                  className="w-14 h-14 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-14 h-14 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
+                  <Building2 className="w-7 h-7 text-gray-500" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-medium text-gray-900 truncate">
+                {profile?.businessName || <span className="text-gray-400 italic">{t('account.addBusinessName')}</span>}
+              </p>
+              <p className="text-sm text-gray-500 truncate">
+                {profile?.ownerName || <span className="italic">{t('account.addYourName')}</span>}
+              </p>
+              {guestMode && (
+                <p className="text-xs text-amber-600 font-medium mt-0.5">{t('guest.mode')}</p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const loadedProfile = getBusinessProfile()
+                if (loadedProfile) {
+                  setProfileEditData(loadedProfile)
+                  const savedCategory = loadedProfile.businessCategory || ''
+                  if (savedCategory && businessCategories.includes(savedCategory)) {
+                    setSelectedCategory(savedCategory)
+                    setCustomCategory('')
+                  } else if (savedCategory) {
+                    setSelectedCategory('Other')
+                    setCustomCategory(savedCategory)
+                  } else {
                     setSelectedCategory('')
                     setCustomCategory('')
                   }
-                  setIsProfileEditOpen(true)
-                }}
-                className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]"
-              >
-                {t('account.editProfile')}
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {/* Logo */}
-              <div className="flex justify-center mb-4">
-                {profile?.logoDataUrl ? (
-                  <div className="relative">
-                    <img
-                      src={profile.logoDataUrl}
-                      alt="Business logo"
-                      className="w-20 h-20 rounded-full object-cover border-2 border-border"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-[rgba(41,151,140,0.12)] border-2 border-border flex items-center justify-center">
-                    <Building2 className="w-10 h-10 text-[#29978C]" />
-                  </div>
-                )}
-              </div>
-
-              {/* Business Name and Owner Name */}
-              <div className="text-center">
-                <p className="text-base font-medium text-foreground mb-1">
-                  {profile?.businessName || (
-                    <span className="text-muted-foreground italic">{t('account.addBusinessName')}</span>
-                  )}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {profile?.ownerName || (
-                    <span className="italic">{t('account.addYourName')}</span>
-                  )}
-                </p>
-                {guestMode && (
-                  <p className="text-xs text-amber-600 mt-2 font-medium">
-                    {t('guest.mode')}
-                  </p>
-                )}
-              </div>
-
-              {/* Category */}
-              {profile?.businessCategory && (
-                <div className="flex items-center justify-center gap-2">
-                  <Tag className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">{profile.businessCategory}</p>
-                </div>
-              )}
-
-              {/* Location */}
-              {(profile?.country || profile?.stateOrRegion || profile?.area) && (
-                <div className="flex items-center justify-center gap-2">
-                  <MapPin className="w-4 h-4 text-[var(--tally-text-muted)]" />
-                  <p className="text-sm text-[var(--tally-text-muted)]">
-                    {[profile.area, profile.stateOrRegion, profile.country].filter(Boolean).join(', ')}
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Preferences Section */}
-        <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-[var(--tally-text)] mb-4">{t('account.preferences')}</h2>
-            
-            <div className="space-y-4">
-              {/* Country */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-5 h-5 text-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{t('account.country')}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(() => {
-                        const country = typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null
-                        if (country === 'malaysia') return 'Malaysia'
-                        if (country === 'sierra-leone') return 'Sierra Leone'
-                        return t('account.notSet')
-                      })()}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsCountryModalOpen(true)}
-                  className="text-primary border-primary hover:bg-accent"
-                >
-                  {t('account.change')}
-                </Button>
-              </div>
-
-              {/* Language */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center flex-shrink-0">
-                    <UserIcon className="w-5 h-5 text-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{t('settings.language')}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {getCurrentLanguageName()}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsLanguageModalOpen(true)}
-                  className="text-primary border-primary hover:bg-accent"
-                >
-                  {t('account.change')}
-                </Button>
-              </div>
-
-              {/* Currency */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <span className="text-xs font-semibold text-[#29978C]">RM</span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.currency')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">
-                      {getCurrencyFromCountry(profile?.country || 'Malaysia')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Install Tally Section - Only show if not already installed */}
-        {!pwaState.isStandalone && (
-          <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center flex-shrink-0">
-                    <Smartphone className="w-5 h-5 text-[#29978C]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('pwa.install.title')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">
-                      {pwaState.canInstall
-                        ? t('pwa.install.subtitle.canInstall')
-                        : pwaState.isIOS
-                        ? t('pwa.install.subtitle.ios')
-                        : 'Not available yet'}
-                    </p>
-                  </div>
-                </div>
-                {pwaState.canInstall && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={async () => {
-                      const installed = await promptInstall()
-                      if (installed) {
-                        toast.success(t('pwa.install.success'))
-                        setPwaState({
-                          canInstall: false,
-                          isIOS: pwaState.isIOS,
-                          isStandalone: true,
-                        })
-                      } else {
-                        toast.error(t('pwa.install.cancelled'))
-                      }
-                    }}
-                    className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)] flex-shrink-0 ml-3"
-                  >
-                    {t('pwa.install.button')}
-                  </Button>
-                )}
-                {pwaState.isIOS && !pwaState.canInstall && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsIOSModalOpen(true)}
-                    className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)] flex-shrink-0 ml-3"
-                  >
-                    {t('pwa.install.how')}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Data and Export Section */}
-        <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                  <Download className="w-5 h-5 text-[#29978C]" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[var(--tally-text)]">{t('settings.exportCSV')}</p>
-                  <p className="text-xs text-[var(--tally-text-muted)]">{t('settings.exportCSVDesc')}</p>
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleExportCSV}
-                className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]"
-              >
-                {t('account.export')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Support Section */}
-        <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-[var(--tally-text)] mb-4">{t('account.support')}</h2>
-            <div className="space-y-3">
-              <Link href="/help" className="block">
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <HelpCircle className="w-5 h-5 text-[#29978C]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.about')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">{t('account.aboutDesc')}</p>
-                  </div>
-                </div>
-              </Link>
-              <Link href="/privacy" className="block">
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-[#29978C]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.privacy')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">{t('account.privacyDesc')}</p>
-                  </div>
-                </div>
-              </Link>
-              <a
-                href="https://wa.me/60123456789?text=Halo%2C%20saya%20perlu%20bantuan%20dengan%20TALLY"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-[#29978C]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.contact')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">{t('account.contactDesc')}</p>
-                  </div>
-                </div>
-              </a>
-              <button
-                onClick={openIntro}
-                className="block w-full"
-              >
-                <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-[rgba(41,151,140,0.12)] flex items-center justify-center">
-                    <Play className="w-5 h-5 text-[#29978C]" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--tally-text)]">{t('account.showIntro')}</p>
-                    <p className="text-xs text-[var(--tally-text-muted)]">{t('account.showIntroDesc')}</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Legal Section */}
-        <Card className="bg-[var(--tally-surface)] border border-[var(--tally-border)] shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="text-lg font-semibold text-[var(--tally-text)] mb-4">{t('settings.legal')}</h2>
-            <div className="space-y-2">
-              <Link href="/privacy">
-                <Button variant="outline" className="w-full justify-start">
-                  {t('settings.privacy')}
-                </Button>
-              </Link>
-              <Link href="/terms">
-                <Button variant="outline" className="w-full justify-start">
-                  {t('settings.terms')}
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Version */}
-        <div className="text-center text-xs text-[var(--tally-text-muted)]">
-          {t('settings.version')} 0.1.0
+                } else if (currentBusiness) {
+                  setProfileEditData({
+                    ownerName: '',
+                    businessName: currentBusiness.name || '',
+                    businessCategory: '',
+                    country: 'Malaysia',
+                    stateOrRegion: currentBusiness.state || '',
+                    area: currentBusiness.city || '',
+                    logoDataUrl: '',
+                  })
+                  setSelectedCategory('')
+                  setCustomCategory('')
+                }
+                setIsProfileEditOpen(true)
+              }}
+              className="flex-shrink-0 text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]"
+            >
+              {t('account.editProfile')}
+            </Button>
+          </div>
         </div>
 
-        {/* Logout */}
+        {/* Card: Opening balance — compact, 2-col grid on >=360px, stacked on smaller */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
+          <h2 className="text-tally-section-title font-semibold text-gray-900 mb-1.5">{t('settings.openingBalance') || 'Opening balance'}</h2>
+          <p className="text-tally-caption text-gray-500 mb-3">{t('settings.openingBalanceHint') || 'Used for Balance Sheet. Set your starting cash and bank balance.'}</p>
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-tally-caption text-gray-600 mb-1">{t('setup.startingCash') || 'Starting Cash'}</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={openingCash}
+                onChange={(e) => setOpeningCash(e.target.value)}
+                onBlur={saveOpeningBalance}
+                placeholder="0"
+                className="tally-input min-h-[44px] h-11 sm:h-12"
+              />
+            </div>
+            <div>
+              <label className="block text-tally-caption text-gray-600 mb-1">{t('setup.startingBank') || 'Starting Bank Balance'}</label>
+              <Input
+                type="number"
+                inputMode="decimal"
+                value={openingBank}
+                onChange={(e) => setOpeningBank(e.target.value)}
+                onBlur={saveOpeningBalance}
+                placeholder="0"
+                className="tally-input min-h-[44px] h-11 sm:h-12"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Preferences — Country, Language, Currency in one row */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
+          <h2 className="text-tally-section-title font-semibold text-gray-900 mb-2.5">{t('account.preferences')}</h2>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setIsCountryModalOpen(true)}
+              className="relative min-h-[44px] flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
+            >
+              <span className="text-tally-caption text-gray-500">{t('account.country')}</span>
+              <span className="text-sm font-medium text-gray-900 truncate mt-0.5">{currentCountryName ?? t('account.notSet')}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400 absolute top-1/2 right-2 -translate-y-1/2 pointer-events-none" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsLanguageModalOpen(true)}
+              className="relative min-h-[44px] flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
+            >
+              <span className="text-tally-caption text-gray-500">{t('settings.language')}</span>
+              <span className="text-sm font-medium text-gray-900 truncate mt-0.5">{getCurrentLanguageName()}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400 absolute top-1/2 right-2 -translate-y-1/2 pointer-events-none" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCountryModalOpen(true)}
+              className="relative min-h-[44px] flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
+            >
+              <span className="text-tally-caption text-gray-500">{t('account.currency')}</span>
+              <span className="text-sm font-medium text-gray-900 tabular-nums truncate mt-0.5">{currencyCode} ({currencySymbol})</span>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400 absolute top-1/2 right-2 -translate-y-1/2 pointer-events-none" aria-hidden />
+            </button>
+          </div>
+        </div>
+
+        {/* Card 3: Quick Amounts — chips/pills, horizontal scroll if needed */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">{t('settings.quickAmounts')}</h2>
+            <div className="space-y-3">
+              {/* Sale row: chips + [+] */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <span className="text-xs text-gray-500 flex-shrink-0 mr-1">{t('settings.saleButtons')}</span>
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                {salePresets.map((val) => (
+                  <span
+                    key={val}
+                    className="inline-flex items-center gap-0.5 pl-2 pr-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-900"
+                  >
+                    {val}
+                    <button
+                      type="button"
+                      onClick={() => saveSalePresets(salePresets.filter((x) => x !== val))}
+                      className="p-0.5 rounded-full hover:bg-gray-200 text-gray-500"
+                      aria-label="Remove"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                {showAddSale ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="any"
+                      placeholder="0"
+                      value={saleNewValue}
+                      onChange={(e) => setSaleNewValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const num = parseFloat(saleNewValue.replace(/,/g, ''))
+                          if (Number.isFinite(num) && num >= 0 && !salePresets.includes(num)) {
+                            saveSalePresets([...salePresets, num])
+                            setSaleNewValue('')
+                            setShowAddSale(false)
+                          } else if (Number.isFinite(num) && num >= 0) setShowAddSale(false)
+                        }
+                        if (e.key === 'Escape') setShowAddSale(false)
+                      }}
+                      className="w-14 h-7 text-xs py-0 px-1.5 rounded-full border-gray-200"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-full"
+                      onClick={() => {
+                        const num = parseFloat(saleNewValue.replace(/,/g, ''))
+                        if (!Number.isFinite(num) || num < 0) {
+                          toast.error(t('settings.invalidPreset'))
+                          return
+                        }
+                        if (salePresets.includes(num)) {
+                          setSaleNewValue('')
+                          setShowAddSale(false)
+                          return
+                        }
+                        saveSalePresets([...salePresets, num])
+                        setSaleNewValue('')
+                        setShowAddSale(false)
+                      }}
+                    >
+                      +
+                    </Button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSale(true)}
+                    className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-sm flex-shrink-0"
+                    aria-label="Add"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                </div>
+              </div>
+              {/* Expense row: chips + [+] */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <span className="text-xs text-gray-500 flex-shrink-0 mr-1">{t('settings.expenseButtons')}</span>
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                {expensePresets.map((val) => (
+                  <span
+                    key={val}
+                    className="inline-flex items-center gap-0.5 pl-2 pr-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-900"
+                  >
+                    {val}
+                    <button
+                      type="button"
+                      onClick={() => saveExpensePresets(expensePresets.filter((x) => x !== val))}
+                      className="p-0.5 rounded-full hover:bg-gray-200 text-gray-500"
+                      aria-label="Remove"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                {showAddExpense ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="any"
+                      placeholder="0"
+                      value={expenseNewValue}
+                      onChange={(e) => setExpenseNewValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const num = parseFloat(expenseNewValue.replace(/,/g, ''))
+                          if (Number.isFinite(num) && num >= 0 && !expensePresets.includes(num)) {
+                            saveExpensePresets([...expensePresets, num])
+                            setExpenseNewValue('')
+                            setShowAddExpense(false)
+                          } else if (Number.isFinite(num) && num >= 0) setShowAddExpense(false)
+                        }
+                        if (e.key === 'Escape') setShowAddExpense(false)
+                      }}
+                      className="w-14 h-7 text-xs py-0 px-1.5 rounded-full border-gray-200"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-full"
+                      onClick={() => {
+                        const num = parseFloat(expenseNewValue.replace(/,/g, ''))
+                        if (!Number.isFinite(num) || num < 0) {
+                          toast.error(t('settings.invalidPreset'))
+                          return
+                        }
+                        if (expensePresets.includes(num)) {
+                          setExpenseNewValue('')
+                          setShowAddExpense(false)
+                          return
+                        }
+                        saveExpensePresets([...expensePresets, num])
+                        setExpenseNewValue('')
+                        setShowAddExpense(false)
+                      }}
+                    >
+                      +
+                    </Button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddExpense(true)}
+                    className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-sm flex-shrink-0"
+                    aria-label="Add"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                </div>
+              </div>
+
+              {/* Inventory row: chips + [+] */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <span className="text-xs text-gray-500 flex-shrink-0 mr-1">{t('settings.inventoryButtons')}</span>
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                {inventoryPresets.map((val) => (
+                  <span
+                    key={val}
+                    className="inline-flex items-center gap-0.5 pl-2 pr-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs text-gray-900"
+                  >
+                    {val}
+                    <button
+                      type="button"
+                      onClick={() => saveInventoryPresets(inventoryPresets.filter((x) => x !== val))}
+                      className="p-0.5 rounded-full hover:bg-gray-200 text-gray-500"
+                      aria-label="Remove"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+                {showAddInventory ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      step="1"
+                      placeholder="0"
+                      value={inventoryNewValue}
+                      onChange={(e) => setInventoryNewValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const num = parseFloat(inventoryNewValue.replace(/,/g, ''))
+                          if (Number.isFinite(num) && num >= 0 && !inventoryPresets.includes(num)) {
+                            saveInventoryPresets([...inventoryPresets, num])
+                            setInventoryNewValue('')
+                            setShowAddInventory(false)
+                          } else if (Number.isFinite(num) && num >= 0) setShowAddInventory(false)
+                        }
+                        if (e.key === 'Escape') setShowAddInventory(false)
+                      }}
+                      className="w-14 h-7 text-xs py-0 px-1.5 rounded-full border-gray-200"
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 w-7 p-0 rounded-full"
+                      onClick={() => {
+                        const num = parseFloat(inventoryNewValue.replace(/,/g, ''))
+                        if (!Number.isFinite(num) || num < 0) {
+                          toast.error(t('settings.invalidPreset'))
+                          return
+                        }
+                        if (inventoryPresets.includes(num)) {
+                          setInventoryNewValue('')
+                          setShowAddInventory(false)
+                          return
+                        }
+                        saveInventoryPresets([...inventoryPresets, num])
+                        setInventoryNewValue('')
+                        setShowAddInventory(false)
+                      }}
+                    >
+                      +
+                    </Button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowAddInventory(true)}
+                    className="w-7 h-7 rounded-full border border-dashed border-gray-300 text-gray-500 hover:bg-gray-100 flex items-center justify-center text-sm flex-shrink-0"
+                    aria-label="Add"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                </div>
+              </div>
+            </div>
+        </div>
+
+        {/* Card 4: Support — About, Privacy, Contact, Show Intro (side by side) */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">{t('account.support')}</h2>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href="/help" className="flex items-center justify-center py-3 rounded-lg border border-gray-200 bg-gray-50/50 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-center">
+              {t('account.about')}
+            </Link>
+            <Link href={i18n.language ? `/privacy?lang=${i18n.language}` : '/privacy'} className="flex items-center justify-center py-3 rounded-lg border border-gray-200 bg-gray-50/50 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-center">
+              {t('account.privacy')}
+            </Link>
+            <a
+              href={getWhatsAppSupportUrl('Halo, saya perlu bantuan dengan TALLY')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center py-3 rounded-lg border border-gray-200 bg-gray-50/50 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-center"
+            >
+              {t('account.contact')}
+            </a>
+            <button type="button" onClick={openIntro} className="flex items-center justify-center py-3 rounded-lg border border-gray-200 bg-gray-50/50 text-sm text-gray-700 hover:bg-gray-100 transition-colors text-center w-full">
+              {t('account.showIntro')}
+            </button>
+          </div>
+        </div>
+
+        {/* Install PWA — white card (only if not installed) */}
+        {!pwaState.isStandalone && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900">{t('pwa.install.title')}</p>
+                <p className="text-xs text-gray-500">
+                  {pwaState.canInstall ? t('pwa.install.subtitle.canInstall') : pwaState.isIOS ? t('pwa.install.subtitle.ios') : 'Not available yet'}
+                </p>
+              </div>
+              {pwaState.canInstall && (
+                <Button variant="outline" size="sm" onClick={async () => {
+                  const installed = await promptInstall()
+                  if (installed) {
+                    toast.success(t('pwa.install.success'))
+                    setPwaState({ canInstall: false, isIOS: pwaState.isIOS, isStandalone: true })
+                  } else toast.error(t('pwa.install.cancelled'))
+                }} className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)] flex-shrink-0">
+                  {t('pwa.install.button')}
+                </Button>
+              )}
+              {pwaState.isIOS && !pwaState.canInstall && (
+                <Button variant="outline" size="sm" onClick={() => setIsIOSModalOpen(true)} className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)] flex-shrink-0">
+                  {t('pwa.install.how')}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Export CSV — white card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-sm font-medium text-gray-900">{t('settings.exportCSV')}</p>
+              <p className="text-xs text-gray-500">{t('settings.exportCSVDesc')}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-[#29978C] border-[#29978C] hover:bg-[rgba(41,151,140,0.1)]">
+              {t('account.export')}
+            </Button>
+          </div>
+        </div>
+
+        {/* Footer: Red Log Out button */}
         <Button
           variant="outline"
-          className="w-full border-[#B94A3A] text-[#B94A3A] hover:bg-[rgba(185,74,58,0.1)]"
+          className="w-full bg-white border-red-600 text-red-600 hover:bg-red-50"
           onClick={handleLogout}
         >
           <LogOut className="w-4 h-4 mr-2" />
           {t('settings.logout')}
         </Button>
+
+        {/* Version — small gray text at the very bottom */}
+        <div className="text-center text-xs text-gray-500 pb-2">
+          {t('settings.version')} 0.1.0
+        </div>
 
         {/* Edit Business Profile Modal */}
         <Dialog open={isProfileEditOpen} onOpenChange={setIsProfileEditOpen}>
@@ -935,47 +1107,36 @@ export default function AccountPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-2 pt-4">
-              <button
-                onClick={() => handleCountryChange('malaysia')}
-                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                  (typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'malaysia'
-                    ? 'bg-accent border-primary text-foreground'
-                    : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-medium">Malaysia</span>
-                  {(typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'malaysia' && (
-                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="w-3 h-3 text-primary-foreground" />
+              {COUNTRIES.map((c) => {
+                const isSelected = currentCountryCode === c.code
+                return (
+                  <button
+                    key={c.code}
+                    onClick={() => handleCountryChange(c.code)}
+                    className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                      isSelected
+                        ? 'bg-accent border-primary text-foreground'
+                        : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium">{c.name}</span>
+                      {isSelected && (
+                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </button>
-              <button
-                onClick={() => handleCountryChange('sierra-leone')}
-                className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                  (typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'sierra-leone'
-                    ? 'bg-accent border-primary text-foreground'
-                    : 'bg-card border-border text-foreground hover:border-muted-foreground/50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-base font-medium">Sierra Leone</span>
-                  {(typeof window !== 'undefined' ? localStorage.getItem('tally-country') : null) === 'sierra-leone' && (
-                    <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="w-3 h-3 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-              </button>
+                  </button>
+                )
+              })}
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Language Selection Modal */}
+        {/* Language Selection Modal - solid background and high z-index to avoid transparency/overlap */}
         <Dialog open={isLanguageModalOpen} onOpenChange={setIsLanguageModalOpen}>
-          <DialogContent className="max-w-[480px] bg-[var(--tally-bg)]">
+          <DialogContent className="max-w-[480px] z-[60] !bg-white shadow-xl border border-gray-200 rounded-2xl p-6">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
                 {t('settings.language')}
@@ -1037,53 +1198,6 @@ export default function AccountPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Debug Panel - Development Only */}
-        {process.env.NODE_ENV === 'development' && (
-          <Card className="bg-card border border-border shadow-sm">
-            <CardContent className="p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Debug Panel</h2>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Guest Mode:</p>
-                  <p className="text-foreground">{guestMode ? 'true' : 'false'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Auth State:</p>
-                  <p className="text-foreground">{user ? `Authenticated (${user.email || user.id})` : 'Not authenticated'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Business ID (Context):</p>
-                  <p className="text-foreground">{currentBusiness?.id || 'null'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Business Name:</p>
-                  <p className="text-foreground">{currentBusiness?.name || 'null'}</p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">Business ID (localStorage):</p>
-                  <p className="text-foreground">
-                    {typeof window !== 'undefined' ? localStorage.getItem('tally-business-id') || 'null' : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-muted-foreground mb-1">localStorage Keys (tally-*):</p>
-                  <div className="bg-background p-2 rounded text-xs font-mono text-muted-foreground max-h-32 overflow-y-auto">
-                    {typeof window !== 'undefined' 
-                      ? Object.keys(localStorage)
-                          .filter(key => key.startsWith('tally-'))
-                          .map(key => (
-                            <div key={key} className="mb-1">
-                              <span className="font-semibold">{key}:</span>{' '}
-                              <span>{localStorage.getItem(key) || '(empty)'}</span>
-                            </div>
-                          ))
-                      : 'N/A'}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </AppShell>
   </>

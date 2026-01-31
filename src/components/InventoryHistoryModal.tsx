@@ -1,61 +1,51 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { getInventoryMovements, InventoryMovement } from '@/lib/inventory'
+import { useInventoryMovements } from '@/hooks/useInventory'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { useTranslation } from 'react-i18next'
-import { InventoryItem } from '@/types/stock'
+import type { InventoryItem } from '@/types'
 import Link from 'next/link'
 
 interface InventoryHistoryModalProps {
-  item: InventoryItem
+  item: InventoryItem & { lowStockThreshold?: number | null }
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
 export function InventoryHistoryModal({ item, open, onOpenChange }: InventoryHistoryModalProps) {
   const { t } = useTranslation()
-
-  const { data: movements = [], isLoading } = useQuery<InventoryMovement[]>({
-    queryKey: ['inventory-movements', item.id],
-    queryFn: () => getInventoryMovements(item.id, 10),
-    enabled: open,
-  })
+  const { data: movements = [], isLoading } = useInventoryMovements(item.id, { enabled: open, limit: 20 })
 
   const getMovementTypeLabel = (type: string) => {
     switch (type) {
-      case 'sale_deduction':
+      case 'sale':
         return t('inventory.sold')
-      case 'restock_add':
+      case 'restock':
         return t('inventory.added')
-      case 'manual_adjustment_add':
-        return t('inventory.adjusted')
-      case 'manual_adjustment_remove':
+      case 'adjustment':
         return t('inventory.adjusted')
       default:
         return type
     }
   }
 
+  const formatQty = (qty: number) => (qty >= 0 ? `+${qty}` : String(qty))
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] bg-[var(--tally-bg)] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[480px] bg-white rounded-2xl shadow-xl max-h-[80vh] overflow-y-auto border border-gray-200">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">
-            {t('inventory.history')} - {item.name}
+            {t('inventory.history')} — {item.name}
           </DialogTitle>
         </DialogHeader>
 
         <div className="py-4">
           {isLoading ? (
-            <div className="text-center py-8 text-[var(--tally-text-muted)]">
-              {t('common.loading')}
-            </div>
+            <div className="text-center py-8 text-[var(--tally-text-muted)]">{t('common.loading')}</div>
           ) : movements.length === 0 ? (
-            <div className="text-center py-8 text-[var(--tally-text-muted)]">
-              {t('inventory.noHistory')}
-            </div>
+            <div className="text-center py-8 text-[var(--tally-text-muted)]">{t('inventory.noHistory')}</div>
           ) : (
             <div className="space-y-3">
               {movements.map((movement) => (
@@ -67,19 +57,19 @@ export function InventoryHistoryModal({ item, open, onOpenChange }: InventoryHis
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm font-medium text-[var(--tally-text)]">
-                          {getMovementTypeLabel(movement.movement_type)}
+                          {getMovementTypeLabel(movement.type)}
                         </span>
                         <span className="text-sm text-[var(--tally-text-muted)]">
                           {format(new Date(movement.created_at), 'dd MMM yyyy, h:mm a')}
                         </span>
                       </div>
                       <div className="text-sm text-[var(--tally-text-muted)]">
-                        {movement.quantity} {movement.unit}
+                        {formatQty(movement.quantity_change)} {item.unit}
                       </div>
                     </div>
-                    {movement.related_transaction_id && (
+                    {movement.transaction_id && (
                       <Link
-                        href={`/transaction/${movement.related_transaction_id}`}
+                        href={`/transaction/${movement.transaction_id}`}
                         className="text-xs text-[#29978C] hover:underline"
                       >
                         {t('inventory.viewTransaction')}

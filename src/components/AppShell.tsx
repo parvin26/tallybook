@@ -5,6 +5,8 @@ import { BottomNav } from './BottomNav'
 import { AppHeader } from './AppHeader'
 
 const NAV_HEIGHT = 88
+/** Extra gap so the last content (e.g. Save button) is clearly above the fixed nav when scrolled to bottom. */
+const BOTTOM_GAP = 48
 
 export function AppShell({
   children,
@@ -23,8 +25,9 @@ export function AppShell({
         <AppHeader title={title ?? ''} showBack={showBack} showLogo={showLogo} />
       </div>
       <main
+        className="min-h-[60vh]"
         style={{
-          paddingBottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom) + 24px)`,
+          paddingBottom: `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px) + ${BOTTOM_GAP}px)`,
         }}
       >
         {children}

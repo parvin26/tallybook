@@ -4,6 +4,13 @@
 
 @layer base {
   :root {
+    /* Typography scale (responsive via clamp; mobile-first) */
+    --tally-font-page-title: clamp(1.25rem, 4vw + 1rem, 1.375rem);   /* 20–22px */
+    --tally-font-section-title: clamp(1rem, 2.5vw + 0.875rem, 1.125rem); /* 16–18px */
+    --tally-font-body: clamp(0.875rem, 1.5vw + 0.75rem, 1rem);      /* 14–16px */
+    --tally-font-caption: clamp(0.75rem, 1vw + 0.625rem, 0.8125rem);   /* 12–13px */
+    --tally-font-stat-number: clamp(1.5rem, 4vw + 1rem, 2rem);      /* 24–32px */
+
     /* Lovable TALLY Design System - HSL Format */
     
     /* Base Colors */
@@ -115,6 +122,24 @@
     @apply disabled:bg-disabled-bg disabled:text-disabled-text disabled:cursor-not-allowed;
     @apply transition-all;
     box-shadow: var(--shadow-soft);
+  }
+
+  /* Typography utility classes (responsive tokens) */
+  .text-tally-page-title {
+    font-size: var(--tally-font-page-title);
+  }
+  .text-tally-section-title {
+    font-size: var(--tally-font-section-title);
+  }
+  .text-tally-body {
+    font-size: var(--tally-font-body);
+  }
+  .text-tally-caption {
+    font-size: var(--tally-font-caption);
+  }
+  .text-tally-stat-number {
+    font-size: var(--tally-font-stat-number);
+    font-variant-numeric: tabular-nums;
   }
 }
 

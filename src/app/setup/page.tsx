@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MALAYSIAN_STATES } from '@/lib/translations'
+import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { COUNTRIES } from '@/lib/countries'
 
 const BUSINESS_CATEGORIES = [
   { value: 'retail', label: 'Retail shop' },
@@ -51,7 +53,7 @@ export default function SetupPage() {
   // Load country from onboarding
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const country = localStorage.getItem('tally-country')
+      const country = localStorage.getItem(STORAGE_KEYS.COUNTRY)
       if (country) {
         setFormData(prev => ({ ...prev, country }))
       }
@@ -201,7 +203,7 @@ export default function SetupPage() {
                   {t('setup.country') || 'Country'}
                 </label>
                 <Input
-                  value={formData.country === 'malaysia' ? 'Malaysia' : formData.country === 'sierra-leone' ? 'Sierra Leone' : formData.country}
+                  value={COUNTRIES.find(c => c.code === formData.country)?.name ?? formData.country ?? ''}
                   disabled
                   className="tally-input bg-muted"
                 />

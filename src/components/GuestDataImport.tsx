@@ -1,122 +1,42 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/contexts/AuthContext'
 import { useBusiness } from '@/contexts/BusinessContext'
-import { getGuestTransactions, clearGuestTransactions, disableGuestMode, type GuestTransaction } from '@/lib/guest-storage'
-import { supabase } from '@/lib/supabase/supabaseClient'
+import { migrateGuestData, hasGuestData } from '@/lib/data-migration'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 
+/**
+ * When a guest user signs up or logs in, upload their LocalStorage data (transactions + inventory)
+ * to Supabase so nothing is lost. Runs automatically when user is authenticated and guest data exists.
+ * Mounted inside AuthGuard/Providers so it runs on every login.
+ */
 export function GuestDataImport() {
   const { t } = useTranslation()
-  const router = useRouter()
+  const { user, authMode } = useAuth()
   const { currentBusiness } = useBusiness()
-  const [showDialog, setShowDialog] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [guestTransactionCount, setGuestTransactionCount] = useState(0)
+  const migrationAttempted = useRef(false)
 
   useEffect(() => {
-    // Check if there's guest data to import
-    const transactions = getGuestTransactions()
-    if (transactions.length > 0 && currentBusiness?.id) {
-      setGuestTransactionCount(transactions.length)
-      setShowDialog(true)
-    }
-  }, [currentBusiness])
+    if (typeof window === 'undefined') return
+    if (authMode !== 'authenticated' || !user || !currentBusiness?.id) return
+    if (!hasGuestData()) return
+    if (migrationAttempted.current) return
 
-  const handleImport = async () => {
-    if (!currentBusiness?.id) {
-      toast.error(t('guest.importError'))
-      return
-    }
+    migrationAttempted.current = true
+    const toastId = toast.loading(t('guest.syncingData', { defaultValue: 'Syncing your data...' }))
 
-    setIsImporting(true)
-    const transactions = getGuestTransactions()
+    migrateGuestData(currentBusiness.id)
+      .then(() => {
+        toast.success(t('guest.syncSuccess', { defaultValue: 'Data synced successfully!' }), { id: toastId })
+      })
+      .catch((err) => {
+        console.error('[GuestDataImport] Migration error:', err)
+        toast.error(t('guest.syncFailed', { defaultValue: 'Sync failed, please try again' }), { id: toastId })
+        migrationAttempted.current = false
+      })
+  }, [user?.id, currentBusiness?.id, authMode, t])
 
-    try {
-      // Import transactions to Supabase
-      const transactionsToInsert = transactions.map((t: GuestTransaction) => ({
-        business_id: currentBusiness.id,
-        transaction_type: t.transaction_type,
-        amount: t.amount,
-        payment_type: t.payment_type,
-        payment_method: t.payment_method || null,
-        payment_provider: t.payment_provider || null,
-        payment_reference: t.payment_reference || null,
-        expense_category: t.expense_category || null,
-        notes: t.notes || null,
-        transaction_date: t.transaction_date,
-        created_at: t.created_at,
-      }))
-
-      // Insert in batches to avoid payload size issues
-      const batchSize = 50
-      for (let i = 0; i < transactionsToInsert.length; i += batchSize) {
-        const batch = transactionsToInsert.slice(i, i + batchSize)
-        const { error } = await supabase
-          .from('transactions')
-          .insert(batch)
-
-        if (error) {
-          throw error
-        }
-      }
-
-      // Clear guest data
-      clearGuestTransactions()
-      disableGuestMode()
-
-      toast.success(t('guest.importSuccess', { count: transactions.length }))
-      setShowDialog(false)
-      
-      // Refresh the page to show imported transactions
-      router.refresh()
-    } catch (error: any) {
-      console.error('[GuestDataImport] Import error:', error)
-      toast.error(t('guest.importError'))
-    } finally {
-      setIsImporting(false)
-    }
-  }
-
-  const handleDiscard = () => {
-    clearGuestTransactions()
-    disableGuestMode()
-    setShowDialog(false)
-    toast.info(t('guest.noDataToImport'))
-  }
-
-  if (!showDialog) return null
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-lg p-6 max-w-md w-full border border-divider shadow-lg">
-        <h2 className="text-lg font-semibold text-text-primary mb-2">
-          {t('guest.importTitle')}
-        </h2>
-        <p className="text-sm text-text-secondary mb-6">
-          {t('guest.importDescription', { count: guestTransactionCount })}
-        </p>
-        <div className="flex gap-3">
-          <Button
-            onClick={handleDiscard}
-            variant="outline"
-            className="flex-1"
-            disabled={isImporting}
-          >
-            {t('guest.discardButton')}
-          </Button>
-          <Button
-            onClick={handleImport}
-            className="flex-1"
-            disabled={isImporting}
-          >
-            {isImporting ? t('common.loading') : t('guest.importButton')}
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+  return null
 }
