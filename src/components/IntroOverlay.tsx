@@ -456,9 +456,13 @@ export function IntroOverlay({ forceOpen, isFirstTime = false, onClose }: IntroO
               : t('intro.actions.next', { defaultValue: 'Next' })}
           </Button>
           {isLastSlide && (
-            <p className="text-xs text-center text-gray-500">
+            <button
+              type="button"
+              onClick={handleNext}
+              className="text-xs text-center text-gray-500 hover:text-gray-700 underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded px-1 py-0.5"
+            >
               {t('intro.actions.startRecordingToday', { defaultValue: 'Start recording today' })}
-            </p>
+            </button>
           )}
           <Button
             onClick={handleSkip}

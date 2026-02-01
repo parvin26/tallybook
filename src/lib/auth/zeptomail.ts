@@ -48,14 +48,15 @@ export async function sendMagicLinkEmail(params: SendMagicLinkEmailParams): Prom
   const res = await fetch(ZEPTOMAIL_API, {
     method: 'POST',
     headers: {
-      'Authorization': `Zoho-enczapikey ${apiKey}`,
+      Authorization: `Zoho-enczapikey ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   })
 
+  const text = await res.text()
   if (!res.ok) {
-    const text = await res.text()
+    console.error('[ZeptoMail] API error', { status: res.status, body: text })
     throw new Error(`ZeptoMail API error: ${res.status} ${text}`)
   }
 }

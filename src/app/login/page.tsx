@@ -124,10 +124,13 @@ export default function LoginPage() {
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
+        const detail = typeof data?.detail === 'string' ? data.detail : null
+        const missing = Array.isArray(data?.missing) ? data.missing.join(', ') : null
+        const devHint = detail || (missing ? `Missing: ${missing}` : null)
         if (res.status === 429) {
           toast.error(t('auth.sendError') || 'Too many requests. Try again later.')
         } else {
-          toast.error(t('auth.sendError'))
+          toast.error(devHint ? `${t('auth.sendError')} (${devHint})` : t('auth.sendError'))
         }
         setIsLoading(false)
         return

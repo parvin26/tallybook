@@ -55,7 +55,12 @@ export async function createMagicLinkRecord(email: string): Promise<string> {
   })
 
   if (error) {
-    throw new Error('Failed to store magic link token')
+    console.error('[magic-link-db] createMagicLinkRecord insert failed', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+    })
+    throw new Error(`Failed to store magic link token: ${error.message}`)
   }
 
   return rawToken

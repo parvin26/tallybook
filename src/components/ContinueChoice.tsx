@@ -83,10 +83,15 @@ export function ContinueChoice() {
         if (res.status === 429) {
           setEmailErrorMessage(t('auth.sendError', { defaultValue: 'Too many requests. Try again later.' }))
         } else {
+          const detail = typeof data?.detail === 'string' ? data.detail : null
+          const missing = Array.isArray(data?.missing) ? data.missing.join(', ') : null
+          const devHint = detail || (missing ? `Missing: ${missing}` : null)
           setEmailErrorMessage(
-            t('auth.emailLinkSendError', {
-              defaultValue: "We couldn't send the sign-in link. Please check your email or try again later.",
-            })
+            devHint
+              ? `${t('auth.emailLinkSendError', { defaultValue: "We couldn't send the sign-in link." })} (${devHint})`
+              : t('auth.emailLinkSendError', {
+                  defaultValue: "We couldn't send the sign-in link. Please check your email or try again later.",
+                })
           )
         }
         setEmailStep('email_error')
