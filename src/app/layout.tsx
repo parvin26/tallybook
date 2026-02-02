@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   description: 'Buku akaun digital untuk perniagaan kecil',
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.ico.png?v=2',
-    shortcut: '/favicon.ico.png?v=2',
+    icon: '/favicon.ico.png?v=3',
+    shortcut: '/favicon.ico.png?v=3',
     apple: '/icon-192.png',
   },
   appleWebApp: {
