@@ -17,7 +17,7 @@
 | File | Purpose |
 |------|--------|
 | `src/app/api/auth/send-magic-link/route.ts` | API that creates token and calls ZeptoMail |
-| `src/lib/auth/zeptomail.ts` | ZeptoMail template API client |
+| `src/lib/auth/zeptomail.ts` | ZeptoMail send-email API client |
 | `src/lib/auth/magic-link-db.ts` | Token create/validate using Supabase (service role) |
 | `src/lib/auth/magic-link.ts` | Token generation/hashing (no I/O) |
 | `src/lib/supabase/server-admin.ts` | Server Supabase client (service role) |
@@ -40,9 +40,8 @@
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | server-admin, magic-link-db, /auth/magic | Server-only, never expose |
 | `ZEPTOMAIL_API_KEY` | Yes | zeptomail.ts | ZeptoMail “Send Mail” token |
 | `APP_BASE_URL` | Yes (prod) | send-magic-link route, /auth/magic | e.g. `https://tallybook.app` (no trailing slash) |
-| `ZEPTOMAIL_MAGIC_LINK_TEMPLATE_KEY` | No | zeptomail.ts | Defaults to TALLY template |
-| `ZEPTOMAIL_FROM_ADDRESS` | No | zeptomail.ts | Must be verified in ZeptoMail (default `noreply@tallybook.app`) |
-| `ZEPTOMAIL_FROM_NAME` | No | zeptomail.ts | Display name |
+| `ZEPTOMAIL_FROM_EMAIL` | Yes | zeptomail.ts | Verified sender address on your Agent (e.g. `noreply@tallybook.app`) |
+| `ZEPTOMAIL_FROM_NAME` | No | zeptomail.ts | Display name (default: TALLY) |
 
 **Where they are loaded:** Next.js loads `.env.local` (and deployment env) into `process.env` for API routes and server code. Client-only vars must be `NEXT_PUBLIC_*`.
 
@@ -63,12 +62,12 @@
 - Checks rate limit (max 3 per email per 15 min).
 - Creates token via `createMagicLinkRecord(email)` (Supabase insert into `magic_link_tokens`).
 - Builds `magicLink = ${APP_BASE_URL}/auth/magic?token=${encodeURIComponent(rawToken)}`.
-- Calls `sendMagicLinkEmail({ to: email, magicLink })` (ZeptoMail template API).
+- Calls `sendMagicLinkEmail({ to: email, magicLink })` (ZeptoMail send-email API: `from` from `ZEPTOMAIL_FROM_EMAIL`, `subject`, `htmlbody` with link).
 - Returns `{ ok: true }` or 4xx/5xx with `error` (and in dev, `code` / `detail` / `missing`).
 
 **Fixes applied:**
 - Env check at start: if `ZEPTOMAIL_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, or `NEXT_PUBLIC_SUPABASE_URL` is missing → 500 and `[send-magic-link] Missing env: ...` in server log; in dev, response includes `code: 'MISSING_ENV'`, `missing: [...]`.
-- Errors from `createMagicLinkRecord` and `sendMagicLinkEmail` are logged with `[send-magic-link] createMagicLinkRecord` / `sendMagicLinkEmail` and (in dev) stack; DB errors log Supabase `message`, `code`, `details`. ZeptoMail non-ok response logs `[ZeptoMail] API error` with status and body.
+- Errors from `createMagicLinkRecord` and `sendMagicLinkEmail` are logged with `[send-magic-link] createMagicLinkRecord` / `sendMagicLinkEmail` and (in dev) stack; DB errors log Supabase `message`, `code`, `details`. ZeptoMail non-ok response logs `[ZeptoMail] API error` with status, body, and recipient email (never the API key).
 - 500 responses in dev include `code` and `detail` so the UI or network tab shows the real failure (e.g. "ZEPTOMAIL_API_KEY is not set" or ZeptoMail error body).
 - Success in dev logs `[send-magic-link] OK email=... baseUrl=...`.
 
@@ -85,8 +84,7 @@
 
 **ZeptoMail**
 - [ ] **SMTP/API:** Agent has “Send Mail” token; set as `ZEPTOMAIL_API_KEY`.
-- [ ] **From address:** The address used (`ZEPTOMAIL_FROM_ADDRESS` or default `noreply@tallybook.app`) is verified in ZeptoMail (sender verification).
-- [ ] **Template:** Template key in ZeptoMail matches `ZEPTOMAIL_MAGIC_LINK_TEMPLATE_KEY` (or the default in code). Template must accept merge field for the magic link (e.g. `merge_info.magic_link`).
+- [ ] **From address:** Set `ZEPTOMAIL_FROM_EMAIL` to a verified sender on your Agent (e.g. `noreply@tallybook.app` for domain `tallybook.app`). The app uses the send-email API with `from`, `to`, `subject`, `htmlbody` (no template key).
 - [ ] No rate limits or blocks on the agent; check ZeptoMail logs for bounces or errors.
 
 **Redirect URL summary**
@@ -135,7 +133,7 @@
 ## 9. Root-cause summary
 
 - **Why emails weren’t arriving (most likely):**
-  1. **Missing env in deployment or .env.local:** `ZEPTOMAIL_API_KEY` or `SUPABASE_SERVICE_ROLE_KEY` not set → ZeptoMail not called or DB insert fails → generic 500, no email.
+  1. **Missing env in deployment or .env.local:** `ZEPTOMAIL_API_KEY`, `ZEPTOMAIL_FROM_EMAIL`, or `SUPABASE_SERVICE_ROLE_KEY` not set → ZeptoMail not called or DB insert fails → generic 500, no email.
   2. **Errors swallowed:** API route caught all errors and returned a generic “Failed to send magic link” with no logging or detail → hard to see if it was env, DB, or ZeptoMail.
   3. **ZeptoMail/Supabase misconfiguration:** Wrong or unverified from-address, wrong template key, or `magic_link_tokens` table missing / RLS blocking insert (service role should bypass RLS if table exists).
 
@@ -156,12 +154,12 @@
 ## 10. How to test (short checklist)
 
 **Local**
-1. Add to `.env.local`: `ZEPTOMAIL_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `APP_BASE_URL=http://localhost:3000`.
+1. Add to `.env.local`: `ZEPTOMAIL_API_KEY`, `ZEPTOMAIL_FROM_EMAIL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `APP_BASE_URL=http://localhost:3000`.
 2. Run `node scripts/test-magic-link.mjs` → expect “Env check OK”.
-3. Run `npm run dev`, then `node scripts/test-magic-link.mjs --send --email=your@email.com` → expect “Success” and an email (check spam).
+3. Run `npm run dev`, then `node scripts/test-magic-link.mjs --send --email=your@email.com` → expect HTTP 200, “Success”, and an email (check spam).
 4. In app: open “Save your progress?” or login with email, submit your email → check Network for 200 and inbox.
 
 **Production**
-1. In Vercel (or host) set: `ZEPTOMAIL_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_BASE_URL` (e.g. `https://tallybook.app`), and existing Supabase public vars.
+1. In Vercel (or host) set: `ZEPTOMAIL_API_KEY`, `ZEPTOMAIL_FROM_EMAIL`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_BASE_URL` (e.g. `https://tallybook.app`), and existing Supabase public vars.
 2. Deploy and open “Send magic link” flow; check deployment logs for `[send-magic-link]` / `[ZeptoMail]` on success or failure.
 3. Request a magic link to a real address; confirm email arrives and link opens and signs you in.

@@ -7,9 +7,10 @@ const isDev = process.env.NODE_ENV === 'development'
 
 function getEnvCheck(): { ok: true } | { ok: false; missing: string[] } {
   const missing: string[] = []
-  if (!process.env.ZEPTOMAIL_API_KEY) missing.push('ZEPTOMAIL_API_KEY')
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY')
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push('NEXT_PUBLIC_SUPABASE_URL')
+  if (!process.env.ZEPTOMAIL_API_KEY?.trim()) missing.push('ZEPTOMAIL_API_KEY')
+  if (!process.env.ZEPTOMAIL_FROM_EMAIL?.trim()) missing.push('ZEPTOMAIL_FROM_EMAIL')
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) missing.push('SUPABASE_SERVICE_ROLE_KEY')
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) missing.push('NEXT_PUBLIC_SUPABASE_URL')
   if (missing.length) return { ok: false, missing }
   return { ok: true }
 }
@@ -42,12 +43,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
-    const allowed = await checkRateLimit(email)
-    if (!allowed) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
-      )
+    // In development, skip rate limit so 429 is never returned when testing.
+    if (!isDev) {
+      const allowed = await checkRateLimit(email)
+      if (!allowed) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please try again later.' },
+          { status: 429 }
+        )
+      }
     }
 
     let rawToken: string

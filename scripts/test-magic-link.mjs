@@ -41,10 +41,11 @@ loadEnvLocal()
 
 const REQUIRED = [
   'ZEPTOMAIL_API_KEY',
+  'ZEPTOMAIL_FROM_EMAIL',
   'SUPABASE_SERVICE_ROLE_KEY',
   'NEXT_PUBLIC_SUPABASE_URL',
 ]
-const OPTIONAL = ['APP_BASE_URL', 'ZEPTOMAIL_FROM_ADDRESS', 'ZEPTOMAIL_FROM_NAME', 'ZEPTOMAIL_MAGIC_LINK_TEMPLATE_KEY']
+const OPTIONAL = ['APP_BASE_URL', 'ZEPTOMAIL_FROM_NAME']
 
 function checkEnv() {
   const missing = REQUIRED.filter((k) => !process.env[k] || process.env[k].trim() === '')
@@ -97,10 +98,13 @@ async function main() {
         body: JSON.stringify({ email: testEmail }),
       })
       const data = await res.json().catch(() => ({}))
+      console.log('HTTP status:', res.status)
       if (res.ok) {
         console.log('Success:', data)
       } else {
-        console.error('Response:', res.status, data)
+        console.error('Error response body:', data)
+        if (data.detail) console.error('Detail:', data.detail)
+        if (data.missing) console.error('Missing env:', data.missing)
         process.exit(1)
       }
     } catch (err) {

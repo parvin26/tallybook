@@ -38,32 +38,76 @@ export async function checkRateLimit(email: string): Promise<boolean> {
   return (count ?? 0) < RATE_LIMIT_MAX_PER_EMAIL
 }
 
+function maskSupabaseUrl(url: string | undefined): string {
+  if (!url || typeof url !== 'string') return '(not set)'
+  try {
+    const u = new URL(url)
+    const host = u.hostname
+    if (host.endsWith('.supabase.co')) {
+      const prefix = host.slice(0, Math.min(8, host.length - 12))
+      return `${u.protocol}//${prefix}***.supabase.co`
+    }
+    return `${u.protocol}//***`
+  } catch {
+    return '(invalid url)'
+  }
+}
+
+/**
+ * Log full error and nested cause/stack (e.g. for TypeError: fetch failed).
+ */
+function logFullError(label: string, err: unknown): void {
+  const errObj = err instanceof Error ? err : new Error(String(err))
+  console.error(`[magic-link-db] ${label}`, {
+    name: errObj.name,
+    message: errObj.message,
+    stack: errObj.stack,
+    ...(errObj.cause !== undefined && {
+      cause: errObj.cause,
+      causeStack: errObj.cause instanceof Error ? errObj.cause.stack : String(errObj.cause),
+    }),
+  })
+}
+
 /**
  * Create a new magic link record. Returns raw token (send via email only); never log it.
  */
 export async function createMagicLinkRecord(email: string): Promise<string> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  console.log('[magic-link-db] createMagicLinkRecord: Supabase URL (masked)', maskSupabaseUrl(supabaseUrl), '| SUPABASE_SERVICE_ROLE_KEY defined:', !!serviceRoleKey)
+
   const rawToken = generateSecureToken()
   const hashed = hashToken(rawToken)
   const expiresAt = getExpiresAt()
 
   const supabase = getSupabaseAdmin()
-  const { error } = await supabase.from(TABLE).insert({
-    email: email.toLowerCase().trim(),
-    hashed_token: hashed,
-    expires_at: expiresAt.toISOString(),
-    used_at: null,
-  })
 
-  if (error) {
-    console.error('[magic-link-db] createMagicLinkRecord insert failed', {
-      message: error.message,
-      code: error.code,
-      details: error.details,
+  try {
+    const { error } = await supabase.from(TABLE).insert({
+      email: email.toLowerCase().trim(),
+      hashed_token: hashed,
+      expires_at: expiresAt.toISOString(),
+      used_at: null,
     })
-    throw new Error(`Failed to store magic link token: ${error.message}`)
-  }
 
-  return rawToken
+    if (error) {
+      console.error('[magic-link-db] createMagicLinkRecord insert failed', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+      })
+      throw new Error(`Failed to store magic link token: ${error.message}`)
+    }
+
+    return rawToken
+  } catch (err) {
+    if (err instanceof Error && err.message?.includes('Failed to store magic link token')) {
+      throw err
+    }
+    logFullError('createMagicLinkRecord insert threw (e.g. TypeError: fetch failed)', err)
+    throw err instanceof Error ? err : new Error(String(err))
+  }
 }
 
 /**
