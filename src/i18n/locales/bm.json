@@ -287,6 +287,8 @@
   "home": {
     "bestDay": "Hari Terbaik",
     "businessFallback": "Bisnes",
+    "guestModeLabel": "Mod tetamu",
+    "myBusiness": "Perniagaan saya",
     "cashIn": "Wang Masuk",
     "cashOut": "Wang Keluar",
     "expenses": "Belanja",

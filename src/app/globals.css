@@ -29,9 +29,22 @@
     --accent: 156 30% 92%; /* #E3F1EC - soft accent background */
     --accent-foreground: 0 0% 18%;
     
-    /* Primary (Sage) */
+    /* ═══ Primary Tally green (canonical) ═══
+     * Primary Tally green = #2F8F7A. Single source of truth for solid brand green.
+     * Use: --primary (HSL, for Tailwind) or --tally-green (full color) for solid green.
+     * Hover: --primary-hover / --tally-sale-hover. New components: use primary, not raw hex.
+     */
     --primary: 164 50% 37%; /* #2F8F7A - sage green */
     --primary-foreground: 0 0% 100%; /* white text on primary */
+    --primary-hover: 164 50% 30%; /* darker sage, hover state (~#267a66) */
+    
+    /* Legacy solid teal aliases → canonical primary (do not use in new components) */
+    --tally-green: hsl(164, 50%, 37%); /* #2F8F7A alias */
+    --tally-sale: hsl(var(--primary)); /* legacy – use primary */
+    --tally-sale-hover: hsl(var(--primary-hover)); /* legacy – use primary-hover */
+    --cta-primary: hsl(var(--primary));
+    --cta-hover: hsl(var(--primary-hover));
+    --cta-text: hsl(0, 0%, 100%);
     
     /* Secondary (Clay) */
     --secondary: 19 73% 63%; /* #E58A5D - clay orange */
@@ -53,17 +66,32 @@
     
     /* Transaction Colors (using design system tokens) */
     --money-in: hsl(var(--primary));
-    --money-in-bg: 168 30% 75%; /* light sage */
+    --money-in-bg: 168 30% 75%; /* light sage – supporting; money-in / success backgrounds */
     --money-out: hsl(var(--secondary));
     --money-out-bg: 18 73% 60% / 0.1;
     
-    /* Feedback */
+    /* Feedback (success = primary green) */
     --success: hsl(var(--primary));
-    --success-bg: 168 30% 75%;
+    --success-bg: 168 30% 75%; /* same as money-in-bg – supporting only */
     --error: hsl(var(--secondary));
     --error-bg: 18 73% 60% / 0.1;
     --disabled-bg: 220 13% 91%;
     --disabled-text: 215 16% 65%;
+    
+    /* Legacy TALLY UI (surfaces, borders, text) – map to design system */
+    --tally-bg: hsl(40, 33%, 96%);
+    --tally-surface: hsl(0, 0%, 100%);
+    --tally-surface-2: hsl(38, 12%, 90%);
+    --tally-border: hsl(36, 17%, 88%);
+    --tally-text: hsl(0, 0%, 18%);
+    --tally-text-muted: hsl(165, 5%, 46%);
+    --tally-radius: 0.75rem;
+    --tally-shadow: 0 2px 8px hsl(0 0% 18% / 0.04);
+    
+    /* Soft / derived greens (backgrounds, chips, focus – do not use for solid buttons) */
+    --primary-soft-bg: 156 30% 92%; /* #E3F1EC – accent, chips, selection bg */
+    --primary-soft-border: 164 40% 80%; /* light sage border for selected states */
+    --tally-mint: #E8F5E9; /* legacy – soft mint background; prefer primary-soft-bg where possible */
   }
 }
 

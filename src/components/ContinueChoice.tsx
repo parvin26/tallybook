@@ -225,13 +225,17 @@ export function ContinueChoice() {
                 )}
               </div>
               <div className="flex gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={handleEmailFormCancel} className="flex-1">
+                <Button type="button" variant="outline" onClick={handleEmailFormCancel} className="flex-1 min-w-0">
                   {t('common.cancel')}
                 </Button>
-                <Button type="submit" disabled={isEmailSending} className="flex-1 tally-button-primary">
+                <Button
+                  type="submit"
+                  disabled={isEmailSending}
+                  className="flex-1 min-w-0 whitespace-nowrap text-sm font-medium rounded-xl h-11 bg-[#29978C] hover:bg-[#238579] text-white disabled:opacity-70"
+                >
                   {isEmailSending
                     ? t('auth.sending', { defaultValue: 'Sending...' })
-                    : t('auth.sendSignInLink', { defaultValue: 'Send sign-in link' })}
+                    : t('auth.sendSignInLink', { defaultValue: 'Send Sign In Link' })}
                 </Button>
               </div>
             </form>

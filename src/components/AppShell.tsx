@@ -18,6 +18,10 @@ export function AppShell({
   showLogo = true,
   hideBottomNav = false,
   hideHeaderOnHome = false,
+  isHome = false,
+  homeEntityLabel,
+  homeLogoDataUrl,
+  isGuest = false,
 }: {
   children: ReactNode
   title?: string
@@ -25,19 +29,36 @@ export function AppShell({
   showLogo?: boolean
   /** When true, hide bottom nav (e.g. Record Sale, Record Expense, Edit transaction, Setup). */
   hideBottomNav?: boolean
-  /** When true, do not render AppHeader (home page: avoid empty sticky bar); OfflineIndicator still shown. */
+  /** When true, do not render AppHeader (legacy); OfflineIndicator still shown. Ignored when isHome is true. */
   hideHeaderOnHome?: boolean
+  /** When true, show compact home header (business left, Tally right). */
+  isHome?: boolean
+  /** Business name for home header left side. */
+  homeEntityLabel?: string
+  /** Business logo data URL for home header; omit when none. */
+  homeLogoDataUrl?: string
+  /** When true, home header left shows "Guest mode" instead of business name/logo. */
+  isGuest?: boolean
 }) {
+  const showHeader = isHome || !hideHeaderOnHome
   return (
     <div className="min-h-[100dvh] bg-[var(--tally-bg)]">
       <div className="sticky top-0 z-40">
-        {hideHeaderOnHome ? null : (
-          <AppHeader title={title ?? ''} showBack={showBack} showLogo={showLogo} />
-        )}
+        {showHeader ? (
+          <AppHeader
+            title={title ?? ''}
+            showBack={showBack}
+            showLogo={showLogo}
+            isHome={isHome}
+            homeEntityLabel={homeEntityLabel}
+            homeLogoDataUrl={homeLogoDataUrl}
+            isGuest={isGuest}
+          />
+        ) : null}
         <OfflineIndicator />
       </div>
       <main
-        className="relative z-0 min-h-[calc(100dvh-4rem)]"
+        className="relative z-0 min-h-[calc(100dvh-4rem)] overflow-visible"
         style={
           {
             ['--bottom-nav-total' as string]: BOTTOM_NAV_TOTAL,

@@ -109,7 +109,9 @@
     "cashIn": "",
     "cashOut": "",
     "todaysBalance": "",
-    "businessFallback": ""
+    "businessFallback": "",
+    "guestModeLabel": "Guest mode",
+    "myBusiness": "My business"
   },
   "transaction": {
     "recordSale": "",

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tally — Green colours</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; padding: 24px; max-width: 640px; margin: 0 auto; background: #f5f5f5; }
+    h1 { font-size: 1.25rem; margin-bottom: 8px; }
+    p { color: #555; font-size: 0.875rem; margin-bottom: 24px; }
+    .swatch { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; background: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .box { width: 64px; height: 48px; border-radius: 8px; flex-shrink: 0; border: 1px solid rgba(0,0,0,0.08); }
+    .label { font-weight: 600; font-size: 0.9375rem; }
+    .code { font-family: ui-monospace, monospace; font-size: 0.8125rem; color: #666; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <h1>Green colours used in Tally</h1>
+  <p>11 distinct greens (plus 1 typo variant). Open this file in a browser to see swatches.</p>
+
+  <div class="swatch">
+    <div class="box" style="background: #29978C;"></div>
+    <div>
+      <div class="label">1. Main Tally teal</div>
+      <div class="code">#29978C · RGB(41, 151, 140)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: #238579;"></div>
+    <div>
+      <div class="label">2. Darker hover</div>
+      <div class="code">#238579 · RGB(35, 133, 121)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: #238a7f;"></div>
+    <div>
+      <div class="label">3. Hover variant (welcome page)</div>
+      <div class="code">#238a7f · likely typo for #238579</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: #2F8F7A;"></div>
+    <div>
+      <div class="label">4. Design system primary (sage)</div>
+      <div class="code">#2F8F7A · --primary · HSL(164, 50%, 37%)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: #E3F1EC;"></div>
+    <div>
+      <div class="label">5. Soft accent background</div>
+      <div class="code">#E3F1EC · --accent · HSL(156, 30%, 92%)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: #E8F5E9;"></div>
+    <div>
+      <div class="label">6. Mint fallback</div>
+      <div class="code">#E8F5E9 · --tally-mint fallback</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: rgba(41,151,140,0.1);"></div>
+    <div>
+      <div class="label">7. 10% main teal</div>
+      <div class="code">rgba(41, 151, 140, 0.1)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: rgba(41,151,140,0.12);"></div>
+    <div>
+      <div class="label">8. 12% main teal (selected)</div>
+      <div class="code">rgba(41, 151, 140, 0.12)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: rgba(41,151,140,0.25);"></div>
+    <div>
+      <div class="label">9. 25% main teal (focus ring)</div>
+      <div class="code">rgba(41, 151, 140, 0.25)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: rgba(187,216,211,0.45);"></div>
+    <div>
+      <div class="label">10. Date picker selected day</div>
+      <div class="code">rgba(187, 216, 211, 0.45)</div>
+    </div>
+  </div>
+
+  <div class="swatch">
+    <div class="box" style="background: hsl(168, 30%, 75%);"></div>
+    <div>
+      <div class="label">11. Light sage</div>
+      <div class="code">HSL(168, 30%, 75%) · --money-in-bg, --success-bg</div>
+    </div>
+  </div>
+</body>
+</html>

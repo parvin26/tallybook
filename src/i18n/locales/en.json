@@ -143,7 +143,9 @@
     "cashIn": "Cash In",
     "cashOut": "Cash Out",
     "todaysBalance": "Today's Balance",
-    "businessFallback": "Business"
+    "businessFallback": "Business",
+    "guestModeLabel": "Guest mode",
+    "myBusiness": "My business"
   },
   "transaction": {
     "recordSale": "Record Sale",

@@ -149,7 +149,7 @@ export default function WelcomePage() {
           {/* Primary Button */}
           <Button
             onClick={handleNext}
-            className="w-full bg-[#29978C] hover:bg-[#238a7f] text-white h-12 text-base font-medium"
+            className="w-full bg-[#29978C] hover:bg-tally-sale-hover text-white h-12 text-base font-medium"
           >
             {isLastSlide ? t('welcome.getStarted') : t('welcome.next')}
           </Button>

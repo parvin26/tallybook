@@ -12,6 +12,8 @@ import { PWAInstallBanner } from '@/components/PWAInstallBanner'
 import { useTranslation } from 'react-i18next'
 import Link from 'next/link'
 import { STORAGE_KEYS } from '@/lib/storage-keys'
+import { getBusinessProfile } from '@/lib/businessProfile'
+import { isGuestMode } from '@/lib/guest-storage'
 import { EditTransactionModal } from '@/components/EditTransactionModal'
 import type { Transaction } from '@/types'
 
@@ -69,10 +71,15 @@ export default function AppHomePage() {
     return null
   }
 
+  const profile = typeof window !== 'undefined' ? getBusinessProfile() : null
+  const entityName = profile?.businessName?.trim() ? profile.businessName : undefined
+  const homeLogoDataUrl = profile?.logoDataUrl?.trim() ? profile.logoDataUrl : undefined
+  const isGuest = typeof window !== 'undefined' ? isGuestMode() : false
+
   return (
     <>
-      <AppShell title="" showBack={false} showLogo={false} hideHeaderOnHome>
-        <div className="max-w-[480px] mx-auto">
+      <AppShell title="" showBack={false} showLogo={false} isHome homeEntityLabel={entityName} homeLogoDataUrl={homeLogoDataUrl} isGuest={isGuest}>
+        <div className="max-w-[480px] mx-auto min-h-[50vh]">
           <HomeHeader />
 
           {/* PWA install banner: below header, above first content; not a modal; eligibility inside component */}
