@@ -71,7 +71,7 @@ export default function AppHomePage() {
 
   return (
     <>
-      <AppShell title="" showBack={false} showLogo={false}>
+      <AppShell title="" showBack={false} showLogo={false} hideHeaderOnHome>
         <div className="max-w-[480px] mx-auto">
           <HomeHeader />
 
@@ -87,24 +87,24 @@ export default function AppHomePage() {
               <SummaryCardLovable />
             </section>
 
-            {/* Primary Action Buttons */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Primary Action Buttons — stack on smallest screens so both are full-width */}
+            <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2">
               <Link
                 href="/sale"
-                className="tally-button-primary h-20 text-base flex items-center justify-center"
+                className="tally-button-primary h-20 text-base flex items-center justify-center min-w-0"
               >
                 {t('home.recordSale')}
               </Link>
               <Link
                 href="/expense"
-                className="tally-button-secondary h-20 text-base flex items-center justify-center"
+                className="tally-button-secondary h-20 text-base flex items-center justify-center min-w-0"
               >
                 {t('home.recordExpense')}
               </Link>
             </div>
 
-            {/* Recent Activity: at most 3 items; View all activity link below */}
-            <div>
+            {/* Recent Activity: at most 3 items; View all activity link below — extra bottom padding so nav never covers this */}
+            <div className="pb-48">
               <h2 className="text-lg font-semibold text-foreground mb-3">{t('home.recentActivity')}</h2>
               {transactionsError ? (
                 <div className="text-center py-8 text-muted-foreground">

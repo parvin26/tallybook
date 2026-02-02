@@ -389,7 +389,7 @@ export default function AccountPage() {
   return (
     <>
     <AppShell title={t('account.title')} showBack showLogo>
-      <div className="min-h-screen bg-gray-50 pb-32 pt-4 px-4 space-y-3 sm:space-y-4 max-w-[480px] mx-auto">
+      <div className="min-h-screen bg-gray-50 pb-48 pt-4 px-4 space-y-3 sm:space-y-4 max-w-[480px] mx-auto">
 
         {/* Section: Business information */}
         <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1">{t('account.sectionBusinessInfo', { defaultValue: 'Business information' })}</h2>
@@ -495,11 +495,11 @@ export default function AccountPage() {
         {/* Card 2: Preferences — Country, Language, Currency in one row */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 sm:p-4">
           <h2 className="text-tally-section-title font-semibold text-gray-900 mb-2.5">{t('account.preferences')}</h2>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 gap-2 sm:gap-3 min-[480px]:grid-cols-3">
             <button
               type="button"
               onClick={() => setIsCountryModalOpen(true)}
-              className="relative min-h-[44px] flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
+              className="relative min-h-[44px] min-w-0 flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
             >
               <span className="text-tally-caption text-gray-500">{t('account.country')}</span>
               <span className="text-sm font-medium text-gray-900 truncate mt-0.5">{currentCountryName ?? t('account.notSet')}</span>
@@ -508,7 +508,7 @@ export default function AccountPage() {
             <button
               type="button"
               onClick={() => setIsLanguageModalOpen(true)}
-              className="relative min-h-[44px] flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
+              className="relative min-h-[44px] min-w-0 flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
             >
               <span className="text-tally-caption text-gray-500">{t('settings.language')}</span>
               <span className="text-sm font-medium text-gray-900 truncate mt-0.5">{getCurrentLanguageName()}</span>
@@ -517,7 +517,7 @@ export default function AccountPage() {
             <button
               type="button"
               onClick={() => setIsCountryModalOpen(true)}
-              className="relative min-h-[44px] flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
+              className="relative min-h-[44px] min-w-0 flex flex-col items-stretch justify-center rounded-lg border border-gray-200 bg-gray-50/50 px-2.5 py-2 pr-8 text-left active:bg-gray-100 transition-colors"
             >
               <span className="text-tally-caption text-gray-500">{t('account.currency')}</span>
               <span className="text-sm font-medium text-gray-900 tabular-nums truncate mt-0.5">{currencyCode} ({currencySymbol})</span>

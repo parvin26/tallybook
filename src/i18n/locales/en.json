@@ -326,6 +326,8 @@
     "languageChangedKrio": "Language changed to Krio",
     "languageError": "Cannot change language",
     "quickAmounts": "Quick Amounts",
+    "quickAmountsTapToEdit": "Tap an amount to edit or delete it.",
+    "editQuickAmount": "Edit",
     "saleButtons": "Sale",
     "expenseButtons": "Expense",
     "inventoryButtons": "Inventory",

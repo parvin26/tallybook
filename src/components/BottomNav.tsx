@@ -21,7 +21,7 @@ export function BottomNav() {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 bg-[var(--tally-surface)] border-t border-tally-border z-50"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--tally-surface)] border-t border-tally-border"
       style={{
         height: '88px',
         paddingBottom: 'env(safe-area-inset-bottom)',

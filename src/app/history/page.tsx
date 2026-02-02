@@ -64,7 +64,7 @@ export default function HistoryPage() {
 
   return (
     <AppShell title={t('history.transactions')} showBack showLogo>
-      <div className="max-w-[480px] mx-auto px-4 py-4">
+      <div className="max-w-[480px] mx-auto px-4 py-4 pb-48">
         {!isLoading && !error && totalCount > 0 && (
           <div className="flex items-center gap-2 mb-4">
             <button

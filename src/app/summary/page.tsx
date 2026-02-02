@@ -162,7 +162,7 @@ export default function ProfitLossPage() {
 
   return (
     <AppShell title={t('report.profitLoss.title')} showBack showLogo>
-      <div className="max-w-[480px] mx-auto pt-20 pb-24 px-4 space-y-6">
+      <div className="max-w-[480px] mx-auto pt-20 pb-48 px-4 space-y-6">
         {/* Header Block — mt-6 ensures spacing below header / above content */}
         <div className="space-y-1 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">{t('report.profitLoss.title')}</h1>

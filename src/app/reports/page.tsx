@@ -117,7 +117,7 @@ export default function ReportsHubPage() {
   if (isLoading) {
     return (
       <AppShell title={t('nav.reports')} showBack showLogo>
-        <div className="pt-20 pb-24 px-4 flex items-center justify-center min-h-[40vh]">
+        <div className="pt-20 pb-32 px-4 flex items-center justify-center min-h-[40vh]">
           <p className="text-gray-500">{t('common.loading')}</p>
         </div>
       </AppShell>
@@ -126,7 +126,7 @@ export default function ReportsHubPage() {
 
   return (
     <AppShell title={t('nav.reports')} showBack showLogo>
-      <div className="pt-20 pb-24 px-4 space-y-4 sm:space-y-6 max-w-[480px] mx-auto">
+      <div className="pt-4 pb-48 px-4 space-y-4 sm:space-y-6 max-w-[480px] mx-auto">
         {/* Header: title exactly "Business Snapshot"; period as secondary with edit icon */}
         <div>
           <h1 className="text-tally-page-title font-bold text-gray-900">Business Snapshot</h1>
@@ -245,13 +245,13 @@ export default function ReportsHubPage() {
           )}
         </div>
 
-        {/* Detailed Reports */}
-        <div className="mt-4 sm:mt-6">
+        {/* Detailed Reports — stack on smallest screens so labels are not cramped */}
+        <div className="mt-4 sm:mt-6 pb-8">
           <h2 className="text-tally-section-title font-semibold text-gray-900 mb-3">Detailed Reports</h2>
-          <div className="grid grid-cols-3 gap-2 flex-nowrap">
+          <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-3 min-w-0">
             <Link
               href="/summary"
-              className="flex flex-col items-center gap-1 rounded-lg p-2 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors"
+              className="min-w-0 flex flex-col items-center gap-1 rounded-lg p-2 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors"
             >
               <div className="w-9 h-9 rounded-full bg-primary/80 flex items-center justify-center flex-shrink-0">
                 <FileText className="h-4 w-4 text-white" aria-hidden />
@@ -273,7 +273,7 @@ export default function ReportsHubPage() {
             </Link>
             <Link
               href="/health"
-              className="flex flex-col items-center gap-1 rounded-lg p-2 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors"
+              className="min-w-0 flex flex-col items-center gap-1 rounded-lg p-2 border border-gray-200 bg-white shadow-sm hover:bg-gray-50 transition-colors"
             >
               <div className="w-9 h-9 rounded-full bg-gray-500 flex items-center justify-center flex-shrink-0">
                 <Heart className="h-4 w-4 text-white" aria-hidden />

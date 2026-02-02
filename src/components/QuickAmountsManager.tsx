@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight, Pencil } from 'lucide-react'
 import { useQuickAmounts } from '@/hooks/useQuickAmounts'
 
 const MAX_PRESETS = 5
@@ -118,6 +118,7 @@ export function QuickAmountsManager({ open, onOpenChange }: QuickAmountsManagerP
             ))}
           </div>
           <p className="text-sm text-muted-foreground">{typeLabel}</p>
+          <p className="text-xs text-muted-foreground mb-2">{t('settings.quickAmountsTapToEdit', { defaultValue: 'Tap an amount to edit or delete it.' })}</p>
           <div className="flex-1 min-h-0 overflow-y-auto">
             {presets.length === 0 ? (
               <div className="py-8 text-center">
@@ -135,8 +136,10 @@ export function QuickAmountsManager({ open, onOpenChange }: QuickAmountsManagerP
                     key={`${val}-${idx}`}
                     type="button"
                     onClick={() => openEdit(val, idx)}
-                    className="inline-flex items-center justify-center min-w-[56px] px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium text-gray-900"
+                    className="inline-flex items-center gap-1.5 min-w-[56px] px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm font-medium text-gray-900"
+                    aria-label={t('settings.editQuickAmount', { defaultValue: 'Edit' }) + ` ${val}`}
                   >
+                    <Pencil className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                     {val}
                   </button>
                 ))}
