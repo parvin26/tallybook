@@ -231,7 +231,7 @@ export function ContinueChoice() {
                 <Button
                   type="submit"
                   disabled={isEmailSending}
-                  className="flex-1 min-w-0 whitespace-nowrap text-sm font-medium rounded-xl h-11 bg-[#29978C] hover:bg-[#238579] text-white disabled:opacity-70"
+                  className="flex-1 min-w-0 whitespace-nowrap text-sm font-medium h-11 tally-button-primary disabled:opacity-70"
                 >
                   {isEmailSending
                     ? t('auth.sending', { defaultValue: 'Sending...' })
