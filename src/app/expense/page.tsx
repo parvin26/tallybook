@@ -69,6 +69,7 @@ export default function RecordExpensePage() {
 
   const [otherText, setOtherText] = useState(draft?.otherText || '')
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
+  const [showAttachmentSection, setShowAttachmentSection] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [category, setCategory] = useState<'supplies' | 'transport' | 'utilities' | 'rent' | 'wages' | 'food' | 'maintenance' | 'other'>(draft?.category || 'other')
   const { expensePresets } = useQuickAmounts()
@@ -209,7 +210,7 @@ export default function RecordExpensePage() {
 
   return (
     <AppShell title={t('transaction.recordExpense')} showBack showLogo hideBottomNav>
-      <div className="max-w-[480px] mx-auto px-6 py-6 pb-48 space-y-6">
+      <div className="max-w-[480px] mx-auto px-6 py-6 pb-40 space-y-6">
         {/* 1. Amount — text-5xl, font-bold, text-center, no borders, transparent; currency from stored country */}
         <div className="p-6">
           <AmountInput
@@ -252,7 +253,7 @@ export default function RecordExpensePage() {
 
         {/* 4. Payment Method */}
         <div>
-          <label className="block text-sm text-[var(--tally-text-muted)] mb-3 font-medium">{t('expense.paymentMethod.title')}</label>
+          <label className="block text-sm text-[var(--tally-text)]/80 mb-3 font-medium">{t('expense.paymentMethod.title')}</label>
           <PaymentMethodSelector value={paymentMethod} onChange={setPaymentMethod} />
           
           {/* Conditional fields based on payment method */}
@@ -297,18 +298,34 @@ export default function RecordExpensePage() {
 
         {/* 5. Date */}
         <div>
-          <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">{t('transaction.date')}</label>
+          <label className="block text-sm text-[var(--tally-text)]/80 mb-2 font-medium">{t('transaction.date')}</label>
           <DatePickerLovable value={selectedDate} onChange={setSelectedDate} />
         </div>
 
         {/* 6. Attachment (optional) */}
         <div>
-          <AttachmentInputLovable onFilesChange={setAttachmentFiles} variant="expense" />
+          <button
+            type="button"
+            onClick={() => setShowAttachmentSection((prev) => !prev)}
+            className="w-full flex items-center justify-between rounded-lg border border-[var(--tally-border)] bg-[var(--tally-surface)] px-4 py-3 text-left"
+          >
+            <span className="text-sm font-medium text-[var(--tally-text)]">
+              Add receipt ({t('common.optional')})
+            </span>
+            <span className="text-xs text-[var(--tally-text-muted)]">
+              {showAttachmentSection ? 'Hide' : 'Show'}
+            </span>
+          </button>
+          {showAttachmentSection && (
+            <div className="mt-3">
+              <AttachmentInputLovable onFilesChange={setAttachmentFiles} variant="expense" />
+            </div>
+          )}
         </div>
 
         {/* 7. Notes (optional) */}
         <div>
-          <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">
+          <label className="block text-sm text-[var(--tally-text)]/80 mb-2 font-medium">
             {t('transaction.notes')} <span className="text-xs">({t('common.optional')})</span>
           </label>
           <textarea
@@ -319,9 +336,12 @@ export default function RecordExpensePage() {
             rows={3}
           />
         </div>
-
-        {/* 7. Save Button - in document flow, clear of Bottom Nav */}
-        <div className="mt-8">
+      </div>
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--tally-bg)]/95 backdrop-blur border-t border-[var(--tally-border)]"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+      >
+        <div className="max-w-[480px] mx-auto px-6 pt-3">
           <button
             type="button"
             onClick={(e) => {
@@ -335,10 +355,6 @@ export default function RecordExpensePage() {
             {mutation.isPending ? t('transaction.saving') : t('transaction.saveExpense')}
           </button>
         </div>
-
-        {/* Reserve space so Save button stays above fixed Bottom Nav (88px + safe area) */}
-        <div className="h-24 w-full shrink-0" aria-hidden="true" />
-
       </div>
     </AppShell>
   )

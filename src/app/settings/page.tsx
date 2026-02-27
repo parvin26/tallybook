@@ -616,14 +616,25 @@ export default function AccountPage() {
         {/* Section: Account */}
         <h2 className="text-[18px] font-semibold text-gray-900 px-1 mb-1 mt-4">{t('account.sectionAccount', { defaultValue: 'Account' })}</h2>
         {guestMode ? (
-          <Button
-            variant="outline"
-            className="w-full border-red-600 text-red-600 hover:bg-red-50"
-            onClick={() => setClearDataConfirmOpen(true)}
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {t('settings.clearDataOnDevice', { defaultValue: 'Clear data on this device' })}
-          </Button>
+          <details className="w-full rounded-xl border border-red-200 bg-red-50/50 p-3">
+            <summary className="cursor-pointer list-none flex items-center justify-between">
+              <span className="text-sm font-semibold text-red-700">Danger zone</span>
+              <span className="text-xs text-red-600">Tap to expand</span>
+            </summary>
+            <div className="pt-3">
+              <p className="text-xs text-red-700 mb-3">
+                This action permanently clears locally stored guest data from this device.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full border-red-600 text-red-600 hover:bg-red-50"
+                onClick={() => setClearDataConfirmOpen(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {t('settings.clearDataOnDevice', { defaultValue: 'Clear data on this device' })}
+              </Button>
+            </div>
+          </details>
         ) : (
           <button
             type="button"

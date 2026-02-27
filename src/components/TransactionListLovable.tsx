@@ -43,9 +43,11 @@ interface TransactionListLovableProps {
   limit?: number
   /** When provided, clicking a row opens the edit modal instead of navigating to detail page. */
   onTransactionClick?: (transaction: Transaction) => void
+  /** Home variant keeps behavior but applies compact single-card styling. */
+  variant?: 'default' | 'home'
 }
 
-export function TransactionListLovable({ transactions, limit, onTransactionClick }: TransactionListLovableProps) {
+export function TransactionListLovable({ transactions, limit, onTransactionClick, variant = 'default' }: TransactionListLovableProps) {
   const { t } = useTranslation()
   const router = useRouter()
   const [viewerOpen, setViewerOpen] = useState(false)
@@ -116,6 +118,8 @@ export function TransactionListLovable({ transactions, limit, onTransactionClick
     return !isToday(txDate) && !isYesterday(txDate)
   })
 
+  const formatHomeAmount = (amount: number, isSale: boolean) => `${isSale ? '+' : '-'}RM ${Math.abs(amount).toFixed(2)}`
+
   const renderTransaction = (transaction: Transaction) => {
     const isSale = transaction.transaction_type === 'sale'
     
@@ -148,24 +152,36 @@ export function TransactionListLovable({ transactions, limit, onTransactionClick
       cleanNotes = cleanNotes.replace(/^\[?Attachment:\s*[^\]]*\]?\s*/i, '').trim()
     }
 
-    const secondaryLabel = cleanNotes || dateTimeStr
+    const secondaryLabel = variant === 'home'
+      ? (timeStr || dateStr)
+      : (cleanNotes || dateTimeStr)
 
     return (
       <div
         key={transaction.id}
         onClick={() => (onTransactionClick ? onTransactionClick(transaction) : router.push(`/transaction/${transaction.id}`))}
-        className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--tally-surface-2)] transition-colors cursor-pointer"
+        className={`flex items-center gap-3 p-3 transition-colors cursor-pointer ${
+          variant === 'home'
+            ? 'hover:bg-[hsl(var(--muted))]'
+            : 'rounded-lg hover:bg-[var(--tally-surface-2)]'
+        }`}
       >
-        <div className="w-10 h-10 rounded-lg bg-[var(--tally-surface)] border border-[var(--tally-border)] flex items-center justify-center flex-shrink-0">
+        <div className={`flex items-center justify-center flex-shrink-0 ${
+          variant === 'home'
+            ? 'w-11 h-11 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))]'
+            : 'w-10 h-10 rounded-lg bg-[var(--tally-surface)] border border-[var(--tally-border)]'
+        }`}>
           <Icon className="w-5 h-5 text-[var(--tally-text-muted)]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-[var(--tally-text)] truncate">{label}</p>
+          <p className={`${variant === 'home' ? 'text-base font-semibold' : 'text-sm font-medium'} text-[var(--tally-text)] truncate`}>{label}</p>
           <p className="text-xs text-[var(--tally-text-muted)] truncate">{secondaryLabel}</p>
-          <p className="text-[12px] text-[var(--tally-text-muted)] mt-0.5 font-normal opacity-90" aria-label={`Ref ${transaction.id.slice(0, 8).toUpperCase()}`}>
-            Ref: #{transaction.id.slice(0, 8).toUpperCase()}
-          </p>
-          {transaction.transaction_attachments && transaction.transaction_attachments.length > 0 && (
+          {variant !== 'home' && (
+            <p className="text-[11px] text-[var(--tally-text-muted)] mt-0.5 font-normal opacity-65" aria-label={`Ref ${transaction.id.slice(0, 8).toUpperCase()}`}>
+              Ref: #{transaction.id.slice(0, 8).toUpperCase()}
+            </p>
+          )}
+          {variant !== 'home' && transaction.transaction_attachments && transaction.transaction_attachments.length > 0 && (
             <div className="mt-1.5 text-xs">
               <button
                 type="button"
@@ -181,10 +197,45 @@ export function TransactionListLovable({ transactions, limit, onTransactionClick
             </div>
           )}
         </div>
-        <div className={`text-base font-bold tabular-nums ${
-          isSale ? 'text-[#2E7D5B]' : 'text-[#B94A3A]'
+        <div className={`text-base font-bold tabular-nums text-right ${
+          variant === 'home'
+            ? (isSale ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--secondary))]')
+            : (isSale ? 'text-[#2E7D5B]' : 'text-[#B94A3A]')
         }`}>
-          {isSale ? '+' : '–'}{formatCurrency(transaction.amount)}
+          {variant === 'home'
+            ? formatHomeAmount(transaction.amount, isSale)
+            : `${isSale ? '+' : '–'}${formatCurrency(transaction.amount)}`}
+        </div>
+      </div>
+    )
+  }
+
+  const renderGroup = (title: string, txs: Transaction[]) => {
+    if (txs.length === 0) return null
+
+    if (variant === 'home') {
+      return (
+        <div>
+          <div className="mb-2">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--tally-text-muted)]">{title}</h3>
+          </div>
+          <div className="rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] overflow-hidden" style={{ boxShadow: 'var(--shadow-soft)' }}>
+            <div className="divide-y divide-[hsl(var(--border))]">
+              {txs.map(renderTransaction)}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[var(--tally-text)]">{title}</h3>
+          <span className="text-xs text-[var(--tally-text-muted)]">{txs.length}</span>
+        </div>
+        <div className="space-y-1">
+          {txs.map(renderTransaction)}
         </div>
       </div>
     )
@@ -192,43 +243,9 @@ export function TransactionListLovable({ transactions, limit, onTransactionClick
 
   return (
     <div className="space-y-6">
-      {todayTransactions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[var(--tally-text)]">{t('history.today')}</h3>
-            <span className="text-xs text-[var(--tally-text-muted)]">{todayTransactions.length}</span>
-          </div>
-          <div className="space-y-1">
-            {todayTransactions.map(renderTransaction)}
-          </div>
-        </div>
-      )}
-
-      {yesterdayTransactions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[var(--tally-text)]">{t('history.yesterday')}</h3>
-            <span className="text-xs text-[var(--tally-text-muted)]">{yesterdayTransactions.length}</span>
-          </div>
-          <div className="space-y-1">
-            {yesterdayTransactions.map(renderTransaction)}
-          </div>
-        </div>
-      )}
-
-      {otherTransactions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-[var(--tally-text)]">
-              {format(parseISO(otherTransactions[0].transaction_date), 'MMMM d, yyyy')}
-            </h3>
-            <span className="text-xs text-[var(--tally-text-muted)]">{otherTransactions.length}</span>
-          </div>
-          <div className="space-y-1">
-            {otherTransactions.map(renderTransaction)}
-          </div>
-        </div>
-      )}
+      {renderGroup(t('history.today'), todayTransactions)}
+      {renderGroup(t('history.yesterday'), yesterdayTransactions)}
+      {renderGroup(format(parseISO(otherTransactions[0]?.transaction_date || new Date().toISOString()), 'MMMM d, yyyy'), otherTransactions)}
 
       <AttachmentViewer
         open={viewerOpen}

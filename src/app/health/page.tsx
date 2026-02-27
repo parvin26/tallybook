@@ -458,6 +458,19 @@ export default function BusinessHealthPage() {
 
         {/* Insights Cards */}
         <div className="space-y-4">
+          {healthData.insights.some((insight) => insight.type === 'consistency' && insight.color === '#B94A3A') && (
+            <Card className="border border-amber-200 bg-amber-50">
+              <CardContent className="p-4 space-y-3">
+                <p className="text-sm font-semibold text-amber-900">Recording needs attention</p>
+                <p className="text-xs text-amber-800">Record today&apos;s sale to keep your business health insights accurate.</p>
+                <Link href="/sale">
+                  <Button className="h-10 bg-[#29978C] hover:bg-[#238579] text-white text-sm">
+                    Record today&apos;s sale
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
           {healthData.insights.map((insight, index) => {
             const Icon = insight.icon
             return (
@@ -485,6 +498,11 @@ export default function BusinessHealthPage() {
               </Card>
             )
           })}
+          <p className="text-xs text-[var(--tally-text-muted)] px-1">
+            <Link href="/help" className="text-[#29978C] hover:underline">
+              How we calculate this
+            </Link>
+          </p>
         </div>
       </div>
     </AppShell>

@@ -1,6 +1,5 @@
 'use client'
 
-import { formatCurrency } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { useDashboardStats } from '@/hooks/useDashboardStats'
 
@@ -18,33 +17,47 @@ interface SummaryCardLovableProps {
  */
 export function SummaryCardLovable(props: SummaryCardLovableProps) {
   const { t } = useTranslation()
-  const { cashIn: derivedCashIn, cashOut: derivedCashOut, balance: derivedBalance, isLoading } = useDashboardStats()
+  const { cashIn: derivedCashIn, cashOut: derivedCashOut, balance: derivedBalance } = useDashboardStats()
 
   const cashIn = props.cashIn ?? derivedCashIn
   const cashOut = props.cashOut ?? derivedCashOut
   const balance = props.balance ?? derivedBalance
+  const isPositive = balance >= 0
+  const formatRM = (value: number) => `RM ${Math.abs(value).toFixed(2)}`
+  const netColor = isPositive ? 'hsl(var(--primary))' : 'hsl(var(--secondary))'
 
   return (
-    <div className="tally-card p-6">
-      {/* Today's Balance: dominant (~36sp Bold); label 15sp Medium muted */}
-      <div className="border-b border-border pb-4 mb-4">
-        <p className="text-[15px] font-medium text-muted-foreground mb-1">{t('home.todaysBalance')}</p>
-        <p className="text-[36px] font-bold leading-tight tabular-nums text-foreground">
-          {formatCurrency(balance)}
+    <div
+      className="relative rounded-3xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] px-6 py-6 overflow-hidden"
+      style={{ boxShadow: 'var(--shadow-soft)' }}
+    >
+      <div className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full" style={{ backgroundColor: netColor }} />
+      <div className="border-b border-[hsl(var(--border))] pb-4 mb-4 pl-2">
+        <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[hsl(var(--muted-foreground))] mb-2">
+          {t('home.todaysNet', { defaultValue: "TODAY'S NET" })}
         </p>
+        <div className="flex items-end gap-2">
+          <span className="text-2xl font-semibold tabular-nums text-[hsl(var(--muted-foreground))]">RM</span>
+          <span className="text-[54px] leading-[0.9] font-extrabold tabular-nums" style={{ color: netColor }}>
+            {Math.abs(balance).toFixed(2)}
+          </span>
+        </div>
       </div>
-      {/* Cash In / Cash Out: values ~20sp SemiBold; labels 14sp Medium muted */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 pl-2">
         <div>
-          <p className="text-sm font-medium text-muted-foreground mb-1">{t('home.cashIn')}</p>
-          <p className="text-[20px] font-semibold tabular-nums text-[#2E7D5B]">
-            {formatCurrency(cashIn)}
+          <p className="text-sm font-semibold uppercase tracking-[0.06em] text-[hsl(var(--muted-foreground))] mb-1">
+            {t('home.cashIn')}
+          </p>
+          <p className="text-3xl font-bold tabular-nums text-[hsl(var(--primary))]">
+            {formatRM(cashIn)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-medium text-muted-foreground mb-1">{t('home.cashOut')}</p>
-          <p className="text-[20px] font-semibold tabular-nums text-[#B94A3A]">
-            {formatCurrency(cashOut)}
+          <p className="text-sm font-semibold uppercase tracking-[0.06em] text-[hsl(var(--muted-foreground))] mb-1">
+            {t('home.cashOut')}
+          </p>
+          <p className="text-3xl font-bold tabular-nums text-[hsl(var(--secondary))]">
+            {formatRM(cashOut)}
           </p>
         </div>
       </div>

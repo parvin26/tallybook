@@ -19,6 +19,7 @@ export interface SalesByItemEntry {
   itemName: string
   quantity: number
   amount: number
+  quantityType?: 'units' | 'sales'
 }
 
 export interface UseReportsDataResult {
@@ -113,6 +114,9 @@ export function useReportsData(params: UseReportsDataParams = {}): UseReportsDat
       filteredTransactions.filter((t) => t.transaction_type === 'sale').map((t) => [t.id, t.amount])
     )
     const movementsInRange = saleMovements.filter((m) => m.transaction_id && saleIds.has(m.transaction_id))
+    const inventorySaleTxIds = new Set(
+      movementsInRange.map((m) => m.transaction_id).filter(Boolean) as string[]
+    )
     const movementCountByTx = new Map<string, number>()
     movementsInRange.forEach((m) => {
       const tid = m.transaction_id!
@@ -137,17 +141,20 @@ export function useReportsData(params: UseReportsDataParams = {}): UseReportsDat
         itemName: itemNameById.get(itemId) ?? itemId,
         quantity,
         amount,
+        quantityType: 'units' as const,
       }))
       .sort((a, b) => b.amount - a.amount)
 
     const inventoryRevenue = fromInventory.reduce((sum, e) => sum + e.amount, 0)
     const generalSales = Number(totalRevenue) - inventoryRevenue
+    const generalSalesCount = saleTxIds.filter((id) => !inventorySaleTxIds.has(id)).length
     if (generalSales > 0) {
       fromInventory.push({
         itemId: 'general',
         itemName: 'General Sales',
         amount: generalSales,
-        quantity: 1,
+        quantity: Math.max(1, generalSalesCount),
+        quantityType: 'sales',
       })
       fromInventory.sort((a, b) => b.amount - a.amount)
     }

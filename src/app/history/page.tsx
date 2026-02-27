@@ -30,6 +30,11 @@ export default function HistoryPage() {
   const [sortBy, setSortBy] = useState<SortOption>('newest')
   const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false)
+  const [draftTypeFilter, setDraftTypeFilter] = useState<TypeFilter>('all')
+  const [draftPaymentFilter, setDraftPaymentFilter] = useState<PaymentFilter>('all')
+  const [draftDateRange, setDraftDateRange] = useState<DateRangeFilter>('this_month')
+  const [draftCustomStart, setDraftCustomStart] = useState('')
+  const [draftCustomEnd, setDraftCustomEnd] = useState('')
 
   const filteredAndSorted = useMemo(() => {
     let list = transactions ?? []
@@ -61,6 +66,36 @@ export default function HistoryPage() {
   const hasActiveFilters = typeFilter !== 'all' || paymentFilter !== 'all' || dateRange !== 'this_month' || hasCustomDateActive
 
   const sortLabel = t(`history.sort_${sortBy}`, { defaultValue: SORT_OPTIONS.includes(sortBy) ? ['Newest', 'Oldest', 'Highest amount', 'Lowest amount'][SORT_OPTIONS.indexOf(sortBy)] : sortBy })
+  const draftFilterCount =
+    (draftTypeFilter !== 'all' ? 1 : 0) +
+    (draftPaymentFilter !== 'all' ? 1 : 0) +
+    (draftDateRange !== 'this_month' ? 1 : 0)
+
+  const openFilterSheet = () => {
+    setDraftTypeFilter(typeFilter)
+    setDraftPaymentFilter(paymentFilter)
+    setDraftDateRange(dateRange)
+    setDraftCustomStart(customStart)
+    setDraftCustomEnd(customEnd)
+    setFilterSheetOpen(true)
+  }
+
+  const applyFilters = () => {
+    setTypeFilter(draftTypeFilter)
+    setPaymentFilter(draftPaymentFilter)
+    setDateRange(draftDateRange)
+    setCustomStart(draftCustomStart)
+    setCustomEnd(draftCustomEnd)
+    setFilterSheetOpen(false)
+  }
+
+  const resetDraftFilters = () => {
+    setDraftTypeFilter('all')
+    setDraftPaymentFilter('all')
+    setDraftDateRange('this_month')
+    setDraftCustomStart('')
+    setDraftCustomEnd('')
+  }
 
   return (
     <AppShell title={t('history.transactions')} showBack showLogo>
@@ -69,7 +104,7 @@ export default function HistoryPage() {
           <div className="flex items-center gap-2 mb-4">
             <button
               type="button"
-              onClick={() => setFilterSheetOpen(true)}
+              onClick={openFilterSheet}
               className={`flex items-center gap-2 min-h-9 px-3 rounded-lg border text-sm font-medium transition-colors flex-1 min-w-0 justify-center ${hasActiveFilters ? 'border-gray-400 bg-gray-50 text-gray-800' : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'}`}
             >
               <Filter className="w-4 h-4 shrink-0 text-gray-500" />
@@ -107,7 +142,9 @@ export default function HistoryPage() {
         )}
 
         <p className="text-tally-caption text-[var(--tally-text-muted)] mb-3">
-          {filteredCount === totalCount ? t('history.transactionsCount', { count: totalCount }) : t('history.filteredCount', { count: filteredCount, total: totalCount })}
+          {filteredCount === totalCount
+            ? `Showing ${filteredCount} transactions`
+            : `Showing ${filteredCount} transactions (of ${totalCount})`}
         </p>
 
         {error ? (
@@ -135,12 +172,15 @@ export default function HistoryPage() {
           <div className="fixed inset-0 z-50 bg-black/30" onClick={() => setFilterSheetOpen(false)} aria-hidden />
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-xl max-h-[85vh] overflow-y-auto shadow-lg border-t border-gray-200">
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">{t('history.filter', { defaultValue: 'Filter' })}</h2>
+              <h2 className="text-base font-semibold text-gray-900">
+                {t('history.filter', { defaultValue: 'Filter' })}{' '}
+                {draftFilterCount > 0 ? `(${draftFilterCount})` : ''}
+              </h2>
               <button type="button" onClick={() => setFilterSheetOpen(false)} className="p-2 -m-2 rounded-lg hover:bg-gray-100 text-gray-600" aria-label="Close">
                 <ChevronDown className="w-5 h-5 rotate-180" />
               </button>
             </div>
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-6 pb-28">
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('history.filterType', { defaultValue: 'Transaction type' })}</p>
                 <ul className="border border-gray-200 rounded-lg overflow-hidden">
@@ -148,11 +188,11 @@ export default function HistoryPage() {
                     <li key={v}>
                       <button
                         type="button"
-                        onClick={() => setTypeFilter(v)}
+                        onClick={() => setDraftTypeFilter(v)}
                         className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 border-b border-gray-200 last:border-b-0"
                       >
                         <span>{v === 'all' ? t('history.filterAll', { defaultValue: 'All' }) : v === 'sale' ? t('transaction.sale', { defaultValue: 'Sale' }) : t('transaction.expense', { defaultValue: 'Expense' })}</span>
-                        {typeFilter === v && <Check className="w-4 h-4 shrink-0 text-gray-600" />}
+                        {draftTypeFilter === v && <Check className="w-4 h-4 shrink-0 text-gray-600" />}
                       </button>
                     </li>
                   ))}
@@ -165,11 +205,11 @@ export default function HistoryPage() {
                     <li key={v}>
                       <button
                         type="button"
-                        onClick={() => setPaymentFilter(v)}
+                        onClick={() => setDraftPaymentFilter(v)}
                         className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 border-b border-gray-200 last:border-b-0"
                       >
                         <span>{v === 'all' ? t('history.filterAll', { defaultValue: 'All' }) : t(`paymentTypes.${v === 'e_wallet' ? 'mobile_money' : v}`, { defaultValue: v === 'e_wallet' ? 'Mobile Money' : v === 'bank_transfer' ? 'Bank Transfer' : v === 'cash' ? 'Cash' : 'Other' })}</span>
-                        {paymentFilter === v && <Check className="w-4 h-4 shrink-0 text-gray-600" />}
+                        {draftPaymentFilter === v && <Check className="w-4 h-4 shrink-0 text-gray-600" />}
                       </button>
                     </li>
                   ))}
@@ -182,33 +222,52 @@ export default function HistoryPage() {
                     <li key={v}>
                       <button
                         type="button"
-                        onClick={() => setDateRange(v)}
+                        onClick={() => setDraftDateRange(v)}
                         className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-800 hover:bg-gray-50 border-b border-gray-200 last:border-b-0"
                       >
                         <span>{v === 'this_month' ? t('history.thisMonth', { defaultValue: 'This month' }) : v === 'last_30' ? t('history.last30Days', { defaultValue: 'Last 30 days' }) : t('history.custom', { defaultValue: 'Custom' })}</span>
-                        {dateRange === v && <Check className="w-4 h-4 shrink-0 text-gray-600" />}
+                        {draftDateRange === v && <Check className="w-4 h-4 shrink-0 text-gray-600" />}
                       </button>
                     </li>
                   ))}
                 </ul>
-                {dateRange === 'custom' && (
+                {draftDateRange === 'custom' && (
                   <div className="mt-3 flex items-center gap-2">
                     <input
                       type="date"
-                      value={customStart}
-                      onChange={(e) => setCustomStart(e.target.value)}
+                      value={draftCustomStart}
+                      onChange={(e) => setDraftCustomStart(e.target.value)}
                       className="flex-1 min-h-9 px-3 rounded-lg border border-gray-200 text-sm text-gray-800"
                     />
                     <span className="text-sm text-gray-500">–</span>
                     <input
                       type="date"
-                      value={customEnd}
-                      onChange={(e) => setCustomEnd(e.target.value)}
+                      value={draftCustomEnd}
+                      onChange={(e) => setDraftCustomEnd(e.target.value)}
                       className="flex-1 min-h-9 px-3 rounded-lg border border-gray-200 text-sm text-gray-800"
                     />
                   </div>
                 )}
               </div>
+            </div>
+            <div
+              className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-gray-200 px-4 py-3 flex items-center justify-between gap-3"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+            >
+              <button
+                type="button"
+                onClick={resetDraftFilters}
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                {t('common.reset', { defaultValue: 'Reset' })}
+              </button>
+              <button
+                type="button"
+                onClick={applyFilters}
+                className="h-11 px-5 rounded-lg bg-[#29978C] text-white text-sm font-semibold hover:bg-[#238579]"
+              >
+                {t('common.apply', { defaultValue: 'Apply filters' })}
+              </button>
             </div>
           </div>
         </>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear, startOfToday } from 'date-fns'
 import { useRouter } from 'next/navigation'
@@ -141,6 +141,9 @@ export default function ReportsHubPage() {
               <Pencil className="w-3.5 h-3.5" aria-hidden />
             </button>
           </div>
+          <p className="text-[11px] text-gray-400 mt-0.5">
+            {format(new Date(period.startDate), 'd MMM')} - {format(new Date(period.endDate), 'd MMM')}
+          </p>
         </div>
 
         {/* Business Snapshot cards: stack vertically on ≤360px, row on wider */}
@@ -206,7 +209,7 @@ export default function ReportsHubPage() {
                       <thead>
                         <tr className="border-b border-gray-200 text-left text-gray-500">
                           <th className="py-2 pr-3 font-medium">{t('report.salesByItem.item') || 'Item'}</th>
-                          <th className="py-2 pr-3 font-medium text-right">{t('report.salesByItem.qty') || 'Qty'}</th>
+                          <th className="py-2 pr-3 font-medium text-right">{t('report.salesByItem.qty') || 'Units / Sales'}</th>
                           <th className="py-2 font-medium text-right">{t('report.salesByItem.amount') || 'Amount'}</th>
                         </tr>
                       </thead>
@@ -214,7 +217,10 @@ export default function ReportsHubPage() {
                         {salesByItem.map((row) => (
                           <tr key={row.itemId} className="border-b border-gray-100">
                             <td className="py-2 pr-3 text-gray-900">{row.itemName}</td>
-                            <td className="py-2 pr-3 text-right tabular-nums">{row.quantity}</td>
+                            <td className="py-2 pr-3 text-right tabular-nums">
+                              {row.quantity}
+                              {row.quantityType === 'sales' ? ' sales' : ''}
+                            </td>
                             <td className="py-2 text-right tabular-nums font-medium text-[#166556]">
                               {formatCurrency(row.amount)}
                             </td>
@@ -222,6 +228,9 @@ export default function ReportsHubPage() {
                         ))}
                       </tbody>
                     </table>
+                    <Link href="/history" className="mt-3 inline-block text-xs font-medium text-[#166556] hover:underline">
+                      View all transactions
+                    </Link>
                   </div>
                 </div>
               ) : (

@@ -294,14 +294,22 @@ export function EditTransactionModal({ transaction, open, onOpenChange, onDelete
     }
   }
 
+  const handleFieldFocus = (event: React.FocusEvent<HTMLElement>) => {
+    ;(event.target as HTMLElement).scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[480px] max-h-[90vh] overflow-y-auto bg-background">
-        <DialogHeader>
+      <DialogContent className="max-w-[480px] w-[calc(100vw-1rem)] max-h-[92dvh] overflow-hidden bg-background p-0 gap-0 flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-[var(--tally-border)]">
           <DialogTitle className="text-xl font-bold text-[var(--tally-text)]">{t('transaction.editTitle')}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 pt-4">
+        <div
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 pt-4"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+        >
+          <div className="space-y-6 pb-6">
           {/* Date (editable) */}
           <div>
             <label className="block text-sm text-[var(--tally-text-muted)] mb-2 font-medium">{t('transaction.date')}</label>
@@ -329,6 +337,7 @@ export function EditTransactionModal({ transaction, open, onOpenChange, onDelete
                 <Input
                   value={otherPaymentText}
                   onChange={(e) => setOtherPaymentText(e.target.value)}
+                  onFocus={handleFieldFocus}
                   placeholder={t('transaction.otherPaymentPlaceholder')}
                 />
               </div>
@@ -355,6 +364,7 @@ export function EditTransactionModal({ transaction, open, onOpenChange, onDelete
                   <Input
                     value={otherCategoryText}
                     onChange={(e) => setOtherCategoryText(e.target.value)}
+                    onFocus={handleFieldFocus}
                     placeholder={t('transaction.otherDescriptionPlaceholder')}
                   />
                 </div>
@@ -402,14 +412,20 @@ export function EditTransactionModal({ transaction, open, onOpenChange, onDelete
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              onFocus={handleFieldFocus}
               placeholder={t('transaction.addNotesPlaceholder')}
               className="w-full p-3 border border-[var(--tally-border)] rounded-lg bg-[var(--tally-surface)] placeholder:text-[var(--tally-text-muted)] focus:outline-none focus:ring-2 focus:ring-[rgba(41,151,140,0.25)] focus:border-[#29978C] focus:ring-offset-2"
               rows={3}
             />
           </div>
 
-          {/* Actions: Delete (red, left) + Save (primary, right) */}
-          <div className="space-y-3 pt-6 mt-2 border-t border-[var(--tally-border)]">
+          </div>
+        </div>
+        {/* Actions: Delete (red, left) + Save (primary, right) */}
+        <div
+          className="space-y-3 pt-3 px-6 border-t border-[var(--tally-border)] bg-background/95 backdrop-blur"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)' }}
+        >
             {!showDeleteConfirm ? (
               <div className="flex gap-3">
                 <Button
@@ -452,7 +468,6 @@ export function EditTransactionModal({ transaction, open, onOpenChange, onDelete
             <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">
               {t('common.cancel')}
             </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

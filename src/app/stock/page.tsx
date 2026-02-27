@@ -32,6 +32,8 @@ export default function StockPage() {
   const [historyItem, setHistoryItem] = useState<InventoryItem | null>(null)
   const [restockItem, setRestockItem] = useState<InventoryItem | null>(null)
   const [restockQty, setRestockQty] = useState('')
+  const hasOverlayOpen =
+    isAddModalOpen || !!editingItem || !!historyItem || !!restockItem || !!deletingItem
 
   const businessId = isGuestMode() ? 'guest' : currentBusiness?.id ?? null
   const showInventory = !!businessId
@@ -85,7 +87,7 @@ export default function StockPage() {
   }
 
   return (
-    <AppShell title={t('stock.title')} showBack showLogo={false}>
+    <AppShell title={t('stock.title')} showBack showLogo={false} hideBottomNav={hasOverlayOpen}>
       <div className="max-w-[480px] mx-auto px-6 py-6 pb-40">
         <div className="flex items-center justify-between mb-6">
           <div>

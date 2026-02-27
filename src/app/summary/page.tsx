@@ -75,6 +75,10 @@ export default function ProfitLossPage() {
   const safeExpenses = Number(totalExpenses) || 0
   const safeProfit = Number(netProfit) || 0
   const safeMargin = Number(profitMargin) || 0
+  const tr = (key: string, fallback: string) => {
+    const translated = t(key)
+    return translated === key ? fallback : translated
+  }
 
   const handleExportPDF = () => {
     toast.info(t('report.common.generatingReport') || 'Generating Report...')
@@ -302,7 +306,7 @@ export default function ProfitLossPage() {
         {/* Sales by payment method */}
         {revenueByTypeEntries.length > 0 && (
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-gray-800">{t('report.profitLoss.salesByPayment') || 'Sales by payment method'}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-gray-800">{tr('report.profitLoss.salesByPayment', 'Sales by payment method')}</h3>
             <div className="space-y-2">
               {revenueByTypeEntries.map(([method, amount]) => {
                 const pct = safeRevenue > 0 ? (amount / safeRevenue) * 100 : 0
@@ -315,7 +319,7 @@ export default function ProfitLossPage() {
                     />
                     <div className="relative flex items-center justify-between px-3 py-2">
                       <span className="text-sm font-medium text-gray-800">
-                        {t(`paymentTypes.${label}`) || label}
+                        {tr(`paymentTypes.${label}`, label)}
                       </span>
                       <span className="text-sm font-semibold tabular-nums text-gray-800">
                         {formatCurrency(amount)} ({pct.toFixed(0)}%)

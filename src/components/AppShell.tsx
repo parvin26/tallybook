@@ -6,8 +6,8 @@ import { AppHeader } from './AppHeader'
 import { OfflineIndicator } from './OfflineIndicator'
 
 const NAV_HEIGHT = 88
-/** Extra gap above the fixed nav so last content is never covered. */
-const BOTTOM_GAP = 80
+/** Extra gap above the fixed nav so last content can scroll past it. */
+const BOTTOM_GAP = 16
 /** CSS variable for nav total height (88px + safe-area); used for main paddingBottom. */
 const BOTTOM_NAV_TOTAL = `calc(${NAV_HEIGHT}px + env(safe-area-inset-bottom, 0px))`
 

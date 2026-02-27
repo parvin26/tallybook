@@ -20,13 +20,26 @@ const DialogContext = React.createContext<DialogContextValue | undefined>(undefi
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
   // Lock body scroll when modal is open
   React.useEffect(() => {
+    const htmlEl = document.documentElement
+    const bodyEl = document.body
+    const previousHtmlOverflow = htmlEl.style.overflow
+    const previousBodyOverflow = bodyEl.style.overflow
+    const previousBodyOverscroll = bodyEl.style.overscrollBehavior
+
     if (open) {
-      document.body.style.overflow = 'hidden'
+      htmlEl.style.overflow = 'hidden'
+      bodyEl.style.overflow = 'hidden'
+      bodyEl.style.overscrollBehavior = 'none'
     } else {
-      document.body.style.overflow = ''
+      htmlEl.style.overflow = previousHtmlOverflow
+      bodyEl.style.overflow = previousBodyOverflow
+      bodyEl.style.overscrollBehavior = previousBodyOverscroll
     }
+
     return () => {
-      document.body.style.overflow = ''
+      htmlEl.style.overflow = previousHtmlOverflow
+      bodyEl.style.overflow = previousBodyOverflow
+      bodyEl.style.overscrollBehavior = previousBodyOverscroll
     }
   }, [open])
 
@@ -36,13 +49,13 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
         <>
           {/* Backdrop: fixed full screen, blocks interaction with page content */}
           <div
-            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm pointer-events-auto"
+            className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm pointer-events-auto"
             onClick={() => onOpenChange?.(false)}
             onPointerDown={(e) => e.preventDefault()}
             aria-hidden
           />
           {/* Content: centered card floating on top; z-[51] so content sits above backdrop (z-50) */}
-          <div className="fixed inset-0 z-[51] flex items-center justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-[71] flex items-center justify-center p-4 pointer-events-none">
             <div
               className="pointer-events-auto w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
