@@ -112,7 +112,7 @@ export default function TransactionSlipPage() {
     setIsSharing(true)
     try {
       const canvas = await html2canvas(exportRef.current, {
-        backgroundColor: '#fff',
+        background: '#fff',
         scale: 2,
       })
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
